@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Robotic Meat Interception Cell | Technical Implementation Report</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #071018;
+      --panel: #0e1b26;
+      --panel-2: #142431;
+      --line: #294052;
+      --text: #e8f0f5;
+      --muted: #9db0bd;
+      --cyan: #45d8e8;
+      --blue: #68a7ff;
+      --green: #66d394;
+      --yellow: #f1cb61;
+      --red: #ff7184;
+      --orange: #ff9f5a;
+      --shadow: 0 18px 60px rgba(0,0,0,.28);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 85% 0%, rgba(69,216,232,.12), transparent 26rem),
+        radial-gradient(circle at 0% 32%, rgba(104,167,255,.10), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+    a { color: var(--cyan); }
+    code, pre { font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace; }
+    code { color: #b9eff5; }
+    pre {
+      margin: 0;
+      padding: 1rem;
+      overflow: auto;
+      color: #d6eef2;
+      background: #050b10;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      white-space: pre-wrap;
+    }
+    .shell { width: min(1240px, calc(100% - 32px)); margin: 0 auto; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(16px);
+      background: rgba(7,16,24,.86);
+      border-bottom: 1px solid rgba(69,216,232,.12);
+    }
+    .topbar .shell {
+      min-height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .brand { font-weight: 700; letter-spacing: .02em; }
+    .brand span { color: var(--cyan); }
+    nav { display: flex; flex-wrap: wrap; gap: .9rem; }
+    nav a { color: var(--muted); text-decoration: none; font-size: .86rem; }
+    nav a:hover { color: var(--text); }
+    header { padding: 84px 0 52px; }
+    .eyebrow {
+      color: var(--cyan);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 { line-height: 1.15; margin: 0; }
+    h1 { max-width: 900px; margin-top: .6rem; font-size: clamp(2.4rem, 6vw, 5.4rem); letter-spacing: -.045em; }
+    h2 { font-size: clamp(1.7rem, 3vw, 2.6rem); letter-spacing: -.025em; }
+    h3 { font-size: 1.05rem; }
+    .lede { max-width: 820px; color: var(--muted); font-size: 1.13rem; }
+    .notice {
+      margin-top: 1.5rem;
+      max-width: 950px;
+      padding: .9rem 1rem;
+      border-left: 3px solid var(--yellow);
+      color: #f4e6b4;
+      background: rgba(241,203,97,.07);
+    }
+    .hero-grid { display: grid; grid-template-columns: 1.55fr .85fr; gap: 1.2rem; margin-top: 2.2rem; }
+    .panel {
+      background: linear-gradient(180deg, rgba(20,36,49,.95), rgba(14,27,38,.95));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-body { padding: 1.2rem; }
+    video, .evidence-image { display: block; width: 100%; height: auto; background: #030609; }
+    .video-meta { display: flex; flex-wrap: wrap; gap: .55rem 1.1rem; color: var(--muted); font-size: .84rem; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .26rem .56rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--text);
+      background: rgba(255,255,255,.03);
+      font-size: .76rem;
+    }
+    .dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--green); box-shadow: 0 0 14px var(--green); }
+    .summary-list { margin: 1rem 0 0; padding: 0; list-style: none; }
+    .summary-list li { display: grid; grid-template-columns: 1.1rem 1fr; gap: .65rem; margin-top: .76rem; color: var(--muted); }
+    .summary-list strong { color: var(--text); }
+    section { padding: 64px 0; }
+    .section-head { display: grid; grid-template-columns: .8fr 1.2fr; gap: 2rem; margin-bottom: 1.8rem; }
+    .section-head p { margin: 0; color: var(--muted); }
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .9rem; }
+    .stat { padding: 1rem; border-top: 2px solid var(--cyan); background: rgba(14,27,38,.74); }
+    .stat .value { font-size: 1.75rem; font-weight: 760; letter-spacing: -.03em; }
+    .stat .label { color: var(--muted); font-size: .82rem; }
+    .diagram {
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(5,11,16,.55);
+      overflow-x: auto;
+    }
+    .diagram svg { width: 100%; min-width: 880px; height: auto; display: block; }
+    .diagram text { font-family: Inter, system-ui, sans-serif; fill: var(--text); }
+    .diagram .muted { fill: var(--muted); }
+    .diagram .node { fill: #142431; stroke: #385366; stroke-width: 1.5; }
+    .diagram .sensor { fill: #102d34; stroke: #45d8e8; }
+    .diagram .control { fill: #172842; stroke: #68a7ff; }
+    .diagram .physical { fill: #2b2420; stroke: #ff9f5a; }
+    .diagram .safety { fill: #2b2620; stroke: #f1cb61; }
+    .diagram .log { fill: #202a25; stroke: #66d394; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .content-card { padding: 1.15rem; background: rgba(14,27,38,.72); border: 1px solid var(--line); border-radius: 15px; }
+    .content-card p { color: var(--muted); }
+    .content-card ul { color: var(--muted); padding-left: 1.15rem; }
+    .content-card strong { color: var(--text); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 15px; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; background: rgba(14,27,38,.68); }
+    th, td { padding: .78rem .9rem; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+    th { color: #cfe7ee; background: rgba(255,255,255,.03); font-size: .79rem; text-transform: uppercase; letter-spacing: .08em; }
+    td { color: var(--muted); font-size: .9rem; }
+    tr:last-child td { border-bottom: 0; }
+    td strong { color: var(--text); }
+    .pipeline { display: grid; grid-template-columns: repeat(6, 1fr); gap: .65rem; }
+    .pipe-step { position: relative; padding: .9rem; min-height: 124px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .pipe-step:not(:last-child)::after { content: "\2192"; position: absolute; right: -.55rem; top: 45%; z-index: 2; color: var(--cyan); font-weight: 800; }
+    .pipe-step .num { color: var(--cyan); font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
+    .pipe-step p { color: var(--muted); font-size: .82rem; margin-bottom: 0; }
+    .flow-lanes { display: grid; gap: .8rem; }
+    .lane { display: grid; grid-template-columns: 112px 1fr; gap: .8rem; align-items: start; }
+    .lane-name { color: var(--cyan); font-weight: 700; padding-top: .55rem; }
+    .lane-track { display: flex; flex-wrap: wrap; gap: .42rem; }
+    .state { padding: .45rem .62rem; border-radius: 9px; background: var(--panel-2); border: 1px solid var(--line); font-size: .78rem; }
+    .state.good { border-color: rgba(102,211,148,.7); }
+    .state.warn { border-color: rgba(241,203,97,.7); }
+    .state.bad { border-color: rgba(255,113,132,.7); }
+    .media-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .recipe-visuals { display: grid; grid-template-columns: 1.25fr .8fr .8fr; gap: 1rem; }
+    figure { margin: 0; border: 1px solid var(--line); border-radius: 15px; overflow: hidden; background: var(--panel); }
+    figcaption { padding: .72rem .85rem; color: var(--muted); font-size: .82rem; }
+    .bar-list { display: grid; gap: .8rem; }
+    .bar-row { display: grid; grid-template-columns: 210px 1fr 118px; gap: .7rem; align-items: center; }
+    .bar-label, .bar-value { font-size: .84rem; color: var(--muted); }
+    .bar-value { text-align: right; color: var(--text); }
+    .bar-track { height: 11px; background: rgba(255,255,255,.07); border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+    .metric-note { color: var(--muted); font-size: .84rem; }
+    .callout { padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 14px; background: rgba(69,216,232,.05); }
+    .callout.warning { background: rgba(241,203,97,.06); border-color: rgba(241,203,97,.35); }
+    .callout.danger { background: rgba(255,113,132,.06); border-color: rgba(255,113,132,.35); }
+    .callout p { margin: .35rem 0 0; color: var(--muted); }
+    details { border: 1px solid var(--line); border-radius: 12px; padding: .85rem 1rem; background: rgba(14,27,38,.62); }
+    details + details { margin-top: .65rem; }
+    summary { cursor: pointer; font-weight: 700; }
+    details p, details li { color: var(--muted); }
+    .file-map { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+    .file { padding: .78rem; border-left: 2px solid var(--blue); background: rgba(14,27,38,.62); }
+    .file p { color: var(--muted); font-size: .84rem; margin: .3rem 0 0; }
+    .timeline { position: relative; margin-left: .4rem; padding-left: 1.4rem; border-left: 1px solid var(--line); }
+    .timeline-item { position: relative; display: grid; grid-template-columns: 86px 1fr; gap: .7rem; padding: .35rem 0 .9rem; }
+    .timeline-item::before { content: ""; position: absolute; left: -1.7rem; top: .75rem; width: .55rem; height: .55rem; border-radius: 50%; background: var(--cyan); }
+    .timeline time { color: var(--cyan); font-variant-numeric: tabular-nums; }
+    .timeline p { margin: 0; color: var(--muted); }
+    footer { padding: 42px 0 62px; color: var(--muted); border-top: 1px solid var(--line); }
+    @media (max-width: 960px) {
+      .hero-grid, .section-head, .two-col, .three-col, .recipe-visuals { grid-template-columns: 1fr; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .pipeline { grid-template-columns: repeat(3, 1fr); }
+      .pipe-step:nth-child(3)::after { display: none; }
+      .topbar nav { display: none; }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 20px, 1240px); }
+      header { padding-top: 54px; }
+      section { padding: 46px 0; }
+      .stat-grid, .media-grid, .file-map, .pipeline { grid-template-columns: 1fr; }
+      .pipe-step::after { display: none; }
+      .bar-row { grid-template-columns: 1fr; }
+      .bar-value { text-align: left; }
+      .lane { grid-template-columns: 1fr; }
+    }
+    @media print {
+      .topbar { position: static; }
+      body { background: #fff; color: #111; }
+      .panel, .content-card, .table-wrap, .diagram, .pipe-step, details, .file { box-shadow: none; break-inside: avoid; }
+      video { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="shell">
+      <div class="brand">MEATCELL <span>REFERENCE</span></div>
+      <nav aria-label="Report sections">
+        <a href="SCENE_DESIGN_REPORT.html">Scene 2.0</a>
+        <a href="WRITING_STYLE_RESEARCH.md">Writing standard</a>
+        <a href="#demo">Demo</a>
+        <a href="#products">Products</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#io">Inputs and outputs</a>
+        <a href="#control">Control</a>
+        <a href="#vision">YOLO26</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#implementation">Implementation</a>
+      </nav>
+    </div>
+  </div>
+
+  <header class="shell" id="demo">
+    <div class="eyebrow">Isaac Sim 6.0.1 | Technical implementation report | 2026-08-26</div>
+    <h1>How the simulated meat handling cell works</h1>
+    <p class="lede">The current Scene 1 demo watches a moving workpiece and predicts a pick point. It controls an Isaac articulation, checks finger contact, and places the workpiece in a stationary cutter-entry tray. Scene 2.0 will replace the abstract robot and gripper with the selected six-axis arm and a better reference tool.</p>
+    <div class="notice"><strong>Scope boundary:</strong> The robot, gripper, workpiece, buffer, and cutter are abstract reference assets. Results are simulation evidence only. They are not OEM-accurate, physically calibrated, food-safety validated, real-cell safety validated, or production ready.</div>
+
+    <div class="hero-grid">
+      <article class="panel">
+        <video controls preload="metadata" poster="results/yolo/recorded_demo/isaac_b/contact_sheet.png">
+          <source src="results/yolo/recorded_demo/isaac_b/demo.mp4" type="video/mp4">
+          Your browser cannot play the recorded MP4. Open results/yolo/recorded_demo/isaac_b/demo.mp4 directly.
+        </video>
+        <div class="panel-body">
+          <div class="video-meta">
+            <span class="tag"><span class="dot"></span> Gate passed</span>
+            <span>31.42 s</span><span>640 by 480</span><span>12 FPS</span><span>377 frames</span><span>H.264</span>
+          </div>
+          <p class="metric-note">This is the actual rendered overhead RGB stream from the recorded generic-workpiece run. It is not a proxy animation. The later three-recipe evidence is reported below.</p>
+        </div>
+      </article>
+      <aside class="panel panel-body">
+        <div class="eyebrow">Recorded run</div>
+        <h2 style="margin-top:.45rem">Solution B with YOLO26</h2>
+        <ul class="summary-list">
+          <li><span>01</span><span><strong>Two nominal deliveries</strong> completed perception, interception, contact grasp, buffer re-observation, slip correction, regrasp, alignment, downstream handoff, verification, and retract.</span></li>
+          <li><span>02</span><span><strong>Two expected recoveries</strong> exercised failed contact confirmation and buffer timeout.</span></li>
+          <li><span>03</span><span><strong>6,603 articulation commands</strong> passed velocity, acceleration, workspace, joint-limit, and collision gates.</span></li>
+          <li><span>04</span><span><strong>Four deterministic replays</strong> reproduced the terminal decisions from logged inputs.</span></li>
+        </ul>
+      </aside>
+    </div>
+  </header>
+
+  <main>
+    <section class="shell" aria-labelledby="snapshot-title">
+      <div class="section-head">
+        <h2 id="snapshot-title">What passed in Isaac Sim</h2>
+        <p>We use two test sets. The short set runs four cycles. The hardening set runs five fixed seeds for both solutions, with six scenarios in each batch.</p>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="value">60</div><div class="label">hardening cycles passed</div></div>
+        <div class="stat"><div class="value">60 / 60</div><div class="label">deterministic replay passes</div></div>
+        <div class="stat"><div class="value">0</div><div class="label">unexpected collisions</div></div>
+        <div class="stat"><div class="value">0</div><div class="label">joint-limit violations</div></div>
+      </div>
+    </section>
+
+    <section id="products">
+      <div class="shell">
+        <div class="section-head">
+          <h2>Workpieces and the cutter boundary</h2>
+          <p>The robot loads prepared boneless products. It does not debone, trim, or cut. The cutter owns product holding, blade motion, and the resulting portions.</p>
+        </div>
+        <div class="recipe-visuals">
+          <figure><img class="evidence-image" src="results/recipes/beef_center_cut_tenderloin/solution_a/isaac_a/media/overhead_001091666667_rgb.png" alt="Rendered beef center-cut tenderloin reference proxy moving on the Isaac conveyor"><figcaption>Beef center-cut tenderloin reference proxy in the complete Isaac cell.</figcaption></figure>
+          <figure><img class="evidence-image" src="results/recipes/pork_boneless_loin/solution_a/isaac_a/media/overhead_001100000000_rgb.png" alt="Rendered pork boneless loin reference proxy moving on the Isaac conveyor"><figcaption>Pork boneless loin reference proxy.</figcaption></figure>
+          <figure><img class="evidence-image" src="results/recipes/chicken_breast_fillet/solution_a/isaac_a/media/overhead_001095833333_rgb.png" alt="Rendered chicken breast fillet reference proxy moving on the Isaac conveyor"><figcaption>Chicken breast fillet reference proxy.</figcaption></figure>
+        </div>
+        <div class="table-wrap" style="margin-top:1rem">
+          <table>
+            <thead><tr><th>Recipe</th><th>Nominal dimensions</th><th>Nominal mass</th><th>Shape-family metadata</th><th>Current simulated handoff</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Beef center-cut tenderloin</strong></td><td>450 by 110 by 75 mm</td><td>1.80 kg</td><td>Tapered capsule</td><td>Long axis aligned, thick end first</td></tr>
+              <tr><td><strong>Pork boneless loin</strong></td><td>460 by 140 by 80 mm</td><td>2.75 kg</td><td>Elongated rounded prism</td><td>Long axis aligned, square end first</td></tr>
+              <tr><td><strong>Chicken breast fillet</strong></td><td>180 by 115 by 32 mm</td><td>0.16 kg</td><td>Asymmetric teardrop slab</td><td>Long axis aligned, thick end first</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="two-col" style="margin-top:1rem">
+          <div class="callout"><strong>Gripper and tray</strong><p>The reference gripper has a fixed 175 mm open gap and recipe-aware closure. It uses an uncalibrated 8 mm compliance deflection per pad. The robot releases at near-zero speed into the stationary tray after cutter-ready and tray-clear checks.</p></div>
+          <div class="callout warning"><strong>Geometry and perception limit</strong><p>The current workpieces are rigid rectangular proxies with recipe-specific size, mass, color, and metadata. The existing YOLO26 checkpoint was trained on the earlier generic proxy. These recipe runs use rendered color and depth segmentation until a multi-recipe YOLO model is retrained.</p></div>
+        </div>
+        <div class="stat-grid" style="margin-top:1rem">
+          <div class="stat"><div class="value">24 / 24</div><div class="label">recipe cycles and replay checks passed</div></div>
+          <div class="stat"><div class="value">12</div><div class="label">nominal stationary tray deliveries</div></div>
+          <div class="stat"><div class="value">3</div><div class="label">recipes in both A and B</div></div>
+          <div class="stat"><div class="value">0</div><div class="label">collisions and joint-limit violations</div></div>
+        </div>
+        <p class="metric-note">Across the recipe tests, p95 perception latency was 32.61 ms and p95 intercept timing error was 3.83 ms. For successful placements, p95 position error was 54.08 mm, angle error was 0.0375 rad, and stationary speed error was 0.00534 m/s. Pork Solution B passed the 55 mm position gate with little simulation margin.</p>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <div class="shell">
+        <div class="section-head">
+          <h2>How the parts communicate</h2>
+          <p>The cell has six working areas: simulated hardware, perception, tracking and planning, robot control, PLC and safety logic, and test evidence. Every time-sensitive message uses the same fixed simulation clock.</p>
+        </div>
+        <div class="diagram" role="img" aria-label="System architecture showing camera data flowing into YOLO26, tracking, interception planning, control, Isaac articulation and PhysX, with PLC supervision and logging">
+          <svg viewBox="0 0 1160 570" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#6d9bb2"/></marker>
+            </defs>
+            <rect class="physical" x="24" y="50" width="220" height="100" rx="14"/><text x="44" y="82" font-size="17" font-weight="700">Isaac stage and PhysX</text><text class="muted" x="44" y="108" font-size="13">Conveyor, product, contact,</text><text class="muted" x="44" y="129" font-size="13">buffer, cutter, guards</text>
+            <rect class="sensor" x="24" y="210" width="220" height="100" rx="14"/><text x="44" y="242" font-size="17" font-weight="700">Rendered sensors</text><text class="muted" x="44" y="268" font-size="13">Overhead and wrist RGB-D</text><text class="muted" x="44" y="289" font-size="13">Encoder and contact samples</text>
+            <rect class="sensor" x="306" y="210" width="220" height="100" rx="14"/><text x="326" y="242" font-size="17" font-weight="700">YOLO26 adapter</text><text class="muted" x="326" y="268" font-size="13">RGB to instance mask, box,</text><text class="muted" x="326" y="289" font-size="13">class and confidence</text>
+            <rect class="node" x="588" y="210" width="220" height="100" rx="14"/><text x="608" y="242" font-size="17" font-weight="700">Pose and tracking</text><text class="muted" x="608" y="268" font-size="13">Mask plus depth plus calibration</text><text class="muted" x="608" y="289" font-size="13">Track ID, velocity, covariance</text>
+            <rect class="control" x="870" y="210" width="250" height="100" rx="14"/><text x="890" y="242" font-size="17" font-weight="700">Interception planner</text><text class="muted" x="890" y="268" font-size="13">Predicted pose and time, grasp,</text><text class="muted" x="890" y="289" font-size="13">commit and abort boundaries</text>
+            <rect class="control" x="870" y="370" width="250" height="105" rx="14"/><text x="890" y="402" font-size="17" font-weight="700">Motion executor</text><text class="muted" x="890" y="428" font-size="13">Quintic trajectories and limits</text><text class="muted" x="890" y="449" font-size="13">Isaac articulation commands</text>
+            <rect class="safety" x="588" y="370" width="220" height="105" rx="14"/><text x="608" y="402" font-size="17" font-weight="700">Supervisor and PLC</text><text class="muted" x="608" y="428" font-size="13">Permissives, recipe, faults,</text><text class="muted" x="608" y="449" font-size="13">emergency stop, recovery</text>
+            <rect class="log" x="306" y="370" width="220" height="105" rx="14"/><text x="326" y="402" font-size="17" font-weight="700">Trace and metrics</text><text class="muted" x="326" y="428" font-size="13">JSONL events, USD, media,</text><text class="muted" x="326" y="449" font-size="13">replay and acceptance gates</text>
+            <path d="M134 150 V210" fill="none" stroke="#6d9bb2" stroke-width="2" marker-end="url(#arrow)"/><text class="muted" x="146" y="184" font-size="12">render and sample</text>
+            <path d="M244 260 H306" fill="none" stroke="#6d9bb2" stroke-width="2" marker-end="url(#arrow)"/><text class="muted" x="252" y="247" font-size="12">RGB</text>
+            <path d="M526 260 H588" fill="none" stroke="#6d9bb2" stroke-width="2" marker-end="url(#arrow)"/><text class="muted" x="538" y="247" font-size="12">mask</text>
+            <path d="M244 286 C405 340,490 330,588 286" fill="none" stroke="#6d9bb2" stroke-width="2" marker-end="url(#arrow)"/><text class="muted" x="392" y="340" font-size="12">depth, calibration, encoder</text>
+            <path d="M808 260 H870" fill="none" stroke="#6d9bb2" stroke-width="2" marker-end="url(#arrow)"/><text class="muted" x="817" y="247" font-size="12">track</text>
+            <path d="M995 310 V370" fill="none" stroke="#6d9bb2" stroke-width="2" marker-end="url(#arrow)"/><text class="muted" x="1007" y="346" font-size="12">plan</text>
+            <path d="M870 423 H808" fill="none" stroke="#6d9bb2" stroke-width="2" marker-end="url(#arrow)"/><text class="muted" x="813" y="410" font-size="12">status</text>
+            <path d="M995 475 C970 540,165 540,134 150" fill="none" stroke="#6d9bb2" stroke-width="2" marker-end="url(#arrow)"/><text class="muted" x="690" y="548" font-size="12">joint targets into articulation, state and contact feedback from PhysX</text>
+            <path d="M588 423 H526" fill="none" stroke="#6d9bb2" stroke-width="2" marker-end="url(#arrow)"/><text class="muted" x="535" y="410" font-size="12">events</text>
+            <path d="M698 370 V310" fill="none" stroke="#6d9bb2" stroke-width="2" marker-end="url(#arrow)"/><text class="muted" x="710" y="345" font-size="12">permissive</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell" aria-labelledby="parts-title">
+      <div class="section-head">
+        <h2 id="parts-title">System parts</h2>
+        <p>Each part has one clear job. YOLO estimates the visible workpiece. Ordinary control code handles timing, plans, state changes, motion limits, PLC checks, and recovery.</p>
+      </div>
+      <div class="three-col">
+        <article class="content-card"><h3>Physical USD cell</h3><ul><li>Rigid conveyor and moving workpieces</li><li>Generic six-joint Cartesian articulation</li><li>Finite-effort two-finger gripper</li><li>Solution B centering buffer</li><li>Stationary cutter-entry tray reference</li><li>Guards, reject location, lights, named frames</li></ul></article>
+        <article class="content-card"><h3>Sensors and calibration</h3><ul><li>640 by 480 overhead RGB and depth</li><li>400 by 300 wrist RGB and depth</li><li>Finger contact and effort feedback</li><li>Conveyor speed and simulation time</li><li>Camera intrinsics and camera-to-world transform</li><li>Explicit belt, tool, buffer, and cut frames</li></ul></article>
+        <article class="content-card"><h3>Perception and estimation</h3><ul><li>Replaceable <code>VisionModel</code> interface</li><li>YOLO26 instance segmentation</li><li>Depth-backed planar pose and yaw</li><li>Seeded noise, jitter, and latency</li><li>Stable track ID and filtered motion</li><li>Predicted intercept pose and timestamp</li></ul></article>
+        <article class="content-card"><h3>Robot and grasp control</h3><ul><li>Quintic joint trajectories at 240 Hz</li><li>Position, velocity, acceleration, and envelope checks</li><li>Belt-speed matching at contact</li><li>Two-finger contact confirmation</li><li>Fixed-joint hold approximation</li><li>Slip estimate, correction, regrasp, retract</li></ul></article>
+        <article class="content-card"><h3>Cell coordination</h3><ul><li>Deterministic state supervisor</li><li>Solution A direct path</li><li>Solution B buffered path</li><li>PLC-style cutter permissives and phase</li><li>Fault, emergency stop, result acknowledgment</li><li>Reject and known-safe recovery paths</li></ul></article>
+        <article class="content-card"><h3>Evidence system</h3><ul><li>Saved and reloaded USDA stage</li><li>RGB, depth, video, and validation media</li><li>Per-cycle JSON Lines traces</li><li>Machine-readable metric gates</li><li>Independent artifact audit</li><li>Deterministic decision replay</li></ul></article>
+      </div>
+    </section>
+
+    <section id="io">
+      <div class="shell">
+        <div class="section-head">
+          <h2>Inputs, outputs, and message contracts</h2>
+          <p>The table below follows the live data path. Every pose uses meters and a normalized quaternion. The accepted demonstration uses planar X, Y, Z, and yaw helpers while preserving the full transform contract.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Component</th><th>Inputs</th><th>Outputs</th><th>Consumer</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Isaac cameras</strong></td><td>USD scene, lights, camera calibration, render time</td><td>RGB array, depth array, frame metadata</td><td>Vision adapter, media recorder</td></tr>
+              <tr><td><strong>YOLO26 segmentation</strong></td><td>Rendered RGB only, model checkpoint</td><td>Instance mask, bounding box, class index, confidence</td><td>Depth pose adapter</td></tr>
+              <tr><td><strong>Depth pose adapter</strong></td><td>YOLO mask, rendered depth, intrinsics, extrinsics, seeded noise and latency</td><td><code>ObjectObservation</code>: ID, exposure and delivery times, class, confidence, box, mask RLE, belt pose, variance, visibility, geometry quality</td><td>Tracker and trace</td></tr>
+              <tr><td><strong>Object tracker</strong></td><td>Stamped observation, conveyor encoder speed, current simulation time</td><td><code>ObjectTrack</code>: stable ID, lifecycle, pose, twist, covariance, hit and miss counts</td><td>Interception planner</td></tr>
+              <tr><td><strong>Interception planner</strong></td><td>Track, grasp candidate, robot state, current time, reach and unsafe-zone limits</td><td><code>InterceptionPlan</code> or typed rejection reason</td><td>Supervisor and motion executor</td></tr>
+              <tr><td><strong>Motion executor</strong></td><td>TCP target, intercept time, end velocity, joint and workspace limits</td><td><code>RobotCommand</code> stream: joint names, position targets, velocity limits, acceleration limits</td><td>Isaac articulation controller</td></tr>
+              <tr><td><strong>Articulation and PhysX</strong></td><td>Joint targets, drive properties, conveyor and product dynamics</td><td><code>RobotState</code>, TCP pose, joint position, velocity, effort, contacts, rigid-body pose and velocity</td><td>Control, grasp model, safety gates</td></tr>
+              <tr><td><strong>Grasp model</strong></td><td>Finger contacts, force proxy, capture margin, friction and inertial proxy, commanded and observed relative poses</td><td>Capture, hold, damage, attached state, slip transform, corrected pose</td><td>Solution controller and supervisor</td></tr>
+              <tr><td><strong>PLC adapter</strong></td><td>Conveyor speed, recipe, cutter state, phase, permissive sequence, faults, emergency stop</td><td><code>PLCState</code>, result acknowledgment, fault state, cycle trace</td><td>Solution controller and evidence system</td></tr>
+              <tr><td><strong>Supervisor</strong></td><td>Observation status, plan decision, contact result, PLC status, delivery measurement, fault injections</td><td>State transitions, reject, recover, safe stop, terminal path and reason</td><td>Robot actions and logger</td></tr>
+              <tr><td><strong>Evidence and replay</strong></td><td>Configuration, events, observations, plans, states, contacts, PLC transitions, results</td><td>USDA, JSONL, JSON metrics, PNG, NPY, MP4, deterministic replay verdict</td><td>Tests, report, human review</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="two-col" style="margin-top:1rem">
+          <article class="content-card">
+            <h3>Launch and recipe inputs</h3>
+            <ul><li>Solution: <code>a</code> or <code>b</code></li><li>Cycle count and deterministic seed</li><li>Scenario profile: baseline or hardening</li><li>Vision backend: color-depth baseline or YOLO26</li><li>Checkpoint path and confidence configuration</li><li>Headless or visible mode</li><li>Output root, video flag, and recording FPS</li><li>Simulation recipe, belt speed, cutter readiness, and permissives</li></ul>
+          </article>
+          <article class="content-card">
+            <h3>Durable outputs</h3>
+            <ul><li>Complete saved USD cell and reload signature</li><li>Rendered RGB and depth arrays with hashes</li><li>Recorded overhead camera MP4</li><li>Per-cycle structured JSON Lines trace</li><li>Aggregate gate and distribution metrics</li><li>YOLO dataset, checkpoint, model card, and validation plots</li><li>Artifact audit and seed-matrix summary</li><li>Human-readable build, overnight, and technical reports</li></ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell" id="control">
+      <div class="section-head">
+        <h2>One cycle from camera to cutter tray</h2>
+        <p>The state machine reads Isaac Sim state. A YOLO result never moves the arm by itself. Before the robot moves, the planner checks time, uncertainty, reach, motion limits, and cutter readiness.</p>
+      </div>
+      <div class="pipeline" aria-label="Six stage control pipeline">
+        <div class="pipe-step"><div class="num">01 OBSERVE</div><h3>Render and segment</h3><p>Camera RGB goes to YOLO26. Depth and calibration recover the belt-plane pose.</p></div>
+        <div class="pipe-step"><div class="num">02 ESTIMATE</div><h3>Track and predict</h3><p>Timestamped detections become a stable track with velocity, uncertainty, and future pose.</p></div>
+        <div class="pipe-step"><div class="num">03 RESERVE</div><h3>Plan in space and time</h3><p>Choose a grasp and intercept window. Publish commit, abort, and validity times.</p></div>
+        <div class="pipe-step"><div class="num">04 INTERCEPT</div><h3>Control articulation</h3><p>Send preflight-checked quintic commands and match the 2.24 m/s belt at contact.</p></div>
+        <div class="pipe-step"><div class="num">05 VERIFY</div><h3>Confirm physical evidence</h3><p>Require two-finger contact, evaluate hold, detect slip, and correct when needed.</p></div>
+        <div class="pipe-step"><div class="num">06 DELIVER</div><h3>Align, release, recover</h3><p>Respect cutter permissives, release into the stationary tray, verify tolerances, retract or recover.</p></div>
+      </div>
+
+      <div class="flow-lanes" style="margin-top:2rem">
+        <div class="lane"><div class="lane-name">Shared</div><div class="lane-track"><span class="state">IDLE</span><span class="state">ACQUIRE</span><span class="state">TRACK</span><span class="state">PLAN</span><span class="state">WAIT_COMMIT</span><span class="state">INTERCEPT</span><span class="state">VERIFY_GRASP</span></div></div>
+        <div class="lane"><div class="lane-name">Solution A</div><div class="lane-track"><span class="state">TRANSFER_DIRECT</span><span class="state warn">WAIT_CUTTER_PERMISSIVE</span><span class="state">ALIGN_DIRECT</span><span class="state">FEED_DIRECT</span><span class="state good">VERIFY_DELIVERY</span><span class="state">RETRACT</span></div></div>
+        <div class="lane"><div class="lane-name">Solution B</div><div class="lane-track"><span class="state">TRANSFER_BUFFER</span><span class="state">RELEASE_BUFFER</span><span class="state">SETTLE</span><span class="state">REOBSERVE_BUFFER</span><span class="state">ALIGN_BUFFER</span><span class="state warn">WAIT_CUTTER_PERMISSIVE</span><span class="state">FEED_BUFFER</span><span class="state good">VERIFY_DELIVERY</span><span class="state">RETRACT</span></div></div>
+        <div class="lane"><div class="lane-name">Any state</div><div class="lane-track"><span class="state bad">REJECT</span><span class="state bad">RECOVER</span><span class="state bad">SAFE_STOP</span><span class="state good">IDLE</span></div></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <h2>Solution A and Solution B</h2>
+          <p>Both share the same perception, tracking, prediction, interception, articulation, grasp, PLC, logging, and recovery contracts. They differ only after grasp verification.</p>
+        </div>
+        <div class="two-col">
+          <article class="content-card">
+            <div class="eyebrow">Solution A</div><h3 style="margin-top:.4rem">Direct tray loading</h3>
+            <p>The robot carries the intercepted workpiece directly to <code>cut_target_frame</code> and releases it into the stationary cutter-entry tray. If the cutter cannot guarantee a permissive before commitment, the controller rejects or diverts.</p>
+            <ul><li>Fewer handoffs</li><li>Direct alignment and stationary release</li><li>More sensitive to cutter availability</li><li>Injected failure: cutter unavailable before commit</li></ul>
+          </article>
+          <article class="content-card">
+            <div class="eyebrow">Solution B</div><h3 style="margin-top:.4rem">Buffered re-observation and tray loading</h3>
+          <p>The robot places the workpiece in a centering buffer and lets it settle. A new camera image measures any pose change. The robot corrects the target, grips the workpiece again, and loads the stationary tray when the cutter is ready.</p>
+            <ul><li>Decouples interception from cutter timing</li><li>Allows post-grasp pose correction</li><li>Adds occupancy and maximum-hold contracts</li><li>Injected failure: buffer timeout</li></ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell" id="vision">
+      <div class="section-head">
+        <h2>How the demo uses YOLO26</h2>
+        <p>The learned vision path uses Ultralytics YOLO26 nano segmentation. We fine-tuned it on 240 images rendered from Scene 1. Simulator ground truth created the training labels. During the demo, YOLO receives rendered RGB and does not read ground truth.</p>
+      </div>
+      <div class="media-grid">
+        <figure><img class="evidence-image" src="results/yolo/dataset_v2/training_label_preview.png" alt="Synthetic Isaac training image with segmentation label overlay"><figcaption>Synthetic training label preview. Known simulator geometry produces the label. This is not a live inference result.</figcaption></figure>
+        <figure><img class="evidence-image" src="results/yolo/example_prediction.jpg" alt="YOLO26 example prediction on a held-out Isaac image"><figcaption>Held-out synthetic prediction from the trained YOLO26 reference checkpoint.</figcaption></figure>
+        <figure><img class="evidence-image" src="results/yolo/validation/MaskPR_curve.png" alt="YOLO26 mask precision recall curve"><figcaption>Mask precision-recall curve from the synthetic validation split.</figcaption></figure>
+        <figure><img class="evidence-image" src="results/yolo/validation/confusion_matrix_normalized.png" alt="Normalized validation confusion matrix"><figcaption>Normalized confusion matrix for the one-class synthetic reference task.</figcaption></figure>
+      </div>
+
+      <div class="two-col" style="margin-top:1rem">
+        <article class="content-card">
+          <h3>Training identity</h3>
+          <ul><li>Ultralytics 8.4.129</li><li>Base: <code>yolo26n-seg.pt</code></li><li>30 epochs, seed 2601</li><li>192 training images, 48 validation images</li><li>160 moving-belt views, 80 buffer views</li><li>Checkpoint SHA-256 starts <code>cf280497427a</code></li></ul>
+        </article>
+        <article class="content-card">
+          <h3>Live transform from pixels to control</h3>
+          <ol><li>YOLO26 returns mask and confidence from RGB.</li><li>Valid depth samples inside the mask produce range.</li><li>Camera intrinsics back-project the mask centroid.</li><li>Camera-to-world and belt transforms produce product pose.</li><li>Principal-axis analysis estimates planar yaw.</li><li>Seeded latency, timestamp jitter, and pose noise are applied.</li><li>The resulting <code>ObjectObservation</code> enters the unchanged tracker.</li></ol>
+        </article>
+      </div>
+
+      <div class="bar-list" style="margin-top:1.4rem">
+        <div class="bar-row"><span class="bar-label">Mask mAP50</span><div class="bar-track"><div class="bar-fill" style="width:91.88%"></div></div><span class="bar-value">0.9188</span></div>
+        <div class="bar-row"><span class="bar-label">Mask mAP50-95</span><div class="bar-track"><div class="bar-fill" style="width:69.23%"></div></div><span class="bar-value">0.6923</span></div>
+        <div class="bar-row"><span class="bar-label">Mask precision</span><div class="bar-track"><div class="bar-fill" style="width:87.33%"></div></div><span class="bar-value">0.8733</span></div>
+        <div class="bar-row"><span class="bar-label">Mask recall</span><div class="bar-track"><div class="bar-fill" style="width:86.15%"></div></div><span class="bar-value">0.8615</span></div>
+      </div>
+      <p class="metric-note">These are synthetic holdout metrics from the reference scene family. They do not estimate performance on real meat or a real camera.</p>
+      <div class="callout warning" style="margin-top:1rem"><strong>Current recipe limitation</strong><p>This checkpoint was trained on the earlier generic workpiece appearance. It remains valid evidence for that recorded demonstration only. Beef, pork, and chicken recipe runs currently use the replaceable deterministic rendered color and depth baseline.</p></div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <h2>Frames, timing, motion, and grasp</h2>
+          <p>Every pose names its coordinate frame and every observation keeps its capture time. The robot aims for the predicted future workpiece pose, not the last detected pixel location.</p>
+        </div>
+        <div class="two-col">
+          <article class="content-card"><h3>Named coordinate frames</h3><p><code>world</code>, <code>robot_base</code>, <code>conveyor</code>, <code>belt_surface</code>, <code>camera</code>, <code>camera_calibration_target</code>, <code>meat_track</code>, <code>grasp_track</code>, <code>tool0</code>, <code>buffer_frame</code>, <code>cut_target_frame</code>, and <code>cutter_feed_frame</code>.</p><p>Camera world translation is [1.0, 0.0, 3.0] m. The belt surface is at world Z = 0.04 m in the accepted reference scene.</p></article>
+          <article class="content-card"><h3>Fixed-step time</h3><p>Physics runs at 240 Hz. Camera exposure is 60 Hz. The recorder samples at 12 FPS. Observations retain exposure time after delivery latency. The tracker and planner receive simulation time explicitly. No domain function owns a wall clock.</p><p>Setup validation measured exactly 240 domain steps for one simulated second.</p></article>
+          <article class="content-card"><h3>Motion limits and interception</h3><p>Every move is a preflight-checked quintic trajectory. X, Y, Z, yaw, and finger joints have explicit position, velocity, and acceleration bounds. TCP targets are checked against the validated work envelope and cutter exclusion geometry.</p><p>The X trajectory reaches the predicted interception pose while matching the 2.24 m/s belt velocity. A bounded braking move stops conveyor-relative motion before lift.</p></article>
+          <article class="content-card"><h3>Contact, compliance, and slip</h3><p>Each finger reports PhysX contact. A grasp is accepted only after recent contact on both sides. Finite-effort prismatic drives provide a force proxy. A fixed joint then approximates a stable hold.</p><p>Solution B releases on the buffer, renders a new observation, estimates the commanded-to-observed slip transform, corrects it, and requires new contact before feed.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell" aria-labelledby="plc-title">
+      <div class="section-head">
+        <h2 id="plc-title">PLC and machine I/O</h2>
+        <p>The simulated PLC contract keeps machine readiness outside the learned model and outside the grasp planner. The cutter owns its guarded feed permissive.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Signal</th><th>Direction</th><th>Type and meaning</th><th>Control use</th></tr></thead>
+          <tbody>
+            <tr><td><code>conveyor_speed_mps</code></td><td>PLC to cell</td><td>Float, nominal 2.24 m/s</td><td>Encoder fusion and intercept velocity</td></tr>
+            <tr><td><code>recipe_id</code></td><td>PLC to cell</td><td>String, current reference recipe</td><td>Validates downstream contract</td></tr>
+            <tr><td><code>cutter.mode</code></td><td>PLC to cell</td><td>Blocked, ready, fault, or emergency stop</td><td>Permits direct transfer or buffered feed</td></tr>
+            <tr><td><code>cutter.target_frame</code></td><td>PLC to cell</td><td>Named downstream frame</td><td>Alignment target</td></tr>
+            <tr><td><code>feed_speed_mps</code></td><td>PLC to cell</td><td>Float, 0.4 m/s in the reference cutter</td><td>Later cutter-owned internal feed, after tray acceptance</td></tr>
+            <tr><td><code>phase_rad</code></td><td>PLC to cell</td><td>Current cutter cycle phase</td><td>Timing and readiness evidence</td></tr>
+            <tr><td><code>permissive_sequence</code></td><td>PLC to cell</td><td>Monotonic integer</td><td>Prevents use of a stale permissive</td></tr>
+            <tr><td><code>fault_active</code></td><td>Bidirectional simulation state</td><td>Boolean</td><td>Blocks feed and records recovery</td></tr>
+            <tr><td><code>emergency_stop_active</code></td><td>PLC to cell</td><td>Boolean</td><td>Stops conveyor, enters safe stop, commands measured hold</td></tr>
+            <tr><td><code>result_acknowledged</code></td><td>Cell to PLC</td><td>Boolean</td><td>Confirms successful delivery measurement</td></tr>
+            <tr><td>cycle trace</td><td>Cell to evidence</td><td>Timestamped state and I/O records</td><td>Audit, metrics, and deterministic replay</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="evidence">
+      <div class="shell">
+        <div class="section-head">
+          <h2>Evidence and results</h2>
+          <p>The report uses machine-readable artifacts generated by Isaac Sim. Failure cycles are intentional acceptance cases, so the four-cycle 50 percent terminal success count is not an expected production yield.</p>
+        </div>
+        <div class="media-grid">
+          <figure><img class="evidence-image" src="results/yolo/recorded_demo/isaac_b/media/overhead_001095833333_rgb.png" alt="Actual rendered overhead RGB frame from recorded Isaac run"><figcaption>Actual rendered 640 by 480 overhead RGB evidence.</figcaption></figure>
+          <figure><img class="evidence-image" src="results/yolo/recorded_demo/isaac_b/media/overhead_001095833333_depth_preview.png" alt="Depth preview from the same recorded Isaac run"><figcaption>Rendered depth preview paired with the RGB frame. The full float array is saved as NPY.</figcaption></figure>
+        </div>
+
+        <div class="stat-grid" style="margin-top:1rem">
+          <div class="stat"><div class="value">32.18 ms</div><div class="label">p95 injected perception latency, 60-cycle matrix</div></div>
+          <div class="stat"><div class="value">3.90 ms</div><div class="label">p95 intercept timing error</div></div>
+          <div class="stat"><div class="value">3.334 mm</div><div class="label">p95 placement position error</div></div>
+          <div class="stat"><div class="value">8.33 ms</div><div class="label">p95 downstream timing error</div></div>
+        </div>
+
+        <div class="two-col" style="margin-top:1rem">
+          <article class="content-card"><h3>Four-cycle YOLO26 gates, Solution A</h3><ul><li>2 of 2 nominal deliveries passed</li><li>5,591 articulation commands</li><li>8 learned perception observations</li><li>Failed grasp recovered</li><li>Cutter-unavailable path rejected safely</li><li>4 of 4 deterministic replays passed</li><li>0 collisions and 0 joint-limit violations</li></ul></article>
+          <article class="content-card"><h3>Four-cycle YOLO26 gates, Solution B</h3><ul><li>2 of 2 nominal deliveries passed</li><li>6,603 articulation commands</li><li>8 learned perception observations</li><li>Slip detected and corrected on both successes</li><li>Failed grasp and buffer timeout recovered</li><li>4 of 4 deterministic replays passed</li><li>0 collisions and 0 joint-limit violations</li></ul></article>
+        </div>
+
+        <div class="callout" style="margin-top:1rem"><strong>Independent hardening matrix</strong><p>Five seeds [7, 31, 101, 509, 1001] ran six cycles for A and six for B, for 60 cycles total. It covered nominal delivery, failed grasp, cutter unavailable or buffer timeout, emergency stop, and stale observation. All 60 traces replayed deterministically. The artifact audit verified 10 stages, 10 RGB files, 10 depth arrays, 60 traces, and 10 metrics files.</p></div>
+        <div class="callout" style="margin-top:1rem"><strong>Independent recipe matrix</strong><p>Beef, pork, and chicken each ran four Solution A cycles and four Solution B cycles. The audit found all six saved stages and all six schema version 2 metric files. It also found paired RGB and depth output, 24 traces, the expected PLC transitions, and the expected recovery paths.</p></div>
+      </div>
+    </section>
+
+    <section class="shell" aria-labelledby="cycle-title">
+      <div class="section-head">
+        <h2 id="cycle-title">Recorded nominal cycle trace</h2>
+        <p>Cycle 000 from the recorded video transitions through the complete Solution B state machine. Times below are simulation time from the JSON Lines trace.</p>
+      </div>
+      <div class="timeline">
+        <div class="timeline-item"><time>1.000 s</time><p><strong>ACQUIRE</strong> starts the episode.</p></div>
+        <div class="timeline-item"><time>1.058 s</time><p><strong>TRACK</strong> receives a rendered YOLO observation.</p></div>
+        <div class="timeline-item"><time>1.096 s</time><p><strong>PLAN</strong> confirms the track and predicts interception.</p></div>
+        <div class="timeline-item"><time>1.096 s</time><p><strong>WAIT_COMMIT</strong> reserves a timed interception.</p></div>
+        <div class="timeline-item"><time>1.100 s</time><p><strong>INTERCEPT</strong> commits the articulation trajectory.</p></div>
+        <div class="timeline-item"><time>2.033 s</time><p><strong>VERIFY_GRASP</strong> completes two-finger closure and contact checking.</p></div>
+        <div class="timeline-item"><time>3.579 s</time><p><strong>RELEASE_BUFFER</strong> reaches the centering buffer and releases the product.</p></div>
+        <div class="timeline-item"><time>4.321 s</time><p><strong>REOBSERVE_BUFFER</strong> renders a new observation after settle.</p></div>
+        <div class="timeline-item"><time>4.321 s</time><p><strong>ALIGN_BUFFER</strong> applies the estimated slip correction.</p></div>
+        <div class="timeline-item"><time>5.650 s</time><p><strong>FEED_BUFFER</strong> starts after the cutter permissive.</p></div>
+        <div class="timeline-item"><time>8.558 s</time><p><strong>VERIFY_DELIVERY</strong> measures position, angle, timing, and speed.</p></div>
+        <div class="timeline-item"><time>9.458 s</time><p><strong>IDLE</strong> is restored after physical retract.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <h2>Failure handling</h2>
+          <p>Failures are typed, traced, and connected to physical recovery motion. Gates are not weakened to make injected fault cycles look successful.</p>
+        </div>
+        <div class="three-col">
+          <article class="content-card"><h3>Failed grasp</h3><p>If both finger contacts are not confirmed, no hold is accepted. The controller enters recovery, opens the gripper, moves to a known-safe pose, and records <code>failed_grasp_contact_confirmation</code>.</p></article>
+          <article class="content-card"><h3>Cutter unavailable</h3><p>Solution A refuses direct commitment when readiness cannot be guaranteed. An attached product follows the reject route. The PLC fault and terminal reason are traced.</p></article>
+          <article class="content-card"><h3>Buffer timeout</h3><p>Solution B enforces buffer occupancy and maximum hold time. If readiness does not arrive, it executes recovery and records <code>buffer_timeout</code>.</p></article>
+          <article class="content-card"><h3>Slip correction</h3><p>Buffer re-observation compares commanded and observed product pose. A detected transform changes the regrasp target. New two-finger contact is required.</p></article>
+          <article class="content-card"><h3>Emergency stop</h3><p>The PLC stops the conveyor and transitions to <code>SAFE_STOP</code>. A limit-clamped measured hold command goes through the articulation controller. Drift is measured before recovery.</p></article>
+          <article class="content-card"><h3>Stale observation</h3><p>The clock advances until the observation exceeds its validity. Planning rejects it before commit and executes the explicit reject or recovery path.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell" id="implementation">
+      <div class="section-head">
+        <h2>Where the implementation lives</h2>
+        <p>The core control code can run in focused unit tests. The Isaac adapter translates between that code and simulator objects. Only the integrated runner counts as evidence for a full simulated cycle.</p>
+      </div>
+      <div class="file-map">
+        <div class="file"><code>isaac_sim/stage_builder.py</code><p>Authors the visible USD cell, reference assets, physics, sensors, frames, guards, buffer, cutter, and PLC attributes.</p></div>
+        <div class="file"><code>isaac_sim/adapter.py</code><p>Maps fixed physics steps, camera arrays, articulation commands, contacts, grasp constraint, PLC state, stage save and reload, and video recording.</p></div>
+        <div class="file"><code>isaac_sim/run_cell.py</code><p>Validated CLI for product recipe, solution, seed, profile, output, vision backend, visible mode, hold time, and recording options.</p></div>
+        <div class="file"><code>isaac_sim/cell_runner.py</code><p>Runs perception, tracking, planning, timed robot motion, grasp, A or B downstream flow, recovery, gates, traces, and metrics.</p></div>
+        <div class="file"><code>isaac_sim/yolo_perception.py</code><p>Runs YOLO26 masks on rendered RGB and combines them with depth and calibration to produce the domain observation contract.</p></div>
+        <div class="file"><code>isaac_sim/video_recorder.py</code><p>Streams actual RGB24 camera frames into H.264 with ffmpeg and records frame, timing, codec, and file metadata.</p></div>
+        <div class="file"><code>meatcell/contracts.py</code><p>Defines versioned transforms, timestamps, observations, tracks, plans, cutter state, events, and terminal results.</p></div>
+        <div class="file"><code>meatcell/tracking.py</code><p>Associates observations, maintains lifecycle and covariance, fuses conveyor speed, and predicts future state.</p></div>
+        <div class="file"><code>meatcell/interception.py</code><p>Evaluates candidate times and rejects stale, late, uncertain, unreachable, or unsafe plans.</p></div>
+        <div class="file"><code>meatcell/grasp.py</code><p>Separates capture, hold, damage proxy, slip estimate, and corrected product pose.</p></div>
+        <div class="file"><code>meatcell/solutions.py</code><p>Implements Solution A direct feed, Solution B buffer flow, delivery tolerances, and PLC permissive sequence handling.</p></div>
+        <div class="file"><code>meatcell/supervisor.py</code><p>Enforces legal state transitions and explicit success, reject, recovered, safe-stop, and partial terminal paths.</p></div>
+      </div>
+
+      <div class="two-col" style="margin-top:1.2rem">
+        <article>
+          <h3 style="margin-bottom:.7rem">One-command entry points</h3>
+          <pre><code># Validate Isaac, clock, stage, sensors, and articulation
+.\validate_setup.ps1
+
+# Run Solution A and Solution B
+.\run_solution_a.ps1
+.\run_solution_b.ps1
+
+# Run a product recipe through either architecture
+.\run_recipe.ps1 -Recipe beef_center_cut_tenderloin -Solution a
+.\run_recipe.ps1 -Recipe pork_boneless_loin -Solution b
+
+# Run the complete suite
+.\run_tests.ps1
+
+# Run learned-vision suites
+.\run_yolo_solution_a.ps1
+.\run_yolo_solution_b.ps1
+.\run_yolo_tests.ps1
+
+# Open the visible demo
+.\run_yolo_demo.ps1
+
+# Record the actual rendered demo
+.\record_yolo_demo.ps1
+
+# Audit all three recipes and both solutions
+C:\Users\jainl\is6\Scripts\python.exe tools\audit_artifacts.py --root results\recipes --mode recipes</code></pre>
+        </article>
+        <article>
+          <h3 style="margin-bottom:.7rem">Recorded output paths</h3>
+          <pre><code>results/yolo/recorded_demo/
+  isaac_cell_b.usda
+  isaac_b/
+    demo.mp4
+    contact_sheet.png
+    metrics.json
+    media/
+      overhead_*_rgb.png
+      overhead_*_depth.npy
+      overhead_*_depth_preview.png
+    traces/
+      cycle_000.jsonl
+      cycle_001.jsonl
+      cycle_002.jsonl
+      cycle_003.jsonl</code></pre>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <h2>Tests and acceptance gates</h2>
+          <p>A run passes only when the simulator behavior and saved evidence pass their checks. A zero Python exit code is not enough.</p>
+        </div>
+        <details open><summary>Stage and simulator gates</summary><ul><li>Isaac Sim 6.0.1 startup</li><li>240 fixed physics steps per simulated second</li><li>Required prims and named frames</li><li>Deterministic stage save and reload signature</li><li>Articulation response and valid controller state</li><li>Nonempty 640 by 480 RGB and depth</li></ul></details>
+        <details><summary>Perception and calibration gates</summary><ul><li>Rendered sensor publication</li><li>Ground truth not used as primary inference</li><li>YOLO model identity and checkpoint hash</li><li>Mask, confidence, pose, timestamp, and uncertainty output</li><li>Calibration consistency and depth-backed pose</li><li>Noise and latency injection</li></ul></details>
+        <details><summary>Robot, grasp, and downstream gates</summary><ul><li>Actual articulation command count greater than zero</li><li>Joint position, velocity, acceleration, and workspace checks</li><li>Successful and intentionally failed contact grasps</li><li>Alignment and timing within configured tolerances</li><li>Zero unexpected collisions and zero joint-limit violations</li><li>Slip correction, cutter gating, delivery verification, retract, and recovery</li></ul></details>
+        <details><summary>Evidence and replay gates</summary><ul><li>Monotonic simulator timestamps in every trace</li><li>Expected PLC transitions and acknowledgments</li><li>Matching terminal metrics and failure-specific recovery</li><li>Independent reading of stages, media, traces, and metrics</li><li>Deterministic decision replay for every cycle</li><li>Recorded video contains nonzero rendered frames and bytes</li></ul></details>
+      </div>
+    </section>
+
+    <section class="shell">
+      <div class="section-head">
+        <h2>Assumptions and unresolved physical parameters</h2>
+        <p>You can run the simulation with the assumptions below. The next phase must replace those assumptions with measurements from the real process.</p>
+      </div>
+      <div class="two-col">
+        <div class="callout warning"><strong>Reference asset assumptions</strong><p>Generic Cartesian kinematics, simple collision envelopes, abstract two-finger geometry, rigid workpiece, reference cutter geometry, and a simulation buffer. None represent selected OEM equipment.</p></div>
+        <div class="callout warning"><strong>Contact assumptions</strong><p>The 175 mm gripper opening, 8 mm per-pad compliance deflection, finite drive effort, and PhysX contact impulses are proxies. The fixed joint approximates a stable hold. Tissue deformation, wet adhesion, pressure distribution, tearing, and sanitation effects are not modeled.</p></div>
+        <div class="callout warning"><strong>Perception assumptions</strong><p>The model sees synthetic appearance, lighting, geometry, and camera characteristics. Real lens calibration, motion blur, fluids, glare, occlusion, contamination, and domain shift remain unmeasured.</p></div>
+        <div class="callout warning"><strong>Machine and safety assumptions</strong><p>Cutter phase, permissive timing, encoder behavior, robot dynamics, stopping performance, guards, and emergency-stop behavior require real I/O captures, OEM limits, and qualified safety engineering.</p></div>
+      </div>
+      <div class="callout danger" style="margin-top:1rem"><strong>Exact next ticket: T015</strong><p>Select the OEM assets. Then collect real camera recordings, camera calibration, conveyor measurements, encoder logs, workpiece grasp data, cutter PLC timing, and robot controller limits. A qualified engineer must also define the inputs for the physical safety review.</p></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell">This report reads the project artifacts in <code>C:\Users\jainl\meat-conveyor-robot-simulation</code>. If the report disagrees with a machine-readable result, use the machine-readable result.</div>
+  </footer>
+</body>
+</html>

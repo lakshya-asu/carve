@@ -1,0 +1,101 @@
+catalog_version: 1
+
+# These are engineering envelopes for simulation and equipment sizing.
+# They are not procurement specifications or calibrated material models.
+recipes:
+  beef_center_cut_tenderloin:
+    display_name: Beef center-cut tenderloin
+    species: beef
+    cut: boneless center-cut tenderloin
+    process_state: fresh or chilled, trimmed, boneless, separated
+    mass_kg: {min: 1.0, nominal: 1.8, max: 3.0}
+    geometry:
+      length_m: {min: 0.28, nominal: 0.45, max: 0.60}
+      width_m: {min: 0.07, nominal: 0.11, max: 0.15}
+      height_m: {min: 0.05, nominal: 0.075, max: 0.10}
+      shape_family: tapered_capsule
+      taper_ratio: {min: 0.55, nominal: 0.75, max: 0.95}
+      maximum_curvature_ratio: 0.12
+      maximum_asymmetry_ratio: 0.15
+    mechanics:
+      handling_compliance: medium
+      compliance_index: {min: 0.25, nominal: 0.38, max: 0.50}
+      effective_compression_modulus_kpa: {min: 15.0, nominal: 80.0, max: 310.0}
+      friction_coefficient: {min: 0.20, nominal: 0.35, max: 0.50}
+      surface_condition: chilled and damp, with variable exposed fat
+      calibrated: false
+    required_tray_orientation: long axis aligned with cutter X, thick end forward
+    evidence:
+      - https://www.ams.usda.gov/sites/default/files/media/IMPS100SeriesDraft2020.pdf
+      - https://marel.com/media/bpclpsv3/me21_br_271_i-cut11_en_lq.pdf
+      - https://www.frontiersin.org/journals/physics/articles/10.3389/fphy.2022.917842/full
+      - https://pmc.ncbi.nlm.nih.gov/articles/PMC8787436/
+    assumptions:
+      - Dimensions are a provisional equipment envelope below the selected cutter limits.
+      - The wide modulus range combines unlike test methods and is only a sensitivity range.
+      - Friction, pressure limit, adhesion, and damage thresholds require chilled product trials.
+
+  pork_boneless_loin:
+    display_name: Pork boneless loin
+    species: pork
+    cut: trimmed boneless loin
+    process_state: fresh or chilled, trimmed, boneless, separated
+    mass_kg: {min: 2.0, nominal: 2.75, max: 3.2}
+    geometry:
+      length_m: {min: 0.30, nominal: 0.46, max: 0.62}
+      width_m: {min: 0.10, nominal: 0.14, max: 0.20}
+      height_m: {min: 0.055, nominal: 0.08, max: 0.10}
+      shape_family: elongated_rounded_prism
+      taper_ratio: {min: 0.70, nominal: 0.85, max: 1.00}
+      maximum_curvature_ratio: 0.10
+      maximum_asymmetry_ratio: 0.12
+    mechanics:
+      handling_compliance: medium
+      compliance_index: {min: 0.30, nominal: 0.43, max: 0.55}
+      effective_compression_modulus_kpa: {min: 10.0, nominal: 25.0, max: 60.0}
+      friction_coefficient: {min: 0.20, nominal: 0.35, max: 0.50}
+      surface_condition: chilled and damp, with variable fat cap after trimming
+      calibrated: false
+    required_tray_orientation: long axis aligned with cutter X, square end forward
+    evidence:
+      - https://www.ams.usda.gov/sites/default/files/media/IMPS400SeriesDraft2020.pdf
+      - https://marel.com/media/bpclpsv3/me21_br_271_i-cut11_en_lq.pdf
+      - https://pmc.ncbi.nlm.nih.gov/articles/PMC10511390/
+      - https://pubmed.ncbi.nlm.nih.gov/25068816/
+    assumptions:
+      - Dimensions are a provisional equipment envelope below the selected cutter limits.
+      - The modulus values are a sensitivity envelope informed by passive porcine muscle tests.
+      - Friction, pressure limit, adhesion, and damage thresholds require chilled product trials.
+
+  chicken_breast_fillet:
+    display_name: Chicken breast fillet
+    species: chicken
+    cut: boneless skinless breast fillet
+    process_state: fresh or chilled, trimmed, boneless, skinless, separated
+    mass_kg: {min: 0.095, nominal: 0.160, max: 0.230}
+    geometry:
+      length_m: {min: 0.14, nominal: 0.18, max: 0.21}
+      width_m: {min: 0.09, nominal: 0.115, max: 0.18}
+      height_m: {min: 0.020, nominal: 0.032, max: 0.045}
+      shape_family: asymmetric_teardrop_slab
+      taper_ratio: {min: 0.35, nominal: 0.55, max: 0.75}
+      maximum_curvature_ratio: 0.15
+      maximum_asymmetry_ratio: 0.25
+    mechanics:
+      handling_compliance: high
+      compliance_index: {min: 0.60, nominal: 0.75, max: 0.90}
+      effective_compression_modulus_kpa: {min: 40.0, nominal: 48.6, max: 185.0}
+      friction_coefficient: {min: 0.20, nominal: 0.35, max: 0.50}
+      surface_condition: chilled, wet or damp, skinless
+      calibrated: false
+    required_tray_orientation: long axis aligned with cutter X, thick cranial end forward, smooth side down
+    evidence:
+      - https://www.ams.usda.gov/sites/default/files/media/Chicken_Trade_Descriptions.pdf
+      - https://www.sciencedirect.com/science/article/pii/S003257911940299X
+      - https://pmc.ncbi.nlm.nih.gov/articles/PMC10031490/
+      - https://www.sciencedirect.com/science/article/pii/S2772502226002209
+      - https://link.springer.com/article/10.1007/s11340-026-01315-0
+    assumptions:
+      - The broad width range covers different commercial measurement conventions and bird sizes.
+      - Handling compliance is high because the thin fillet bends and folds even when local tissue modulus is moderate.
+      - Friction, pressure limit, adhesion, and damage thresholds require chilled product trials.

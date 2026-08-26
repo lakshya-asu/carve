@@ -1,0 +1,66 @@
+name: solution_b_buffered
+architecture: buffered
+conveyor:
+  nominal_speed_mps: 2.24
+  speed_sigma_fraction: 0.05
+  encoder_sigma_fraction: 0.01
+  observation_x_m: 0.0
+  pick_x_min_m: 0.80
+  pick_x_max_m: 1.55
+  candidate_step_m: 0.025
+robot:
+  max_tcp_speed_mps: 10.0
+  max_tcp_accel_mps2: 80.0
+  home_to_pick_distance_m: 0.55
+  grasp_close_s: 0.045
+  command_latency_s: 0.010
+  timing_reserve_s: 0.035
+  transfer_distance_m: 0.60
+  transfer_accel_mps2: 16.0
+perception:
+  latency_mean_s: 0.030
+  latency_sigma_s: 0.008
+  timestamp_sigma_s: 0.003
+  position_sigma_m: 0.008
+  angle_sigma_deg: 2.5
+  detection_probability: 0.985
+gripper:
+  normal_force_n: 50.0
+  contact_count: 2
+  contact_area_m2: 0.003
+  friction_mean: 0.35
+  friction_sigma: 0.07
+  max_pressure_pa: 25000.0
+  pick_position_tolerance_m: 0.035
+  pick_angle_tolerance_deg: 12.0
+  slip_position_sigma_m: 0.006
+  slip_angle_sigma_deg: 2.0
+cutting:
+  position_tolerance_m: 0.010
+  angle_tolerance_deg: 3.0
+  timing_tolerance_s: 0.020
+  speed_tolerance_mps: 0.15
+  readiness_probability: 0.94
+  direct_position_sigma_m: 0.0
+  direct_angle_sigma_deg: 0.0
+  direct_timing_sigma_s: 0.0
+  direct_speed_sigma_mps: 0.0
+buffer:
+  centering_position_factor: 0.30
+  centering_angle_factor: 0.25
+  feed_position_sigma_m: 0.002
+  feed_angle_sigma_deg: 0.6
+  feed_timing_sigma_s: 0.004
+  feed_speed_sigma_mps: 0.025
+  capacity: 1
+  settle_s: 0.120
+  feed_s: 0.180
+  max_hold_s: 0.750
+scenario:
+  mass_min_kg: 0.4
+  mass_max_kg: 1.2
+  yaw_rate_sigma_deg_s: 8.0
+  calibration_sigma_m: 0.004
+  calibration_sigma_deg: 1.0
+  actuation_position_sigma_m: 0.004
+  actuation_angle_sigma_deg: 1.0

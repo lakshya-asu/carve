@@ -1,0 +1,21 @@
+#usda 1.0
+(
+    "FANUC M-10iD/12 visual and kinematic simulation reference imported from official fanuc_description commit fb40c9803a826ba68c7c8e28ba904a25efa7fcd2"
+    customLayerData = {
+        string creator = "URDF USD Converter v0.1.3"
+    }
+    defaultPrim = "fanuc_m10id12_reference"
+    kilogramsPerUnit = 1
+    metersPerUnit = 1
+    subLayers = [
+        @./Physics.usda@,
+        @./Geometry.usda@,
+        @./Materials.usda@
+    ]
+    upAxis = "Z"
+)
+
+def Xform "fanuc_m10id12_reference"
+{
+}
+

@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Scene 2.0 engineering design report for the Isaac Sim robotic meat interception cell.">
+  <title>Scene 2.0 | Robotic Meat Interception Cell</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f2f4f5;
+      --surface: #fafbfb;
+      --surface-2: #e8ecee;
+      --surface-3: #dce2e5;
+      --ink: #172025;
+      --muted: #55636a;
+      --line: #c7d0d4;
+      --accent: #c9522d;
+      --accent-strong: #963719;
+      --accent-soft: #f1d8cf;
+      --ok: #276749;
+      --ok-soft: #dcebe4;
+      --warn: #8a5a12;
+      --warn-soft: #f3e8ce;
+      --bad: #9b2c2c;
+      --bad-soft: #f1d8d8;
+      --shadow: 0 18px 50px rgb(28 43 50 / 0.10);
+      --radius: 12px;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      --sans: "Segoe UI Variable", Aptos, "Segoe UI", system-ui, sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111619;
+        --surface: #171e22;
+        --surface-2: #20292e;
+        --surface-3: #29343a;
+        --ink: #edf2f3;
+        --muted: #aab7bc;
+        --line: #3b484f;
+        --accent: #e37049;
+        --accent-strong: #f08a66;
+        --accent-soft: #47271e;
+        --ok: #78c6a3;
+        --ok-soft: #193a2e;
+        --warn: #e0b565;
+        --warn-soft: #41351f;
+        --bad: #ef8b8b;
+        --bad-soft: #452626;
+        --shadow: 0 18px 50px rgb(0 0 0 / 0.24);
+      }
+    }
+
+    html[data-theme="light"] {
+      color-scheme: light;
+      --bg: #f2f4f5;
+      --surface: #fafbfb;
+      --surface-2: #e8ecee;
+      --surface-3: #dce2e5;
+      --ink: #172025;
+      --muted: #55636a;
+      --line: #c7d0d4;
+      --accent: #c9522d;
+      --accent-strong: #963719;
+      --accent-soft: #f1d8cf;
+      --ok: #276749;
+      --ok-soft: #dcebe4;
+      --warn: #8a5a12;
+      --warn-soft: #f3e8ce;
+      --bad: #9b2c2c;
+      --bad-soft: #f1d8d8;
+      --shadow: 0 18px 50px rgb(28 43 50 / 0.10);
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #111619;
+      --surface: #171e22;
+      --surface-2: #20292e;
+      --surface-3: #29343a;
+      --ink: #edf2f3;
+      --muted: #aab7bc;
+      --line: #3b484f;
+      --accent: #e37049;
+      --accent-strong: #f08a66;
+      --accent-soft: #47271e;
+      --ok: #78c6a3;
+      --ok-soft: #193a2e;
+      --warn: #e0b565;
+      --warn-soft: #41351f;
+      --bad: #ef8b8b;
+      --bad-soft: #452626;
+      --shadow: 0 18px 50px rgb(0 0 0 / 0.24);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.58;
+      text-rendering: optimizeLegibility;
+    }
+    a { color: var(--accent-strong); text-underline-offset: 0.18em; }
+    a:hover { text-decoration-thickness: 2px; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 3px; }
+    code, pre, .mono, .value, .metric-number { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    code { font-size: 0.92em; color: var(--accent-strong); }
+    img, video { display: block; max-width: 100%; }
+    svg { display: block; width: 100%; height: auto; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2, h3 { line-height: 1.08; letter-spacing: -0.035em; }
+    h1 { font-size: clamp(2.7rem, 6vw, 5.7rem); font-weight: 650; max-width: 12ch; margin-bottom: 1.3rem; }
+    h2 { font-size: clamp(2rem, 4vw, 3.7rem); font-weight: 620; max-width: 16ch; margin-bottom: 1rem; }
+    h3 { font-size: clamp(1.1rem, 2vw, 1.45rem); font-weight: 650; margin-bottom: 0.7rem; }
+    p { color: var(--muted); max-width: 70ch; }
+    ul { color: var(--muted); }
+    .shell { width: min(1320px, calc(100% - 40px)); margin-inline: auto; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: color-mix(in srgb, var(--bg) 90%, transparent);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar-inner {
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.4rem;
+    }
+    .brand { color: var(--ink); text-decoration: none; font-weight: 700; white-space: nowrap; }
+    .brand span { color: var(--accent); }
+    .topbar nav { display: flex; align-items: center; gap: 1.2rem; min-width: 0; }
+    .topbar nav a { color: var(--muted); text-decoration: none; font-size: 0.86rem; white-space: nowrap; }
+    .topbar nav a[aria-current="true"] { color: var(--ink); }
+    .tools { display: flex; gap: 0.5rem; }
+    .tool-button, .layer-button {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+      font: inherit;
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+    .tool-button { padding: 0.45rem 0.7rem; font-size: 0.78rem; }
+    .layer-button { padding: 0.55rem 0.78rem; font-size: 0.82rem; }
+    .tool-button:hover, .layer-button:hover { border-color: var(--accent); }
+    .tool-button:active, .layer-button:active { transform: translateY(1px); }
+    .layer-button[aria-pressed="true"] { color: var(--surface); background: var(--accent-strong); border-color: var(--accent-strong); }
+
+    header { padding: clamp(3.5rem, 8vw, 7rem) 0 4.5rem; }
+    .hero-grid { display: grid; grid-template-columns: 0.86fr 1.14fr; gap: clamp(2rem, 5vw, 5rem); align-items: center; }
+    .hero-grid > * { min-width: 0; }
+    .eyebrow { color: var(--accent-strong); font-family: var(--mono); font-size: 0.77rem; font-weight: 700; letter-spacing: 0.11em; text-transform: uppercase; margin-bottom: 1rem; }
+    .hero-lede { font-size: clamp(1.05rem, 2vw, 1.28rem); max-width: 34rem; margin-bottom: 1.6rem; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0.7rem 1rem;
+      border: 1px solid var(--accent-strong);
+      border-radius: var(--radius);
+      background: var(--accent-strong);
+      color: #f8faf9;
+      text-decoration: none;
+      font-weight: 650;
+      white-space: nowrap;
+      transition: transform 160ms ease, background 160ms ease;
+    }
+    .button.secondary { background: var(--surface); color: var(--ink); border-color: var(--line); }
+    .button:hover { background: var(--accent); text-decoration: none; }
+    .button.secondary:hover { background: var(--surface-2); }
+    .button:active { transform: translateY(1px); }
+    .hero-media {
+      width: 100%;
+      margin: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .hero-media img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+    figcaption { padding: 0.85rem 1rem; color: var(--muted); font-size: 0.84rem; border-top: 1px solid var(--line); }
+
+    .truth-strip { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 3rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .truth-item { padding: 1.05rem 1rem; min-width: 0; }
+    .truth-item + .truth-item { border-left: 1px solid var(--line); }
+    .truth-item .value { display: block; color: var(--ink); font-size: 1rem; font-weight: 700; }
+    .truth-item .label { display: block; color: var(--muted); font-size: 0.78rem; margin-top: 0.2rem; }
+    .truth-item.good .value { color: var(--ok); }
+    .truth-item.bad .value { color: var(--bad); }
+    .truth-item.pending .value { color: var(--warn); }
+
+    main section { padding: clamp(4rem, 8vw, 7rem) 0; }
+    main section + section { border-top: 1px solid var(--line); }
+    .section-intro { margin-bottom: 2.4rem; }
+    .section-intro p { font-size: 1.02rem; }
+    .reading-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 1rem; align-items: stretch; }
+    .panel { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .panel.pad { padding: clamp(1.2rem, 3vw, 2rem); }
+    .decision-copy { font-size: 1.18rem; color: var(--ink); max-width: 54ch; }
+    .scope-note { border-left: 4px solid var(--accent); padding: 0.2rem 0 0.2rem 1rem; margin-top: 1.5rem; }
+    .scope-note p { margin-bottom: 0; }
+    .process-ribbon { display: grid; gap: 0; height: 100%; }
+    .process-step { display: grid; grid-template-columns: 4.2rem 1fr; align-items: center; gap: 0.8rem; padding: 0.9rem 1rem; }
+    .process-step + .process-step { border-top: 1px solid var(--line); }
+    .process-step .short { font-family: var(--mono); color: var(--accent-strong); font-weight: 700; }
+    .process-step p { margin: 0; font-size: 0.86rem; }
+
+    .layer-controls { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-bottom: 1rem; }
+    .scene-wrap { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+    .scene-canvas { padding: 0.8rem; overflow-x: auto; }
+    .scene-canvas svg { min-width: 820px; }
+    .scene-canvas text { fill: var(--ink); font-family: var(--sans); font-size: 12px; }
+    .scene-canvas .grid-line { stroke: var(--line); stroke-width: 1; opacity: 0.55; }
+    .scene-canvas .guard { fill: color-mix(in srgb, var(--warn-soft) 55%, transparent); stroke: var(--warn); stroke-width: 2; }
+    .scene-canvas .reach { fill: color-mix(in srgb, var(--accent-soft) 45%, transparent); stroke: var(--accent); stroke-width: 2; stroke-dasharray: 7 5; }
+    .scene-canvas .belt { fill: var(--surface-3); stroke: var(--muted); stroke-width: 2; }
+    .scene-canvas .belt-arrow { stroke: var(--ink); stroke-width: 2.5; fill: none; }
+    .scene-canvas .observe { fill: color-mix(in srgb, var(--ok-soft) 75%, transparent); stroke: var(--ok); stroke-width: 2; }
+    .scene-canvas .pick { fill: color-mix(in srgb, var(--accent-soft) 80%, transparent); stroke: var(--accent); stroke-width: 2; }
+    .scene-canvas .camera { fill: var(--surface-2); stroke: var(--ok); stroke-width: 2; }
+    .scene-canvas .camera-ray { stroke: var(--ok); stroke-width: 1.5; stroke-dasharray: 4 4; fill: none; }
+    .scene-canvas .robot-base { fill: var(--accent-soft); stroke: var(--accent-strong); stroke-width: 3; }
+    .scene-canvas .robot-arm { stroke: var(--accent-strong); stroke-width: 17; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+    .scene-canvas .robot-joint { fill: var(--surface); stroke: var(--accent-strong); stroke-width: 3; }
+    .scene-canvas .tool { fill: var(--surface-2); stroke: var(--accent); stroke-width: 3; }
+    .scene-canvas .tray { fill: var(--ok-soft); stroke: var(--ok); stroke-width: 3; }
+    .scene-canvas .cutter { fill: var(--bad-soft); stroke: var(--bad); stroke-width: 2; }
+    .scene-canvas .reject { fill: var(--warn-soft); stroke: var(--warn); stroke-width: 2; }
+    .scene-canvas .plc { fill: var(--surface-2); stroke: var(--muted); stroke-width: 2; }
+    .scene-canvas .axis { stroke: var(--accent); stroke-width: 3; fill: none; }
+    .scene-canvas [data-layer-group].hidden { display: none; }
+    .scene-caption { display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: start; padding: 1rem; border-top: 1px solid var(--line); }
+    .scene-caption p { margin: 0; font-size: 0.84rem; }
+    .scale-note { font-family: var(--mono); color: var(--ink); white-space: nowrap; font-size: 0.8rem; }
+
+    .reach-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-top: 1rem; }
+    .reach-item { padding: 1rem; border-top: 3px solid var(--accent); background: color-mix(in srgb, var(--surface) 90%, transparent); }
+    .reach-item .metric-number { font-size: 1.55rem; font-weight: 750; color: var(--ink); }
+    .reach-item p { margin: 0.3rem 0 0; font-size: 0.82rem; }
+
+    .robot-feature { display: grid; grid-template-columns: 1fr 1.25fr; gap: 1rem; }
+    .robot-selected { padding: clamp(1.5rem, 4vw, 3rem); background: var(--accent-strong); color: #f8faf9; border-radius: var(--radius); }
+    .robot-selected h3, .robot-selected p, .robot-selected code { color: #f8faf9; }
+    .robot-selected p { opacity: 0.86; }
+    .spec-cluster { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin-top: 1.8rem; }
+    .spec .metric-number { display: block; font-size: clamp(1.6rem, 3vw, 2.4rem); }
+    .spec .label { font-size: 0.77rem; opacity: 0.78; }
+    .comparison { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    th, td { text-align: left; vertical-align: top; padding: 0.78rem 0.7rem; border-bottom: 1px solid var(--line); font-size: 0.86rem; }
+    th { color: var(--ink); font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.03em; }
+    td { color: var(--muted); }
+    tr.selected td { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); color: var(--ink); }
+    td strong { color: var(--ink); }
+
+    .payload { margin-top: 1rem; }
+    .payload-bar { display: flex; min-height: 72px; overflow: hidden; border-radius: var(--radius); }
+    .payload-segment { display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: 0.65rem; color: var(--ink); }
+    .payload-segment.product { flex: 3.2; background: var(--accent-soft); }
+    .payload-segment.tool { flex: 3.5; background: color-mix(in srgb, var(--accent) 35%, var(--surface)); }
+    .payload-segment.sensor { flex: 0.5; background: var(--surface-3); }
+    .payload-segment.reserve { flex: 4.8; background: var(--ok-soft); }
+    .payload-segment strong { font-family: var(--mono); font-size: 0.95rem; }
+    .payload-segment span { font-size: 0.72rem; }
+    .payload-note { display: flex; justify-content: space-between; gap: 1rem; margin-top: 0.55rem; color: var(--muted); font-size: 0.78rem; }
+
+    .sensor-layout { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 1rem; }
+    .sensor-stack { display: grid; gap: 0.7rem; }
+    .sensor-row { display: grid; grid-template-columns: 8rem 1fr auto; gap: 0.9rem; align-items: start; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .sensor-row strong { color: var(--ink); }
+    .sensor-row p { margin: 0; font-size: 0.84rem; }
+    .rate { font-family: var(--mono); color: var(--accent-strong); white-space: nowrap; font-size: 0.8rem; }
+    .cross-section { padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .cross-section svg { min-height: 440px; }
+    .cross-section text { fill: var(--ink); font-family: var(--sans); font-size: 12px; }
+    .cross-section .mount { stroke: var(--muted); stroke-width: 8; }
+    .cross-section .sensor-body { fill: var(--surface-3); stroke: var(--ok); stroke-width: 2; }
+    .cross-section .fov { fill: color-mix(in srgb, var(--ok-soft) 50%, transparent); stroke: var(--ok); stroke-width: 1.5; }
+    .cross-section .belt-profile { fill: var(--surface-3); stroke: var(--muted); stroke-width: 2; }
+    .cross-section .product-shape { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+    .cross-section .robot-profile { fill: none; stroke: var(--accent-strong); stroke-width: 15; stroke-linecap: round; }
+    .cross-section .datum { stroke: var(--line); stroke-width: 1; stroke-dasharray: 4 4; }
+
+    .architecture { padding: clamp(1rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow-x: auto; }
+    .architecture svg { min-width: 1040px; }
+    .architecture text { fill: var(--ink); font-family: var(--sans); font-size: 12px; }
+    .architecture .sub { fill: var(--muted); font-size: 10px; }
+    .architecture .node { fill: var(--surface-2); stroke: var(--line); stroke-width: 1.5; }
+    .architecture .vision-node { fill: var(--ok-soft); stroke: var(--ok); }
+    .architecture .control-node { fill: var(--accent-soft); stroke: var(--accent); }
+    .architecture .plant-node { fill: var(--warn-soft); stroke: var(--warn); }
+    .architecture .safety-node { fill: var(--bad-soft); stroke: var(--bad); }
+    .architecture .flow { stroke: var(--muted); stroke-width: 2; fill: none; }
+    .architecture .flow-accent { stroke: var(--accent); stroke-width: 2.5; fill: none; }
+
+    .io-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+    .io-group { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+    .io-group h3 { padding: 1rem; margin: 0; border-bottom: 1px solid var(--line); }
+    .io-list { margin: 0; padding: 0; list-style: none; }
+    .io-list li { display: grid; grid-template-columns: minmax(9rem, 0.7fr) 1.3fr; gap: 0.8rem; padding: 0.75rem 1rem; }
+    .io-list li + li { border-top: 1px solid color-mix(in srgb, var(--line) 65%, transparent); }
+    .io-list code { color: var(--ink); }
+    .io-list span { color: var(--muted); font-size: 0.83rem; }
+
+    .latency-grid { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 1rem; align-items: stretch; }
+    .latency-copy { padding: clamp(1.4rem, 4vw, 2.6rem); background: var(--accent-strong); color: #f8faf9; border-radius: var(--radius); }
+    .latency-copy h3, .latency-copy p { color: #f8faf9; }
+    .latency-copy .formula { font-family: var(--mono); font-size: clamp(1.35rem, 3vw, 2.1rem); margin: 1.2rem 0; }
+    .latency-chart { padding: 1.2rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .latency-row { display: grid; grid-template-columns: 4.5rem 1fr 5rem; gap: 0.8rem; align-items: center; min-height: 48px; }
+    .latency-row + .latency-row { border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+    .latency-line { height: 10px; background: var(--accent); border-radius: 3px; width: var(--w); }
+    .latency-row .travel { font-family: var(--mono); text-align: right; color: var(--ink); }
+
+    .state-flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.65rem; }
+    .state-node { position: relative; min-height: 118px; padding: 0.9rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .state-node:not(:nth-child(6n))::after { content: ">"; position: absolute; right: -0.48rem; top: 46%; color: var(--accent); font-family: var(--mono); font-weight: 800; z-index: 2; }
+    .state-node strong { display: block; margin-bottom: 0.45rem; color: var(--ink); font-size: 0.87rem; }
+    .state-node span { color: var(--muted); font-size: 0.76rem; }
+    .state-node.recovery { border-color: var(--warn); background: var(--warn-soft); }
+    .state-node.safety { border-color: var(--bad); background: var(--bad-soft); }
+
+    .fidelity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .fidelity-group { padding: 1.2rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .fidelity-item { display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: start; padding: 0.75rem 0; }
+    .fidelity-item + .fidelity-item { border-top: 1px solid var(--line); }
+    .fidelity-item p { margin: 0.2rem 0 0; font-size: 0.82rem; }
+    .status { display: inline-flex; align-items: center; min-height: 28px; padding: 0.2rem 0.5rem; border-radius: 6px; font-family: var(--mono); font-size: 0.72rem; white-space: nowrap; }
+    .status.verified { color: var(--ok); background: var(--ok-soft); }
+    .status.reference { color: var(--warn); background: var(--warn-soft); }
+    .status.blocked { color: var(--bad); background: var(--bad-soft); }
+
+    .evidence-grid { display: grid; grid-template-columns: 1.25fr 0.75fr 0.75fr; gap: 0.8rem; }
+    .evidence-grid figure { margin: 0; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+    .evidence-grid img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+    .evidence-grid .large { grid-row: span 2; }
+    .evidence-grid .large img { height: 100%; min-height: 470px; }
+    .metrics-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 1rem; margin-top: 1rem; }
+    .metrics-set { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .metric { padding: 1rem; border-top: 3px solid var(--accent); background: var(--surface); }
+    .metric-number { display: block; color: var(--ink); font-size: 1.55rem; font-weight: 750; }
+    .metric-label { color: var(--muted); font-size: 0.78rem; }
+    .current-result { display: grid; gap: 0.75rem; }
+    .result-row { padding: 1rem; border-radius: var(--radius); }
+    .result-row.good { background: var(--ok-soft); border: 1px solid var(--ok); }
+    .result-row.bad { background: var(--bad-soft); border: 1px solid var(--bad); }
+    .result-row strong { display: block; margin-bottom: 0.3rem; }
+    .result-row p { margin: 0; font-size: 0.84rem; }
+
+    .gate-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+    .gate { position: relative; min-height: 200px; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .gate .gate-state { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+    .gate h3 { margin-top: 1.5rem; }
+    .gate p { font-size: 0.82rem; margin-bottom: 0; }
+    .gate.complete { border-color: var(--ok); }
+    .gate.next { border-color: var(--accent); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent); }
+    .gate.complete .gate-state { color: var(--ok); }
+    .gate.next .gate-state { color: var(--accent-strong); }
+
+    .assumption-table { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .sources { columns: 2; column-gap: 2rem; margin: 1rem 0 0; padding-left: 1.2rem; }
+    .sources li { break-inside: avoid; margin-bottom: 0.65rem; }
+
+    footer { padding: 3rem 0 4rem; border-top: 1px solid var(--line); }
+    footer p { margin: 0; font-size: 0.84rem; }
+
+    @media (max-width: 1080px) {
+      .topbar nav { display: none; }
+      .hero-grid, .robot-feature, .sensor-layout, .latency-grid, .metrics-grid { grid-template-columns: 1fr; }
+      .truth-strip { grid-template-columns: 1fr 1fr; }
+      .truth-item:nth-child(3) { border-left: 0; border-top: 1px solid var(--line); }
+      .truth-item:nth-child(4) { border-top: 1px solid var(--line); }
+      .state-flow { grid-template-columns: repeat(3, 1fr); }
+      .state-node:not(:nth-child(6n))::after { display: none; }
+      .gate-list { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 24px, 1320px); }
+      .tools { display: none; }
+      .hero-lede { overflow-wrap: anywhere; }
+      .reading-grid, .io-grid, .fidelity-grid { grid-template-columns: 1fr; }
+      .truth-strip, .reach-grid, .spec-cluster, .metrics-set, .gate-list { grid-template-columns: 1fr; }
+      .truth-item + .truth-item { border-left: 0; border-top: 1px solid var(--line); }
+      .state-flow { grid-template-columns: 1fr 1fr; }
+      .sensor-row { grid-template-columns: 1fr auto; }
+      .sensor-row p { grid-column: 1 / -1; }
+      .evidence-grid { grid-template-columns: 1fr; }
+      .evidence-grid .large { grid-row: auto; }
+      .evidence-grid .large img { min-height: 0; }
+      .payload-bar { display: grid; grid-template-columns: 1fr; }
+      .payload-segment { min-height: 58px; }
+      .payload-note { flex-direction: column; }
+      .scene-caption { grid-template-columns: 1fr; }
+      .sources { columns: 1; }
+    }
+    @media (max-width: 440px) {
+      h1 { font-size: 2.55rem; }
+      .state-flow { grid-template-columns: 1fr; }
+      .sensor-row { grid-template-columns: 1fr; }
+      .rate { white-space: normal; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    }
+    @media print {
+      :root { color-scheme: light; }
+      body::before, .topbar, .layer-controls, .hero-actions { display: none; }
+      body { background: #fff; color: #172025; }
+      main section, header { padding: 30px 0; }
+      .panel, .scene-wrap, .robot-selected, .sensor-row, .cross-section, .architecture, .io-group, .latency-copy, .latency-chart, .state-node, .fidelity-group, .gate, .assumption-table, figure { break-inside: avoid; box-shadow: none; }
+      a { color: #172025; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="#decision">MEATCELL <span>SCENE 2.0</span></a>
+      <nav aria-label="Report sections">
+        <a href="#decision">Decision</a>
+        <a href="#layout">Layout</a>
+        <a href="#robot">Robot</a>
+        <a href="#sensors">Sensors</a>
+        <a href="#communications">Communications</a>
+        <a href="#control">Control</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#build">Build gates</a>
+      </nav>
+      <div class="tools">
+        <button class="tool-button" id="theme-toggle" type="button" aria-label="Toggle report theme">Theme</button>
+        <button class="tool-button print" id="print-report" type="button">Print</button>
+      </div>
+    </div>
+  </div>
+
+  <header class="shell" id="decision">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">Isaac Sim engineering design review</div>
+        <h1>Scene 2.0 starts with the robot and cell.</h1>
+        <p class="hero-lede">We selected the FANUC M-10iD/12 Food Grade arm. The next step is to import it, build the cell around it, and prove the motion in Isaac Sim.</p>
+        <div class="hero-actions">
+          <a class="button" href="#layout">Review layout</a>
+          <a class="button secondary" href="SCENE_DESIGN_V2.md">Read specification</a>
+        </div>
+      </div>
+      <figure class="hero-media">
+        <img src="results/yolo/dataset_v3_audit_20260826_r4_final/previews/isaac_v3_000008_beef_center_cut_tenderloin_moving_belt.png" alt="Verified Isaac Sim render of the recipe-shaped beef reference moving through the current Scene 1 cell">
+        <figcaption>This frame came from Scene 1 in Isaac Sim. The workpiece and camera output are real simulation artifacts. The robot and gripper are still abstract reference models.</figcaption>
+      </figure>
+    </div>
+
+    <div class="truth-strip" aria-label="Current project status">
+      <div class="truth-item good"><span class="value">FANUC M-10iD/12</span><span class="label">selected robot baseline</span></div>
+      <div class="truth-item pending"><span class="value">Not imported</span><span class="label">Scene 2.0 implementation status</span></div>
+      <div class="truth-item good"><span class="value">Solution A passes</span><span class="label">latest recipe-mesh regression</span></div>
+      <div class="truth-item bad"><span class="value">Solution B fails</span><span class="label">buffer regrasp contact</span></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="shell" aria-labelledby="problem-title">
+      <div class="section-intro">
+        <h2 id="problem-title">What the cell must do</h2>
+        <p>A prepared, separated meat cut arrives on a fast conveyor. The cell must see it, predict where it will be, intercept it, grip it, orient it, and release it into a stationary cutter-entry tray.</p>
+      </div>
+      <div class="reading-grid">
+        <article class="panel pad">
+          <p class="decision-copy">The robot has one job: take a prepared meat cut from the moving belt and place it in the cutter-entry tray in the right position.</p>
+          <div class="scope-note">
+            <strong>Selected boundary</strong>
+            <p>The source belt moves at a nominal 2.24 m/s. The tray stays still. After release, the cutter controls the guarded feed and blade motion.</p>
+          </div>
+          <div class="scope-note">
+            <strong>Design principle</strong>
+            <p>YOLO estimates the workpiece outline from the camera image. Conventional control code handles tracking, prediction, timing, motion limits, permissives, and recovery.</p>
+          </div>
+        </article>
+        <aside class="panel process-ribbon" aria-label="End-to-end process summary">
+          <div class="process-step"><span class="short">See</span><p>Render RGB and depth from the fixed sensor mount.</p></div>
+          <div class="process-step"><span class="short">Track</span><p>Fuse detections, timestamps, and encoder motion.</p></div>
+          <div class="process-step"><span class="short">Predict</span><p>Choose a reachable pose and interception time.</p></div>
+          <div class="process-step"><span class="short">Grip</span><p>Match belt velocity and confirm bilateral contact.</p></div>
+          <div class="process-step"><span class="short">Align</span><p>Reorient the product to <code>cut_target_frame</code>.</p></div>
+          <div class="process-step"><span class="short">Release</span><p>Place into the stationary tray only when permissive.</p></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="shell" id="layout" aria-labelledby="layout-title">
+      <div class="section-intro">
+        <h2 id="layout-title">Proposed cell layout</h2>
+        <p>This drawing uses one scale. It shows the proposed Scene 2.0 layout and is not an Isaac Sim screenshot. Use the buttons to show or hide reach, camera coverage, guards, and frames.</p>
+      </div>
+      <div class="layer-controls" aria-label="Scene drawing layers">
+        <button class="layer-button" type="button" data-layer="reach" aria-pressed="true">Robot reach</button>
+        <button class="layer-button" type="button" data-layer="vision" aria-pressed="true">Vision zones</button>
+        <button class="layer-button" type="button" data-layer="guard" aria-pressed="true">Guard perimeter</button>
+        <button class="layer-button" type="button" data-layer="frames" aria-pressed="true">Named frames</button>
+      </div>
+      <div class="scene-wrap">
+        <div class="scene-canvas">
+          <svg viewBox="0 0 900 620" role="img" aria-labelledby="layout-svg-title layout-svg-desc">
+            <title id="layout-svg-title">Scaled top view of Scene 2.0</title>
+            <desc id="layout-svg-desc">A source conveyor runs from left to right. The FANUC robot is on a side pedestal south of the belt. The robot reaches the observation pick window, stationary cutter tray, and reject bin. RGB and depth sensors are fixed above the conveyor.</desc>
+            <defs>
+              <marker id="scene-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0 0L8 3L0 6Z" fill="currentColor"></path>
+              </marker>
+              <marker id="axis-arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0 0L7 3L0 6Z" fill="currentColor"></path>
+              </marker>
+            </defs>
+            <g aria-hidden="true">
+              <path class="grid-line" d="M45 50V590 M225 50V590 M405 50V590 M585 50V590 M765 50V590"></path>
+              <path class="grid-line" d="M45 50H855 M45 230H855 M45 410H855 M45 590H855"></path>
+            </g>
+            <g data-layer-group="guard">
+              <rect class="guard" x="55" y="116" width="760" height="460" rx="4"></rect>
+              <text x="67" y="140">Guarded robot cell</text>
+              <path d="M365 576H475" stroke="var(--warn)" stroke-width="7"></path>
+              <text x="381" y="570">Service gate</text>
+            </g>
+            <g data-layer-group="reach">
+              <circle class="reach" cx="495" cy="419" r="259"></circle>
+              <text x="532" y="536">1.441 m maximum radial reach</text>
+            </g>
+            <rect class="belt" x="76" y="212" width="610" height="144" rx="4"></rect>
+            <path class="belt-arrow" d="M101 284H635" marker-end="url(#scene-arrow)"></path>
+            <text x="93" y="264">Source conveyor, 2.24 m/s nominal</text>
+            <g data-layer-group="vision">
+              <rect class="observe" x="184" y="221" width="153" height="126" rx="3"></rect>
+              <text x="197" y="243">Observe and track</text>
+              <rect class="pick" x="382" y="239" width="126" height="90" rx="3"></rect>
+              <text x="399" y="261">Pick window</text>
+              <rect class="camera" x="225" y="65" width="78" height="34" rx="4"></rect>
+              <rect class="camera" x="410" y="65" width="85" height="34" rx="4"></rect>
+              <text x="234" y="87">RGB 60 Hz</text>
+              <text x="419" y="87">Depth 30 Hz</text>
+              <path class="camera-ray" d="M264 99L184 221 M264 99L337 221 M452 99L382 239 M452 99L508 239"></path>
+            </g>
+            <circle class="robot-base" cx="495" cy="419" r="34"></circle>
+            <path class="robot-arm" d="M495 419L482 376L450 321"></path>
+            <circle class="robot-joint" cx="482" cy="376" r="9"></circle>
+            <circle class="tool" cx="450" cy="321" r="11"></circle>
+            <text x="538" y="398">FANUC M-10iD/12 Food Grade</text>
+            <text x="538" y="418">Side pedestal at (0.40, -0.75, 0.45)</text>
+            <text x="538" y="438">240 mm compliant gripper reference</text>
+            <rect class="tray" x="684" y="244" width="86" height="80" rx="4"></rect>
+            <text x="691" y="238">Stationary tray</text>
+            <path class="axis" d="M696 284H754" marker-end="url(#axis-arrow)"></path>
+            <text x="692" y="343">cut_target_frame</text>
+            <rect class="cutter" x="772" y="218" width="55" height="132" rx="4"></rect>
+            <text x="786" y="271">Cutter</text>
+            <text x="780" y="290">reference</text>
+            <rect class="reject" x="429" y="520" width="74" height="54" rx="4"></rect>
+            <text x="436" y="550">Reject bin</text>
+            <rect class="plc" x="82" y="444" width="112" height="62" rx="4"></rect>
+            <text x="95" y="469">PLC and encoder</text>
+            <text x="99" y="489">shared sim clock</text>
+            <g data-layer-group="frames">
+              <path class="axis" d="M495 419H545" marker-end="url(#axis-arrow)"></path>
+              <text x="501" y="410">robot_base</text>
+              <path class="axis" d="M76 356H126" marker-end="url(#axis-arrow)"></path>
+              <text x="80" y="376">conveyor</text>
+              <path class="axis" d="M450 321H500" marker-end="url(#axis-arrow)"></path>
+              <text x="455" y="312">tool0</text>
+            </g>
+            <g aria-label="One meter scale bar">
+              <path d="M78 596H258 M78 589V603 M258 589V603" stroke="var(--ink)" stroke-width="2" fill="none"></path>
+              <text x="142" y="586">1 meter</text>
+            </g>
+          </svg>
+        </div>
+        <div class="scene-caption">
+          <p>The pick window and tray fit within the simple radial envelope. Full acceptance still requires inverse kinematics, wrist orientation, collision geometry, cable clearance, and time-parameterized motion.</p>
+          <span class="scale-note">Drawing scale: 180 px/m</span>
+        </div>
+      </div>
+      <div class="reach-grid" aria-label="Preliminary reach checks">
+        <div class="reach-item"><span class="metric-number">1.205 m</span><p>Farthest checked pick-window corner from the base origin.</p></div>
+        <div class="reach-item"><span class="metric-number">1.275 m</span><p>Checked distance from the base origin to the tray target.</p></div>
+        <div class="reach-item"><span class="metric-number">0.166 m</span><p>Smallest simple radial margin before orientation and collision checks.</p></div>
+      </div>
+    </section>
+
+    <section class="shell" id="robot" aria-labelledby="robot-title">
+      <div class="section-intro">
+        <h2 id="robot-title">Robot selection</h2>
+        <p>The arm needs food-environment options, enough payload for the product and compliant tool, adequate reach, and enough speed for a 2.24 m/s interception problem.</p>
+      </div>
+      <div class="robot-feature">
+        <article class="robot-selected">
+          <h3>Selected: FANUC M-10iD/12 Food Grade</h3>
+          <p>We chose this arm for three reasons. Its published reach and payload fit the first layout. FANUC also sells a food-grade version and provides a description package that we can import and inspect.</p>
+          <div class="spec-cluster">
+            <div class="spec"><span class="metric-number">12 kg</span><span class="label">maximum wrist payload</span></div>
+            <div class="spec"><span class="metric-number">1.441 m</span><span class="label">maximum reach</span></div>
+            <div class="spec"><span class="metric-number">6</span><span class="label">controlled axes</span></div>
+            <div class="spec"><span class="metric-number">+/-0.02 mm</span><span class="label">published repeatability</span></div>
+          </div>
+        </article>
+        <div class="panel pad comparison">
+          <table>
+            <thead><tr><th>Robot</th><th>Payload</th><th>Reach</th><th>Food environment</th><th>Simulation path</th></tr></thead>
+            <tbody>
+              <tr class="selected"><td><strong>FANUC M-10iD/12 Food Grade</strong></td><td>12 kg</td><td>1.441 m</td><td>Food-grade commercial variant</td><td>Official FANUC description, then Isaac import and validation</td></tr>
+              <tr><td><strong>Stäubli TX2-90L HE</strong></td><td>12 kg</td><td>1.200 m</td><td>Strong humid-environment and H1 options</td><td>No current validated Isaac asset for this exact model</td></tr>
+              <tr><td><strong>Universal Robots UR10e</strong></td><td>12.5 kg</td><td>1.300 m</td><td>Not the preferred direct-food washdown baseline</td><td>Ready-made Isaac asset, useful only as an integration fallback</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel pad payload">
+        <h3>Provisional 12 kg wrist budget</h3>
+        <div class="payload-bar" role="img" aria-label="Payload estimate: 3.2 kilograms product, 3.5 kilograms gripper, 0.5 kilograms flange and sensing, and 4.8 kilograms nominal reserve">
+          <div class="payload-segment product"><strong>3.2 kg</strong><span>maximum product</span></div>
+          <div class="payload-segment tool"><strong>3.5 kg</strong><span>gripper estimate</span></div>
+          <div class="payload-segment sensor"><strong>0.5 kg</strong><span>flange and sensor</span></div>
+          <div class="payload-segment reserve"><strong>4.8 kg</strong><span>nominal reserve</span></div>
+        </div>
+        <div class="payload-note"><span>Working estimate: 7.2 kg</span><span>Unresolved: center of gravity and wrist inertia</span></div>
+      </div>
+    </section>
+
+    <section class="shell" id="sensors" aria-labelledby="sensors-title">
+      <div class="section-intro">
+        <h2 id="sensors-title">Sensors the cell needs</h2>
+        <p>The first build needs enough sensing to measure workpiece motion, recover its position in meters, confirm a grasp, and coordinate with the cutter.</p>
+      </div>
+      <div class="sensor-layout">
+        <div class="sensor-stack">
+          <article class="sensor-row"><strong>RGB camera</strong><p>Fixed global-shutter model with calibrated intrinsics, exposure, distortion, timestamp jitter, and replaceable YOLO segmentation.</p><span class="rate">60 Hz</span></article>
+          <article class="sensor-row"><strong>Depth stream</strong><p>Registered metric depth with clipping, range noise, missing pixels, edge noise, and explicit RGB-depth calibration.</p><span class="rate">30 Hz</span></article>
+          <article class="sensor-row"><strong>Encoder</strong><p>Timestamped belt position and speed. This is fused with visual motion instead of assuming perfect conveyor velocity.</p><span class="rate">1 kHz model</span></article>
+          <article class="sensor-row"><strong>Photoeye</strong><p>Independent product-presence event used for acquisition timing and diagnostic cross-checking.</p><span class="rate">event</span></article>
+          <article class="sensor-row"><strong>Robot and tool</strong><p>Six joint positions and velocities, jaw position, bilateral contact, commanded force proxy, and wrist force and torque reference.</p><span class="rate">240 Hz sim</span></article>
+          <article class="sensor-row"><strong>Machine I/O</strong><p>Tray clear, cutter ready, recipe, permissives, faults, guard state, emergency stop, and result acknowledgment.</p><span class="rate">PLC cycle</span></article>
+        </div>
+        <figure class="cross-section">
+          <svg viewBox="0 0 620 470" role="img" aria-labelledby="sensor-title sensor-desc">
+            <title id="sensor-title">Sensor cross-section</title>
+            <desc id="sensor-desc">Fixed RGB and depth sensors look down at the conveyor and product. A side-mounted robot approaches from outside the product path.</desc>
+            <path class="mount" d="M80 70H520 M130 70V122 M310 70V122"></path>
+            <rect class="sensor-body" x="95" y="112" width="70" height="48" rx="4"></rect>
+            <rect class="sensor-body" x="275" y="112" width="70" height="48" rx="4"></rect>
+            <text x="108" y="141">RGB</text>
+            <text x="286" y="141">Depth</text>
+            <path class="fov" d="M130 160L55 360H235Z"></path>
+            <path class="fov" d="M310 160L205 360H415Z"></path>
+            <path class="datum" d="M35 360H585"></path>
+            <rect class="belt-profile" x="40" y="360" width="540" height="58" rx="4"></rect>
+            <path class="product-shape" d="M210 360C220 325 265 318 310 330C345 340 360 350 365 360Z"></path>
+            <path class="robot-profile" d="M520 382L495 315L436 285"></path>
+            <circle cx="520" cy="382" r="25" fill="var(--accent-soft)" stroke="var(--accent-strong)" stroke-width="3"></circle>
+            <circle cx="436" cy="285" r="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="3"></circle>
+            <text x="45" y="445">Belt surface defines the depth-plane fallback</text>
+            <text x="412" y="260">tool0 and wrist load</text>
+            <text x="372" y="92">Fixed crossbar outside robot motion</text>
+          </svg>
+          <figcaption>The first build uses a fixed camera mount. It keeps the calibration fixed, reduces robot occlusion, and leaves more wrist payload for the gripper and workpiece.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="shell" id="communications" aria-labelledby="communications-title">
+      <div class="section-intro">
+        <h2 id="communications-title">How the parts communicate</h2>
+        <p>Perception produces observations. It never commands the arm directly. The deterministic controller combines observations, encoder state, robot state, and PLC permissives.</p>
+      </div>
+      <div class="architecture">
+        <svg viewBox="0 0 1160 570" role="img" aria-labelledby="architecture-title architecture-desc">
+          <title id="architecture-title">Scene 2.0 system communication architecture</title>
+          <desc id="architecture-desc">Sensors feed perception and tracking. Planning and the deterministic state machine produce bounded robot commands. PLC supervision can permit, reject, or stop actions. Simulator state and logs provide feedback and evidence.</desc>
+          <defs>
+            <marker id="flow-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0 0L8 3L0 6Z" fill="var(--muted)"></path></marker>
+            <marker id="flow-arrow-accent" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0 0L8 3L0 6Z" fill="var(--accent)"></path></marker>
+          </defs>
+          <rect class="node vision-node" x="35" y="70" width="170" height="80" rx="8"></rect>
+          <text x="55" y="101">RGB and depth sensors</text><text class="sub" x="55" y="123">images, depth, timestamps</text>
+          <rect class="node vision-node" x="35" y="195" width="170" height="80" rx="8"></rect>
+          <text x="55" y="226">Encoder and photoeye</text><text class="sub" x="55" y="248">belt motion, presence event</text>
+          <rect class="node vision-node" x="260" y="70" width="190" height="80" rx="8"></rect>
+          <text x="280" y="101">YOLO segmentation</text><text class="sub" x="280" y="123">mask, class, confidence</text>
+          <rect class="node vision-node" x="260" y="195" width="190" height="80" rx="8"></rect>
+          <text x="280" y="226">Pose and tracking</text><text class="sub" x="280" y="248">identity, pose, velocity, age</text>
+          <rect class="node control-node" x="505" y="70" width="195" height="80" rx="8"></rect>
+          <text x="525" y="101">Intercept planner</text><text class="sub" x="525" y="123">future pose, time, reach check</text>
+          <rect class="node control-node" x="505" y="195" width="195" height="80" rx="8"></rect>
+          <text x="525" y="226">Cell state machine</text><text class="sub" x="525" y="248">reserve, commit, verify, recover</text>
+          <rect class="node control-node" x="760" y="70" width="180" height="80" rx="8"></rect>
+          <text x="780" y="101">Motion controller</text><text class="sub" x="780" y="123">joint targets and limits</text>
+          <rect class="node plant-node" x="985" y="70" width="145" height="80" rx="8"></rect>
+          <text x="1005" y="101">Robot and tool</text><text class="sub" x="1005" y="123">joints, contact, load</text>
+          <rect class="node plant-node" x="985" y="195" width="145" height="80" rx="8"></rect>
+          <text x="1005" y="226">Conveyor and part</text><text class="sub" x="1005" y="248">motion and contact</text>
+          <rect class="node safety-node" x="505" y="355" width="195" height="90" rx="8"></rect>
+          <text x="525" y="387">PLC and safety I/O</text><text class="sub" x="525" y="409">cutter, tray, guard, stop, fault</text>
+          <rect class="node" x="760" y="355" width="180" height="90" rx="8"></rect>
+          <text x="780" y="387">Trace and metrics</text><text class="sub" x="780" y="409">events, commands, gates, replay</text>
+          <rect class="node" x="985" y="355" width="145" height="90" rx="8"></rect>
+          <text x="1005" y="387">Saved USD</text><text class="sub" x="1005" y="409">scene, frames, calibration</text>
+          <path class="flow" d="M205 110H260" marker-end="url(#flow-arrow)"></path>
+          <path class="flow" d="M120 150V195" marker-end="url(#flow-arrow)"></path>
+          <path class="flow" d="M355 150V195" marker-end="url(#flow-arrow)"></path>
+          <path class="flow" d="M205 235H260" marker-end="url(#flow-arrow)"></path>
+          <path class="flow" d="M450 235H505" marker-end="url(#flow-arrow)"></path>
+          <path class="flow" d="M602 195V150" marker-end="url(#flow-arrow)"></path>
+          <path class="flow-accent" d="M700 110H760" marker-end="url(#flow-arrow-accent)"></path>
+          <path class="flow-accent" d="M940 110H985" marker-end="url(#flow-arrow-accent)"></path>
+          <path class="flow" d="M1058 195V150" marker-end="url(#flow-arrow)"></path>
+          <path class="flow" d="M985 235H940V145" marker-end="url(#flow-arrow)"></path>
+          <path class="flow" d="M602 355V275" marker-end="url(#flow-arrow)"></path>
+          <path class="flow" d="M700 235H850V355" marker-end="url(#flow-arrow)"></path>
+          <path class="flow" d="M850 355V150" marker-end="url(#flow-arrow)"></path>
+          <path class="flow" d="M940 400H985" marker-end="url(#flow-arrow)"></path>
+          <text class="sub" x="713" y="96">bounded target</text>
+          <text class="sub" x="946" y="96">joint command</text>
+          <text class="sub" x="615" y="326">permissive or stop</text>
+        </svg>
+      </div>
+      <div class="io-grid">
+        <article class="io-group">
+          <h3>Inputs to the cell controller</h3>
+          <ul class="io-list">
+            <li><code>vision_observation</code><span>Mask, pose, confidence, track ID, exposure time</span></li>
+            <li><code>encoder_state</code><span>Belt position, belt velocity, timestamp, quality</span></li>
+            <li><code>robot_state</code><span>Joint position, velocity, tool pose, controller time</span></li>
+            <li><code>gripper_state</code><span>Jaw position, contact, force proxy, slip estimate</span></li>
+            <li><code>machine_state</code><span>Recipe, cutter ready, tray clear, phase, faults</span></li>
+            <li><code>safety_state</code><span>Guard, emergency stop, drive permissive</span></li>
+          </ul>
+        </article>
+        <article class="io-group">
+          <h3>Outputs from the cell controller</h3>
+          <ul class="io-list">
+            <li><code>target_reservation</code><span>Track ID, intercept pose, intercept time, expiry</span></li>
+            <li><code>joint_trajectory</code><span>Time-indexed positions with velocity and acceleration limits</span></li>
+            <li><code>gripper_command</code><span>Open position, close position, force limit, release</span></li>
+            <li><code>machine_handshake</code><span>Robot ready, product delivered, result code, acknowledgment</span></li>
+            <li><code>recovery_command</code><span>Reject, retract, measured-position hold, safe stop</span></li>
+            <li><code>cycle_trace</code><span>Stamped observations, transitions, commands, contacts, metrics</span></li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="shell" aria-labelledby="timing-title">
+      <div class="section-intro">
+        <h2 id="timing-title">What 30 ms costs at belt speed</h2>
+        <p>At 2.24 m/s, the workpiece moves 67.2 mm in 30 ms. Camera timestamps, encoder timing, and calibration can therefore move the planned grasp by several finger widths.</p>
+      </div>
+      <div class="latency-grid">
+        <article class="latency-copy">
+          <h3>Travel during unmodeled latency</h3>
+          <div class="formula">distance = 2.24 m/s x latency</div>
+          <p>Every observation, encoder sample, robot state, PLC transition, and command must use one simulation clock and an explicit acquisition timestamp.</p>
+        </article>
+        <div class="latency-chart" role="img" aria-label="Conveyor travel at 2.24 meters per second for latency values from 10 to 100 milliseconds">
+          <div class="latency-row"><span class="mono">10 ms</span><div class="latency-line" style="--w:10%"></div><span class="travel">22.4 mm</span></div>
+          <div class="latency-row"><span class="mono">20 ms</span><div class="latency-line" style="--w:20%"></div><span class="travel">44.8 mm</span></div>
+          <div class="latency-row"><span class="mono">30 ms</span><div class="latency-line" style="--w:30%"></div><span class="travel">67.2 mm</span></div>
+          <div class="latency-row"><span class="mono">50 ms</span><div class="latency-line" style="--w:50%"></div><span class="travel">112 mm</span></div>
+          <div class="latency-row"><span class="mono">75 ms</span><div class="latency-line" style="--w:75%"></div><span class="travel">168 mm</span></div>
+          <div class="latency-row"><span class="mono">100 ms</span><div class="latency-line" style="--w:100%"></div><span class="travel">224 mm</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell" id="control" aria-labelledby="control-title">
+      <div class="section-intro">
+        <h2 id="control-title">Control sequence and recovery</h2>
+        <p>The full state machine runs against simulator state. A nominal cycle and every recovery path use the same articulation, contact, and PLC interfaces.</p>
+      </div>
+      <div class="state-flow" aria-label="Nominal and recovery state sequence">
+        <div class="state-node"><strong>Observe</strong><span>Acquire RGB, depth, encoder, and exposure time.</span></div>
+        <div class="state-node"><strong>Track</strong><span>Assign identity and estimate position, yaw, and velocity.</span></div>
+        <div class="state-node"><strong>Predict</strong><span>Forecast the future product pose inside the pick window.</span></div>
+        <div class="state-node"><strong>Reserve</strong><span>Reject stale, uncertain, crowded, late, or unreachable targets.</span></div>
+        <div class="state-node"><strong>Approach</strong><span>Plan a collision-checked joint trajectory to the pre-grasp pose.</span></div>
+        <div class="state-node"><strong>Intercept</strong><span>Arrive at the predicted pose and match belt velocity.</span></div>
+        <div class="state-node"><strong>Confirm grasp</strong><span>Close compliant jaws and require bilateral recent contact.</span></div>
+        <div class="state-node"><strong>Lift and stabilize</strong><span>Brake relative motion and estimate slip from the tool transform.</span></div>
+        <div class="state-node"><strong>Align</strong><span>Reorient to the recipe-specific <code>cut_target_frame</code>.</span></div>
+        <div class="state-node"><strong>Release</strong><span>Require cutter ready and tray clear before opening.</span></div>
+        <div class="state-node"><strong>Verify and retract</strong><span>Measure tray pose, acknowledge the result, and return home.</span></div>
+        <div class="state-node recovery"><strong>Recover or reject</strong><span>Use bounded retract, reject placement, or measured-position hold.</span></div>
+        <div class="state-node safety"><strong>Emergency stop</strong><span>Stop the belt and hold the measured joint state in simulation.</span></div>
+      </div>
+    </section>
+
+    <section class="shell" aria-labelledby="fidelity-title">
+      <div class="section-intro">
+        <h2 id="fidelity-title">What Isaac Sim can test</h2>
+        <p>A better-looking model helps us inspect the cell, but it does not make the physics accurate. The table separates what Isaac Sim can test now from what still needs measurements or hardware trials.</p>
+      </div>
+      <div class="fidelity-grid">
+        <article class="fidelity-group">
+          <h3>Modeled in Isaac Sim</h3>
+          <div class="fidelity-item"><div><strong>Six-axis articulation</strong><p>Joint hierarchy, controller commands, fixed-step state, limits, and collision checks after the import gate.</p></div><span class="status reference">planned</span></div>
+          <div class="fidelity-item"><div><strong>Rendered RGB and depth</strong><p>Physical camera prims, calibrated transforms, lighting, noise, latency, and missing depth.</p></div><span class="status verified">baseline verified</span></div>
+          <div class="fidelity-item"><div><strong>Moving product physics</strong><p>Rigid product meshes, belt motion, contact, mass, pose, and deterministic seeded scenarios.</p></div><span class="status verified">baseline verified</span></div>
+          <div class="fidelity-item"><div><strong>Compliant grasp reference</strong><p>Finite jaw drive, bilateral contact, force proxy, slip evidence, and bounded fixed-joint hold.</p></div><span class="status reference">reference</span></div>
+          <div class="fidelity-item"><div><strong>PLC and recovery</strong><p>Permissives, faults, emergency stop, acknowledgments, reject paths, and cycle traces.</p></div><span class="status verified">baseline verified</span></div>
+        </article>
+        <article class="fidelity-group">
+          <h3>Requires physical evidence</h3>
+          <div class="fidelity-item"><div><strong>Meat deformation</strong><p>Tissue modulus, damping, wet friction, adhesion, pressure distribution, and damage thresholds.</p></div><span class="status blocked">unresolved</span></div>
+          <div class="fidelity-item"><div><strong>Gripper qualification</strong><p>Food-safe materials, cleanability, maximum force, retention, marks, and product-specific fingers.</p></div><span class="status blocked">unresolved</span></div>
+          <div class="fidelity-item"><div><strong>OEM dynamics</strong><p>Controller interpolation, payload inertia limits, tracking performance, line-tracking options, and braking.</p></div><span class="status blocked">unresolved</span></div>
+          <div class="fidelity-item"><div><strong>Camera performance</strong><p>Real wet-product imagery, glare, occlusion, lens contamination, exposure, calibration drift, and cleaning.</p></div><span class="status blocked">unresolved</span></div>
+          <div class="fidelity-item"><div><strong>Machine and safety validation</strong><p>Real PLC captures, cutter timing, guarding, risk assessment, sanitation, and food-safety approval.</p></div><span class="status blocked">unresolved</span></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="shell" id="evidence" aria-labelledby="evidence-title">
+      <div class="section-intro">
+        <h2 id="evidence-title">What passed in Isaac Sim</h2>
+        <p>Isaac Sim 6.0.1 produced these images and metrics. They cover the current Scene 1 control path and the recipe-shaped vision dataset. They do not show the proposed FANUC scene.</p>
+      </div>
+      <div class="evidence-grid">
+        <figure class="large"><img src="results/yolo/recorded_demo/isaac_b/contact_sheet.png" alt="Contact sheet from the recorded Isaac Sim Solution B demonstration"><figcaption>Recorded Scene 1 demonstration contact sheet. Historical rectangular-product run.</figcaption></figure>
+        <figure><img src="results/yolo/dataset_v3_audit_20260826_r4_final/previews/isaac_v3_000076_chicken_breast_fillet_moving_belt.png" alt="Isaac Sim chicken breast reference with segmentation overlay on the moving conveyor"><figcaption>Chicken reference, moving-belt dataset frame.</figcaption></figure>
+        <figure><img src="results/yolo/dataset_v3_audit_20260826_r4_final/previews/isaac_v3_000136_pork_boneless_loin_moving_belt.png" alt="Isaac Sim pork loin reference with segmentation overlay on the moving conveyor"><figcaption>Pork reference, moving-belt dataset frame.</figcaption></figure>
+        <figure><img src="results/vision_step1_regression_a/isaac_a/media/overhead_001100000000_rgb.png" alt="Rendered RGB image from the latest passing Solution A regression"><figcaption>Latest Solution A rendered RGB evidence.</figcaption></figure>
+        <figure><img src="results/vision_step1_regression_a/isaac_a/media/overhead_001100000000_depth_preview.png" alt="Rendered depth preview paired with the latest passing Solution A image"><figcaption>Paired depth preview from the same regression.</figcaption></figure>
+      </div>
+      <div class="metrics-grid">
+        <div class="metrics-set" aria-label="Vision dataset audit metrics">
+          <div class="metric"><span class="metric-number">200</span><span class="metric-label">Isaac RGB, depth, mask, and label frames</span></div>
+          <div class="metric"><span class="metric-number">426</span><span class="metric-label">accepted YOLO polygons</span></div>
+          <div class="metric"><span class="metric-number">0.9645</span><span class="metric-label">minimum accepted polygon IoU</span></div>
+          <div class="metric"><span class="metric-number">0</span><span class="metric-label">positive frames missing labels</span></div>
+          <div class="metric"><span class="metric-number">104 / 96</span><span class="metric-label">moving-belt and buffer frames</span></div>
+          <div class="metric"><span class="metric-number">3</span><span class="metric-label">recipe-shaped product families</span></div>
+        </div>
+        <div class="current-result">
+          <article class="result-row good"><strong>Latest Solution A: passed</strong><p>Two nominal deliveries, failed-grasp recovery, cutter-unavailable reject, 5,671 controller commands, zero collisions, zero joint-limit violations, and four deterministic replays.</p></article>
+          <article class="result-row bad"><strong>Latest Solution B: failed</strong><p>Both nominal cycles stopped at <code>buffer_regrasp_contact_failure</code>. Recovery worked, but no delivery succeeded with the new recipe-shaped mesh. This failure is intentionally visible.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell" id="build" aria-labelledby="build-title">
+      <div class="section-intro">
+        <h2 id="build-title">What we build next</h2>
+        <p>We will finish and test each item in this order. We will train the next YOLO model after the scene, robot, and camera setup stop changing.</p>
+      </div>
+      <div class="gate-list">
+        <article class="gate complete"><span class="gate-state">complete</span><h3>Select the arm</h3><p>Choose the robot, payload budget, scene coordinates, sensor baseline, gripper opening, and acceptance criteria.</p></article>
+        <article class="gate next"><span class="gate-state">next</span><h3>Import the FANUC model</h3><p>Create a project-owned USD from the official description. Verify six revolute joints, axes, limits, masses, and fixed base.</p></article>
+        <article class="gate"><span class="gate-state">pending</span><h3>Prove articulation control</h3><p>Run deterministic joint sweeps through the Isaac articulation controller. Check limits, velocities, save, and reload.</p></article>
+        <article class="gate"><span class="gate-state">pending</span><h3>Build the physical cell</h3><p>Place the belt, pedestal, tray, cutter reference, reject bin, guards, frames, lights, and calibration artifact.</p></article>
+        <article class="gate"><span class="gate-state">pending</span><h3>Add the gripper</h3><p>Implement 240 mm opening, bilateral contact, finite force, compliant travel, wrist load, slip evidence, and release.</p></article>
+        <article class="gate"><span class="gate-state">pending</span><h3>Add the sensors</h3><p>Render RGB and depth. Publish encoder, photoeye, joint, jaw, wrist, PLC, and safety state on one clock.</p></article>
+        <article class="gate"><span class="gate-state">pending</span><h3>Run one dry cycle</h3><p>Move home, pick approach, intercept pose, tray, reject, and home without a product or unexpected collision.</p></article>
+        <article class="gate"><span class="gate-state">pending</span><h3>Reconnect the pipeline</h3><p>Run perception, tracking, prediction, contact grasp, alignment, release, recovery, replay, and the full seed matrix.</p></article>
+      </div>
+
+      <div class="section-intro" style="margin-top:4rem">
+        <h2 id="assumptions-title">Assumptions register</h2>
+        <p>These values keep the simulator runnable. They are not physical qualification data.</p>
+      </div>
+      <div class="assumption-table">
+        <table aria-labelledby="assumptions-title">
+          <thead><tr><th>Parameter</th><th>Current design value</th><th>Reason</th><th>Required evidence</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Conveyor speed</strong></td><td>2.24 m/s nominal</td><td>Authoritative problem statement</td><td>Encoder log and speed variation</td></tr>
+            <tr><td><strong>Robot base</strong></td><td>(0.40, -0.75, 0.45) m</td><td>Preliminary reach screening</td><td>IK, collision, foundation, sanitation review</td></tr>
+            <tr><td><strong>Maximum product</strong></td><td>3.2 kg and 200 mm wide</td><td>Current pork envelope</td><td>Real production distribution</td></tr>
+            <tr><td><strong>Gripper opening</strong></td><td>240 mm minimum</td><td>200 mm product plus clearance</td><td>Finger design and product trials</td></tr>
+            <tr><td><strong>Gripper mass</strong></td><td>3.5 kg estimate</td><td>Payload budgeting placeholder</td><td>Selected end-effector CAD and center of gravity</td></tr>
+            <tr><td><strong>Compliance travel</strong></td><td>20 mm per side</td><td>Simulation sensitivity baseline</td><td>Bench compression and retention tests</td></tr>
+            <tr><td><strong>RGB rate</strong></td><td>60 Hz</td><td>Limits conveyor travel per frame to 37.3 mm</td><td>Selected camera exposure and link budget</td></tr>
+            <tr><td><strong>Depth rate</strong></td><td>30 Hz</td><td>Metric pose baseline with RGB registration</td><td>Wet-surface depth trials</td></tr>
+            <tr><td><strong>Physics rate</strong></td><td>240 Hz</td><td>Existing deterministic Isaac baseline</td><td>Convergence and contact sensitivity study</td></tr>
+            <tr><td><strong>Product material</strong></td><td>Rigid recipe mesh</td><td>Stable integration and vision baseline</td><td>Deformable material calibration</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="shell" aria-labelledby="sources-title">
+      <div class="section-intro">
+        <h2 id="sources-title">Primary sources and project evidence</h2>
+        <p>Robot selection claims use manufacturer sources. Simulation claims point to project-owned machine-readable artifacts.</p>
+      </div>
+      <ul class="sources">
+        <li><a href="https://www.fanucamerica.com/products/robot/m-10id-12">FANUC M-10iD/12 product page</a></li>
+        <li><a href="https://www.fanucamerica.com/docs/default-source/default-document-library/m-10id-12-food-grade-data-sheet.pdf">FANUC M-10iD/12 Food Grade data sheet</a></li>
+        <li><a href="https://github.com/FANUC-CORPORATION/fanuc_description">Official FANUC description and mesh repository</a></li>
+        <li><a href="https://fanuc-corporation.github.io/fanuc_driver_doc/v1.3.0/docs/environment/supported_models.html">Official FANUC supported model mapping</a></li>
+        <li><a href="https://www.staubli.com/content/dam/robotics/industries/food/food-brochure-EN.pdf">Stäubli food robotics brochure</a></li>
+        <li><a href="https://docs.isaacsim.omniverse.nvidia.com/6.0.0/assets/usd_assets_robots.html">NVIDIA Isaac Sim 6.0 robot assets</a></li>
+        <li><a href="SCENE_DESIGN_V2.md">Scene 2.0 design specification</a></li>
+        <li><a href="SYSTEM_DESIGN.md">System architecture specification</a></li>
+        <li><a href="results/vision_step1_regression_a/isaac_a/metrics.json">Latest Solution A machine metrics</a></li>
+        <li><a href="results/vision_step1_regression_b/isaac_b/metrics.json">Latest Solution B machine metrics</a></li>
+        <li><a href="results/yolo/dataset_v3_audit_20260826_r4_final/artifact_audit.json">Dataset v3 independent audit</a></li>
+        <li><a href="TECHNICAL_REPORT.html">Historical integrated implementation report</a></li>
+        <li><a href="WRITING_STYLE_RESEARCH.md">Project writing research and style standard</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell">
+      <p>Labels throughout the report show whether an item was tested in Isaac Sim, proposed for Scene 2.0, or left for physical measurement. This work does not prove OEM accuracy, food safety, real-cell safety, physical performance, or production readiness.</p>
+    </div>
+  </footer>
+
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const themeButton = document.getElementById('theme-toggle');
+      const printButton = document.getElementById('print-report');
+      const requestedTheme = new URLSearchParams(window.location.search).get('theme');
+      let savedTheme = null;
+      try { savedTheme = localStorage.getItem('scene-report-theme'); } catch (error) { savedTheme = null; }
+      if (requestedTheme === 'light' || requestedTheme === 'dark') root.dataset.theme = requestedTheme;
+      else if (savedTheme === 'light' || savedTheme === 'dark') root.dataset.theme = savedTheme;
+
+      themeButton.addEventListener('click', () => {
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const current = root.dataset.theme || (systemDark ? 'dark' : 'light');
+        const next = current === 'dark' ? 'light' : 'dark';
+        root.dataset.theme = next;
+        try { localStorage.setItem('scene-report-theme', next); } catch (error) { /* file URL storage may be unavailable */ }
+      });
+      printButton.addEventListener('click', () => window.print());
+
+      document.querySelectorAll('[data-layer]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const visible = button.getAttribute('aria-pressed') === 'true';
+          button.setAttribute('aria-pressed', String(!visible));
+          document.querySelectorAll(`[data-layer-group="${button.dataset.layer}"]`).forEach((group) => {
+            group.classList.toggle('hidden', visible);
+          });
+        });
+      });
+
+      const navLinks = Array.from(document.querySelectorAll('.topbar nav a'));
+      const sections = navLinks.map((link) => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+          const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+          if (!visible) return;
+          navLinks.forEach((link) => link.setAttribute('aria-current', String(link.getAttribute('href') === `#${visible.target.id}`)));
+        }, { rootMargin: '-20% 0px -65% 0px', threshold: [0, 0.2, 0.6] });
+        sections.forEach((section) => observer.observe(section));
+      }
+    })();
+  </script>
+</body>
+</html>
