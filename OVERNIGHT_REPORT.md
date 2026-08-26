@@ -653,3 +653,24 @@ Evidence:
 - `results/scene2/scene2_validation.json`
 
 The full YOLO and interception state machine is not yet connected to the FANUC articulation. T016 records that remaining work. The scene and joint-controller gate is complete. The full Scene 2.0 end-to-end milestone is not complete.
+
+## Scene 2.0 ROS 2 and motion boundary gate, 2026-08-26
+
+The FANUC Scene 2.0 articulation and overhead camera now have a tested ROS 2 boundary. Isaac remains responsible for fixed-step physics, rendering, measured joints, contacts, and articulation execution. The planned external MoveIt process will be responsible for collision-aware path planning and trajectory timing.
+
+Commands:
+
+```powershell
+python -m py_compile isaac_sim\scene2_ros_bridge.py isaac_sim\scene2_ros_probe.py isaac_sim\run_scene2.py
+python -m pytest -q tests\test_scene2_ros_contract.py
+.\validate_scene2_ros.ps1
+.\run_tests.ps1
+```
+
+The focused unit suite reported 6 passed. The complete ordinary-Python suite reported 111 passed and 1 skipped. The skip is the NumPy-dependent perception test in the plain Python interpreter.
+
+The ROS 2 headless Isaac gate passed twice. Each run published 720 `/clock` messages, 180 `/carve/joint_states` messages, 45 rendered RGB images, 45 rendered depth images, and 45 camera calibration messages. The DDS probe received every stream type. RGB payloads contained 921,600 bytes and depth payloads contained 1,228,800 bytes. Isaac rejected one deliberately partial joint command. It accepted one complete J1 through J6 command and applied it through the FANUC articulation controller. The maximum final joint error was 0.000836 rad. The second run produced the same stage hash and identical ROS metrics.
+
+The full entry point did not pass. Solution A passed. Solution B failed both nominal cycles at `buffer_regrasp_contact_failure`. This matches the known Scene 1 recipe-geometry regression and was not caused by the new Scene 2.0 ROS bridge. No Isaac Sim or Kit process remained after the runs.
+
+The external MoveIt gate remains untested. WSL 2 Ubuntu is present, but ROS 2 and MoveIt are not installed there. No system software was installed. The exact next T016 step is the `FollowJointTrajectory` action bridge and FANUC MoveIt configuration in an authorized existing ROS 2 environment. After that, the planner must drive a timed conveyor interception in Scene 2.0 before perception and full task-state migration can be claimed.

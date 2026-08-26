@@ -1,0 +1,83 @@
+schema_version: 1
+ros_distro: humble
+namespace: /carve
+simulation_time_required: true
+
+rates_hz:
+  physics: 240
+  clock: 240
+  joint_state: 60
+  camera: 15
+  plc_state: 20
+  cycle_trace: event_driven
+
+frames:
+  world: world
+  robot_base: base_link
+  robot_flange: flange
+  tool: tool0
+  conveyor: conveyor
+  camera: overhead_camera_optical
+  target: cut_target_frame
+
+topics:
+  clock:
+    name: /clock
+    type: rosgraph_msgs/msg/Clock
+    publisher: isaac_sim
+  joint_states:
+    name: /carve/joint_states
+    type: sensor_msgs/msg/JointState
+    publisher: isaac_sim
+  joint_command:
+    name: /carve/robot/joint_command
+    type: sensor_msgs/msg/JointState
+    publisher: trajectory_action_bridge
+    subscriber: isaac_sim
+  rgb:
+    name: /carve/camera/overhead/color/image_raw
+    type: sensor_msgs/msg/Image
+    publisher: isaac_sim
+  depth:
+    name: /carve/camera/overhead/depth/image_rect_raw
+    type: sensor_msgs/msg/Image
+    publisher: isaac_sim
+  camera_info:
+    name: /carve/camera/overhead/camera_info
+    type: sensor_msgs/msg/CameraInfo
+    publisher: isaac_sim
+  detections:
+    name: /carve/perception/detections
+    type: vision_msgs/msg/Detection2DArray
+    publisher: perception
+  tracked_workpieces:
+    name: /carve/perception/tracks
+    type: carve_msgs/msg/TrackedWorkpieceArray
+    publisher: tracking
+  plc_state:
+    name: /carve/plc/state
+    type: carve_msgs/msg/PlcState
+    publisher: cell_io
+  cycle_trace:
+    name: /carve/cycle/events
+    type: carve_msgs/msg/CycleEvent
+    publisher: supervisor
+
+actions:
+  arm_trajectory:
+    name: /carve/arm_controller/follow_joint_trajectory
+    type: control_msgs/action/FollowJointTrajectory
+    server: trajectory_action_bridge
+    client: move_group
+
+joint_order: [J1, J2, J3, J4, J5, J6]
+
+command_rules:
+  reject_unknown_joints: true
+  reject_partial_goals: true
+  require_strictly_increasing_time: true
+  reject_nonfinite_values: true
+  reject_limit_violations: true
+  hold_last_command_on_stale_input: true
+  safe_stop_on_plc_fault: true
+

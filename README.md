@@ -55,6 +55,14 @@ Run the unit tests, setup validation, and both integrated suites:
 .\run_tests.ps1
 ```
 
+Validate the Scene 2.0 FANUC articulation and its live ROS 2 core-message bridge:
+
+```powershell
+.\validate_scene2_ros.ps1
+```
+
+This gate uses the ROS 2 Humble libraries bundled with Isaac Sim. It publishes fixed simulation time, measured FANUC joint states, rendered RGB, rendered depth, and camera calibration over DDS. It also proves command rejection and real articulation-controller execution. The external MoveIt process is the next gate and is not yet installed or tested on this workstation.
+
 Run the bounded five-seed hardening matrix for both solutions:
 
 ```powershell
@@ -157,6 +165,7 @@ It is not accepted as evidence for the integrated Isaac milestone.
 - `OVERNIGHT_REPORT.md`: commands, evidence, metrics, fixes, and remaining physical blockers
 - `TECHNICAL_REPORT.html`: architecture, I/O, control, perception, PLC, evidence, video, and implementation map
 - `SCENE_DESIGN_REPORT.html`: Scene 2.0 robot choice, layout, sensors, communication, evidence, and build order
+- `KINEMATICS_AND_MOVEIT.md`: tested ROS 2 boundary and the deliberately small MoveIt plan
 - `WRITING_STYLE_RESEARCH.md`: research-backed project writing standard and language audit rules
 - `isaac_sim/`: stage builder, adapters, perception, validation, and integrated runner
 - `meatcell/`: simulator-independent contracts and deterministic control logic

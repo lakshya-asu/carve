@@ -8,7 +8,11 @@ The new stage contains the FANUC arm, pedestal, specialized compliant gripper re
 
 `validate_scene2.ps1` passed in Isaac Sim 6.0.1. Isaac initialized the six-axis articulation and executed three bounded controller motion segments at 240 Hz. The run reported zero joint-limit violations, nonempty 1280 by 720 RGB and depth, 194 authored cell prims, two cameras, six revolute joints, and a matching save and reload manifest. Evidence is in `results/scene2/scene2_validation.json`.
 
-The visible launcher is `run_scene2.ps1`. It opens the same tested stage and holds the Isaac Sim window for inspection. The full YOLO, interception, contact grasp, and delivery pipeline still uses the existing generic Scene 1 articulation. Connecting those functions to the FANUC Scene 2.0 articulation is T016 and remains in progress.
+`validate_scene2_ros.ps1` also passed twice. It used the ROS 2 Humble libraries bundled with Isaac Sim and real in-process DDS endpoints. Each run published 720 fixed-time clock messages, 180 measured joint states, and 45 sets of RGB, depth, and camera calibration messages. The probe received every stream type. Isaac rejected one partial command and accepted one complete six-joint command. The accepted command moved the FANUC articulation through its controller with a maximum final error of 0.000836 rad. The replay had the same stage hash and identical ROS metrics.
+
+The visible launcher is `run_scene2.ps1`. It opens the same tested stage and holds the Isaac Sim window for inspection. The full YOLO, interception, contact grasp, and delivery pipeline still uses the existing generic Scene 1 articulation. The external MoveIt process is not installed or tested. Connecting those functions to the FANUC Scene 2.0 articulation is T016 and remains in progress.
+
+The current complete `run_tests.ps1` entry point is not green. Its fresh Solution A batch passed. Its fresh Solution B batch failed both nominal cycles at `buffer_regrasp_contact_failure`, matching the existing known regression. Ordinary Python reported 111 passed and 1 skipped. The skip is the NumPy-dependent perception test in the plain interpreter.
 
 ## Report language review, 2026-08-26
 

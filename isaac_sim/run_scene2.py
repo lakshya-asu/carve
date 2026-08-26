@@ -23,6 +23,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--keep-open-seconds", type=float, default=0.0)
     parser.add_argument("--motion-cycles", type=int, default=1)
     parser.add_argument("--output-root", default="results/scene2")
+    parser.add_argument("--ros2", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--ros2-self-test", action=argparse.BooleanOptionalAction, default=False)
     return parser.parse_args()
 
 
@@ -42,6 +44,97 @@ def _as_uint8(image: object) -> object:
         return array
     multiplier = 255.0 if float(array.max(initial=0.0)) <= 1.0 else 1.0
     return np.clip(array * multiplier, 0, 255).astype(np.uint8)
+
+
+def _run_ros2_gate(
+    world: object,
+    articulation: object,
+    controller: object,
+    camera: object,
+    lower: object,
+    upper: object,
+) -> dict[str, object]:
+    import numpy as np
+    import rclpy
+    from isaacsim.core.utils.types import ArticulationAction
+
+    from isaac_sim.scene2_ros_bridge import Scene2RosBridge
+    from isaac_sim.scene2_ros_probe import Scene2RosProbe
+
+    bridge = Scene2RosBridge(
+        articulation,
+        camera,
+        lower_limits=tuple(float(value) for value in lower),
+        upper_limits=tuple(float(value) for value in upper),
+    )
+    probe = Scene2RosProbe()
+    start = np.asarray(articulation.get_joint_positions(), dtype=float)
+    offset = np.array([0.04, -0.035, 0.03, 0.025, -0.02, 0.03], dtype=float)
+    target = np.minimum(np.maximum(start + offset, lower + 0.02), upper - 0.02)
+    command_applied = False
+    try:
+        for step in range(720):
+            sim_seconds = float(world.current_time)
+            bridge.publish_clock(sim_seconds)
+            if step % 4 == 0:
+                bridge.publish_joint_state(sim_seconds)
+            if step % 16 == 0:
+                bridge.publish_camera(sim_seconds)
+            if step == 72:
+                probe.publish_invalid_partial_command(tuple(float(value) for value in target))
+            if step >= 96 and step % 24 == 0 and not command_applied:
+                probe.publish_command(tuple(float(value) for value in target))
+            probe.spin_once()
+            bridge.spin_once()
+            command = bridge.consume_command()
+            if command is not None:
+                controller.apply_action(
+                    ArticulationAction(joint_positions=np.asarray(command.positions, dtype=np.float32))
+                )
+                command_applied = True
+            world.step(render=(step % 4 == 0))
+        for _ in range(32):
+            bridge.spin_once()
+            probe.spin_once()
+        measured = np.asarray(articulation.get_joint_positions(), dtype=float)
+        error = np.abs(measured - target)
+        snapshot = probe.snapshot
+        passed = bool(
+            command_applied
+            and bridge.rejected_commands >= 1
+            and snapshot.clocks > 0
+            and snapshot.joint_states > 0
+            and snapshot.rgb_images > 0
+            and snapshot.depth_images > 0
+            and snapshot.camera_info > 0
+            and snapshot.last_rgb_bytes >= 640 * 480 * 3
+            and snapshot.last_depth_bytes >= 640 * 480 * 4
+            and float(error.max()) < 0.03
+        )
+        return {
+            "passed": passed,
+            "transport": "ROS 2 DDS using Isaac Sim bundled Humble libraries",
+            "command_applied_by_articulation_controller": command_applied,
+            "target_joint_positions_rad": target.tolist(),
+            "measured_joint_positions_rad": measured.tolist(),
+            "max_joint_error_rad": float(error.max()),
+            "probe": {
+                "clocks_received": snapshot.clocks,
+                "joint_states_received": snapshot.joint_states,
+                "rgb_images_received": snapshot.rgb_images,
+                "depth_images_received": snapshot.depth_images,
+                "camera_info_received": snapshot.camera_info,
+                "last_rgb_bytes": snapshot.last_rgb_bytes,
+                "last_depth_bytes": snapshot.last_depth_bytes,
+                "commands_published": probe.commands_published,
+            },
+            "bridge": bridge.metrics(),
+        }
+    finally:
+        probe.close()
+        bridge.close()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 def run_scene(simulation_app: object, args: argparse.Namespace, output_root: Path) -> dict[str, object]:
@@ -126,6 +219,27 @@ def run_scene(simulation_app: object, args: argparse.Namespace, output_root: Pat
                 previous_velocity = velocity
             motion_segments += 1
 
+    ros2_metrics: dict[str, object] | None = None
+    if args.ros2:
+        overhead_camera = Camera(
+            build["camera_path"],
+            name="scene2_overhead_ros_camera",
+            resolution=(640, 480),
+            frequency=15,
+        )
+        overhead_camera.initialize()
+        overhead_camera.add_distance_to_image_plane_to_frame()
+        for _ in range(24):
+            world.step(render=True)
+            physics_steps += 1
+        if args.ros2_self_test:
+            ros2_metrics = _run_ros2_gate(
+                world, articulation, controller, overhead_camera, lower, upper
+            )
+            physics_steps += 720
+            if not ros2_metrics["passed"]:
+                raise RuntimeError(f"Scene 2.0 ROS 2 gate failed: {ros2_metrics}")
+
     set_camera_view(
         eye=[3.05, -1.92, 2.55],
         target=[0.0, 0.0, 1.05],
@@ -207,6 +321,7 @@ def run_scene(simulation_app: object, args: argparse.Namespace, output_root: Pat
         "depth_sha256": _file_sha256(depth_path),
         "depth_finite_positive_pixels": nonempty_depth,
         "save_reload_manifest_match": before == after,
+        "ros2": ros2_metrics,
     }
     metrics_path = output_root / "scene2_validation.json"
     metrics_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -231,6 +346,8 @@ def main() -> int:
         raise ValueError("Output root must be project-relative and inside the project")
     if args.keep_open_seconds < 0.0 or args.motion_cycles < 1:
         raise ValueError("Keep-open time must be nonnegative and motion cycles must be positive")
+    if args.ros2_self_test and not args.ros2:
+        raise ValueError("The ROS 2 self-test requires --ros2")
     simulation_app = None
     payload: dict[str, object] = {"passed": False}
     try:
