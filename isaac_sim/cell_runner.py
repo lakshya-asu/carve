@@ -50,7 +50,7 @@ from meatcell.tracking import ObjectTracker, TrackerConfig
 
 from .adapter import IsaacSimulatorAdapter
 from .perception_adapter import RenderedColorDepthSegmentationModel
-from .stage_builder import REFERENCE_NOTICE
+from .stage_builder import REFERENCE_NOTICE, product_width_scale_at_grasp
 
 
 PHYSICS_HZ = 240
@@ -160,6 +160,16 @@ def _tcp_target_for_product(
     return _planar(compose(product_target, inverse(tcp_from_product)))
 
 
+def _buffer_regrasp_target(observed_product_pose: Transform) -> Transform:
+    """Place the open gripper over the product pose measured after settling."""
+    return Transform.planar(
+        observed_product_pose.translation.x_m,
+        observed_product_pose.translation.y_m,
+        max(0.17, observed_product_pose.translation.z_m + 0.02),
+        observed_product_pose.yaw_rad,
+    )
+
+
 def _plc(adapter: IsaacSimulatorAdapter) -> PLCState:
     cutter = adapter.read_cutter_state()
     return PLCState(
@@ -188,6 +198,17 @@ def _tcp_to_joint_targets(adapter: IsaacSimulatorAdapter, target: Transform, fin
 def _closed_finger_targets(adapter: IsaacSimulatorAdapter) -> tuple[float, float]:
     """Apply the 8 mm per-pad compliance proxy from a fixed 175 mm open gap."""
     product_half_width_m = adapter.product_profile.geometry.width_m.nominal / 2.0
+    travel_m = max(0.0, 0.0875 - product_half_width_m + 0.008)
+    return (-travel_m, travel_m)
+
+
+def _buffer_closed_finger_targets(adapter: IsaacSimulatorAdapter) -> tuple[float, float]:
+    """Close on the mesh width at the stationary central regrasp section."""
+    width_scale = product_width_scale_at_grasp(
+        adapter.product_profile.geometry.shape_family,
+        adapter.product_profile.geometry.taper_ratio.nominal,
+    )
+    product_half_width_m = adapter.product_profile.geometry.width_m.nominal * width_scale / 2.0
     travel_m = max(0.0, 0.0875 - product_half_width_m + 0.008)
     return (-travel_m, travel_m)
 
@@ -1030,15 +1051,23 @@ def run_cycle(
                         if not controller.reobserve_and_align(adapter.simulation_time, observed_pose, slip):
                             raise RuntimeError("Buffer observation unexpectedly exceeded hold time")
                         event_cursor = _append_new_events(writer, supervisor, event_cursor)
-                        corrected = controller.corrected_pose or observed_pose
-                        regrasp_target = Transform.planar(
-                            corrected.translation.x_m,
-                            corrected.translation.y_m,
-                            max(0.17, corrected.translation.z_m + 0.02),
-                            corrected.yaw_rad,
-                        )
+                        regrasp_target = _buffer_regrasp_target(observed_pose)
                         evidence.add(move_tcp(adapter, regrasp_target, 0.60, fingers=(0.0, 0.0)))
-                        evidence.add(move_tcp(adapter, regrasp_target, 0.18, fingers=_closed_finger_targets(adapter)))
+                        writer.append("buffer_regrasp_target", adapter.simulation_time, regrasp_target)
+                        evidence.add(
+                            move_tcp(
+                                adapter,
+                                regrasp_target,
+                                0.35,
+                                fingers=_buffer_closed_finger_targets(adapter),
+                            )
+                        )
+                        writer.append("buffer_regrasp_robot_state", adapter.simulation_time, adapter.read_robot_state())
+                        writer.append("buffer_regrasp_product_pose", adapter.simulation_time, adapter.get_product_pose(PRODUCT_ID))
+                        for finger_pose in adapter.get_finger_world_poses():
+                            writer.append("buffer_regrasp_finger_pose", adapter.simulation_time, finger_pose)
+                        for contact in adapter.read_contacts():
+                            writer.append("buffer_regrasp_contact", adapter.simulation_time, contact)
                         if not adapter.attach_grasp(PRODUCT_ID):
                             supervisor.recover(adapter.simulation_time, "buffer_regrasp_contact_failure")
                             event_cursor = _append_new_events(writer, supervisor, event_cursor)

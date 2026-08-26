@@ -1,6 +1,10 @@
 import pytest
 
-from isaac_sim.stage_builder import product_outline, product_prism_mesh_data
+from isaac_sim.stage_builder import (
+    product_outline,
+    product_prism_mesh_data,
+    product_width_scale_at_grasp,
+)
 
 
 @pytest.mark.parametrize(
@@ -40,6 +44,24 @@ def test_product_prism_has_closed_face_topology() -> None:
 def test_unknown_shape_uses_rectangular_fallback() -> None:
     outline = product_outline("future_cut", 0.8)
     assert outline == ((-0.5, -0.5), (0.5, -0.5), (0.5, 0.5), (-0.5, 0.5))
+
+
+@pytest.mark.parametrize(
+    ("shape_family", "taper_ratio", "expected_range"),
+    [
+        ("tapered_capsule", 0.75, (0.78, 0.84)),
+        ("elongated_rounded_prism", 0.85, (0.90, 1.00)),
+        ("asymmetric_teardrop_slab", 0.55, (0.55, 0.65)),
+        ("future_cut", 0.8, (0.99, 1.00)),
+    ],
+)
+def test_central_grasp_width_matches_reference_outline(
+    shape_family: str,
+    taper_ratio: float,
+    expected_range: tuple[float, float],
+) -> None:
+    scale = product_width_scale_at_grasp(shape_family, taper_ratio)
+    assert expected_range[0] <= scale <= expected_range[1]
 
 
 @pytest.mark.parametrize("dimensions", [(0.0, 0.1, 0.1), (0.1, -0.1, 0.1)])

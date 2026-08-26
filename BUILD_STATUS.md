@@ -12,7 +12,9 @@ The new stage contains the FANUC arm, pedestal, specialized compliant gripper re
 
 The visible launcher is `run_scene2.ps1`. It opens the same tested stage and holds the Isaac Sim window for inspection. The full YOLO, interception, contact grasp, and delivery pipeline still uses the existing generic Scene 1 articulation. The external MoveIt process is not installed or tested. Connecting those functions to the FANUC Scene 2.0 articulation is T016 and remains in progress.
 
-The current complete `run_tests.ps1` entry point is not green. Its fresh Solution A batch passed. Its fresh Solution B batch failed both nominal cycles at `buffer_regrasp_contact_failure`, matching the existing known regression. Ordinary Python reported 111 passed and 1 skipped. The skip is the NumPy-dependent perception test in the plain interpreter.
+The current complete `run_tests.ps1` entry point is green. Its fresh Solution A and Solution B batches both passed. Ordinary Python reported 118 passed and 1 skipped. The skip is the NumPy-dependent perception test in the plain interpreter. The complete run produced 8 cycles, 4 nominal deliveries, 4 expected recovery cycles, 8 deterministic replay passes, zero unexpected collisions, and zero joint-limit violations.
+
+The Solution B buffer regrasp regression is fixed. The controller now preserves the product pose measured from the rendered buffer RGBD observation. The stationary regrasp closure uses the actual central width of the recipe mesh instead of its maximum width envelope. The moving interception closure remains unchanged because it needs extra capture tolerance. The regrasp trace now records the measured product pose, target pose, robot state, finger poses, and PhysX contacts. The 8 mm per-pad compliance value remains an uncalibrated proxy.
 
 ## Report language review, 2026-08-26
 
@@ -32,7 +34,7 @@ The new scene baseline uses a stationary cutter-entry tray, a fixed overhead RGB
 
 No Scene 2.0 implementation milestone is complete yet. This section records the selected direction and the gates that must be passed before YOLO training continues.
 
-The latest Scene 1 regression is mixed. Solution A still passes with the recipe-shaped workpieces. Solution B currently fails its two nominal cycles at `buffer_regrasp_contact_failure`. This is current evidence that the generic Cartesian arm, narrow gripper, and old regrasp geometry should not be tuned further as if they were the final cell. Earlier successful Solution B results below are retained as historical screening evidence from the former rectangular workpiece geometry.
+The latest Scene 1 regression is green. Solution A and Solution B pass with the recipe-shaped workpieces. The generic Cartesian arm and narrow gripper remain development references. They are not the selected final cell hardware.
 
 ## Recorded demonstration and technical report, 2026-08-26
 

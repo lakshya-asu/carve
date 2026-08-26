@@ -68,6 +68,27 @@ def product_outline(shape_family: str, taper_ratio: float) -> tuple[tuple[float,
     return ((-0.50, -0.50), (0.50, -0.50), (0.50, 0.50), (-0.50, 0.50))
 
 
+def product_width_scale_at_grasp(shape_family: str, taper_ratio: float) -> float:
+    """Return the normalized mesh width at the central grasp section."""
+    outline = product_outline(shape_family, taper_ratio)
+    intersections: list[float] = []
+    for index, (x0, y0) in enumerate(outline):
+        x1, y1 = outline[(index + 1) % len(outline)]
+        if not min(x0, x1) <= 0.0 <= max(x0, x1):
+            continue
+        if math.isclose(x0, x1, abs_tol=1e-12):
+            intersections.extend((y0, y1))
+            continue
+        fraction = -x0 / (x1 - x0)
+        intersections.append(y0 + fraction * (y1 - y0))
+    if len(intersections) < 2:
+        raise ValueError(f"Product outline does not cross the central grasp section: {shape_family}")
+    width_scale = max(intersections) - min(intersections)
+    if not 0.0 < width_scale <= 1.0:
+        raise ValueError(f"Invalid central product width scale: {width_scale}")
+    return width_scale
+
+
 def product_prism_mesh_data(
     shape_family: str,
     length_m: float,

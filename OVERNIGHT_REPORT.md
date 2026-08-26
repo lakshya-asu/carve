@@ -45,7 +45,7 @@ Fresh visual checks:
 
 The three files are nonempty and were inspected. The desktop and mobile openings remain readable, navigation fits the desktop layout, the mobile report reflows cleanly, and the truth labels remain visible. Playwright Chromium closed after rendering. No Isaac Sim or Kit process was running after the pass.
 
-No simulator rerun was needed because this pass changed only report text, tests, and documentation. The latest Scene 1 and Scene 2.0 statuses below remain authoritative. Solution A passes with the recipe-shaped workpieces. Solution B still fails at buffer regrasp contact. The FANUC Scene 2.0 robot remains selected but not imported.
+No simulator rerun was needed for the language rewrite itself. Later simulator work superseded the old status recorded here. The FANUC Scene 2.0 robot is now imported and its six-axis articulation and ROS bridge have passed their focused gates. The latest complete Scene 1 suite also passes both solutions.
 
 ## Scene 2.0 design gate, 2026-08-26
 
@@ -73,9 +73,50 @@ The report was rendered through installed Microsoft Edge in headless mode for vi
 
 The proposed cell places the robot on a side pedestal between a moving source conveyor and a stationary cutter-entry tray. The baseline sensors are a fixed global-shutter RGB camera, a registered depth stream, conveyor encoder, entry photoeye, robot joint feedback, bilateral jaw contact and position, a wrist force and torque reference, and PLC-style cutter and safety signals. The current 175 mm gripper opening is not compatible with the 200 mm maximum pork width. The replacement reference gripper requires at least 240 mm clear opening.
 
-The latest recipe-mesh regression is not fully green. Solution A passed. Solution B failed its two nominal cycles at `buffer_regrasp_contact_failure`. Earlier Solution B passes remain historical evidence for the rectangular-product scene. The failure is not hidden and no Scene 2.0 integrated milestone is claimed.
+The recipe-mesh regression was repaired after this design gate. The current complete suite passes both Solution A and Solution B. The Scene 2.0 integrated task milestone is still not claimed because perception, compliant contact grasping, and end-to-end delivery have not yet been connected to the FANUC scene.
 
 Exact next gate: import the official FANUC description, create a project-owned USD, and prove six-axis articulation behavior, joint limits, reach, collision clearance, fixed-step execution, save and reload, and deterministic joint sweeps before adding the rest of the cell.
+
+## Solution B buffer regrasp hardening, 2026-08-26
+
+The buffer regrasp failure was reproduced and fixed without weakening the contact gate. The rendered buffer observation placed the settled product near x 1.781 m and y -0.581 m with about -17 degrees of yaw. The old controller discarded that measured correction and returned to a nominal buffer command pose. It also closed to the maximum width envelope even though the tapered mesh is narrower at its central grasp section.
+
+The fixed controller preserves the observed RGBD pose. It calculates the central mesh width for the stationary regrasp and gives the finite-effort finger drives enough fixed simulation time to close. The moving pick still uses the wider nominal envelope because applying the tighter stationary closure during interception tipped the product.
+
+Focused evidence:
+
+- `results/fixes/buffer_regrasp_full`
+- Two nominal Solution B deliveries passed.
+- Failed grasp recovery passed.
+- Buffer timeout recovery passed.
+- Four of four deterministic replay checks passed.
+- Position p95 was 47.82 mm.
+- Angle p95 was 0.0617 rad.
+- Unexpected collisions were zero.
+- Joint-limit violations were zero.
+
+Complete-suite evidence:
+
+```powershell
+.\run_tests.ps1
+```
+
+- Ordinary Python: 118 passed and 1 skipped.
+- Solution A: passed four cycles.
+- Solution B: passed four cycles.
+- Total nominal deliveries: 4.
+- Total expected recovery cycles: 4.
+- Deterministic replay: 8 of 8.
+- Aggregate position p95: 48.56 mm.
+- Aggregate angle p95: 0.0623 rad.
+- Intercept timing p95: 3.10 ms.
+- Perception latency p95: 33.28 ms.
+- Unexpected collisions: zero.
+- Joint-limit violations: zero.
+- Artifact audit: passed.
+- Isaac Sim and Kit processes after completion: zero.
+
+The compliance value, force proxy, friction, and rigid product model are still simulation assumptions. The next gate is a visible and actuated compliant gripper mechanism on Scene 2.0, followed by the Scene 2.0 perception and task pipeline.
 
 ## Recorded demonstration and implementation report, 2026-08-26
 
