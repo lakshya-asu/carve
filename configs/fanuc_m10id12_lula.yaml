@@ -19,5 +19,4 @@ cspace_to_urdf_rules:
 
 # IK is used to generate pose candidates. Scene collision and clearance gates
 # validate every executed path separately.
-collision_spheres:
-
+collision_spheres: []
