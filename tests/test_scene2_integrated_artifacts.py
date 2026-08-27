@@ -1,8 +1,20 @@
 from pathlib import Path
+import re
 
 import pytest
 
 from isaac_sim.run_scene2_integrated import _artifact_manifest
+
+
+def test_every_integrated_return_to_idle_updates_the_saved_media_label() -> None:
+    source = (Path(__file__).parents[1] / "isaac_sim" / "run_scene2_integrated.py").read_text(encoding="utf-8")
+    calls = list(re.finditer(r'^\s+supervisor\.return_to_idle\([^\n]+\)$', source, flags=re.MULTILINE))
+
+    assert calls
+    for call in calls:
+        following_lines = source[call.end() :].splitlines()[1:3]
+        assert following_lines[0].strip() == 'set_state("idle")'
+        assert following_lines[1].strip() == "flush_events()"
 
 
 def _write_required_artifacts(root: Path) -> Path:

@@ -901,6 +901,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             set_state("recover")
             hold("safe hold after rejected plan", 0.5)
             supervisor.return_to_idle(sim_time(), "known_safe_after_rejected_plan")
+            set_state("idle")
             flush_events()
             terminal_reason = f"interception_{decision.reason.value}"
         else:
@@ -1013,6 +1014,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                 recovery_joints = solve_tcp("failed-grasp retract", recovery_tcp, closing_end_joints)
                 move_cartesian("safe vertical retract after failed grasp", recovery_tcp, tool_orientation, 1.2)
                 supervisor.return_to_idle(sim_time(), "physical_recovery_complete")
+                set_state("idle")
                 flush_events()
                 terminal_reason = "failed_grasp_contact_confirmation"
             else:
@@ -1041,6 +1043,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                     move("controlled jaw opening after reset", finger_indices, GRIPPER_OPEN_TARGET_M, 0.7)
                     grasp_confirmed = False
                     supervisor.return_to_idle(sim_time(), "emergency_stop_reset_and_known_safe")
+                    set_state("idle")
                     flush_events()
                     terminal_reason = "plc_emergency_stop"
                 elif args.solution == "a":
@@ -1059,6 +1062,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                         move("release rejected workpiece", finger_indices, GRIPPER_OPEN_TARGET_M, 0.7)
                         hold("confirm reject release", 0.5)
                         supervisor.return_to_idle(sim_time(), "physical_reject_complete")
+                        set_state("idle")
                         flush_events()
                         terminal_reason = "cutter_unavailable_before_commit"
                     else:
@@ -1109,6 +1113,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                         set_state("retract")
                         move("retract clear of cutter", robot_indices, cut_high, 1.25)
                         supervisor.return_to_idle(sim_time(), "physical_retract_complete")
+                        set_state("idle")
                         flush_events()
                         terminal_reason = "delivery_verified" if delivered else "delivery_out_of_tolerance"
                 else:
@@ -1201,6 +1206,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                         flush_events()
                         set_state("recover")
                         supervisor.return_to_idle(sim_time(), "buffer_timeout_known_safe")
+                        set_state("idle")
                         flush_events()
                         terminal_reason = "buffer_timeout"
                     else:
@@ -1462,6 +1468,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                         set_state("retract")
                         move("retract clear of cutter", robot_indices, cut_high, 1.25)
                         supervisor.return_to_idle(sim_time(), "physical_retract_complete")
+                        set_state("idle")
                         flush_events()
                         terminal_reason = "delivery_verified" if delivered else "delivery_out_of_tolerance"
 
