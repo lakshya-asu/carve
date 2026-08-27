@@ -1,5 +1,19 @@
 # Overnight build report
 
+## Scheduled release validation and artifact fix, 2026-08-27 07:16 EDT
+
+The documented headless release gate passed from a clean Isaac and Kit process state. An initial `run_tests.ps1` run passed with 147 Python tests and fresh evidence at `results/full_suite/20260827_070326208`. The alternating bounded check then ran Solution B, seed 2702, with `buffer_timeout`. The simulator produced the expected recovered result, but inspection found that its metrics listed buffer RGB and depth paths even though this scenario exits before buffer re-observation and those files were not produced.
+
+The artifact serializer now validates every required output before writing passing metrics. It omits uncaptured buffer artifacts and fails closed if only one member of the buffer RGBD pair exists. Three focused tests cover omitted, partial, and complete buffer artifact sets. The affected seed 2702 recovery rerun passed at `results/overnight/20260827_071500_solution_b_buffer_timeout_seed2702_v2`. The corrected metrics list only nonempty files that exist.
+
+The final complete command was `run_tests.ps1`. It passed with 150 Python tests and zero failures. Fresh evidence is `results/full_suite/20260827_071234227`. Setup, Scene 2, ROS command handling, the compliant gripper gate, nominal Solution A and B, both fail-closed audits, stage reload, rendered RGBD, YOLO26 segmentation, tracking, Lula IK, FANUC articulation control, bilateral contact, physical lift and retention, cutter-frame delivery, PLC acknowledgement, event traces, and saved media all passed.
+
+Solution A recorded 10.229 mm position error, 0.002422 rad angle error, 25.000 ms timing error, 1,999 articulation commands, and 177.916 mm lift. Solution B recorded 21.919 mm position error, 0.003428 rad angle error, 16.667 ms timing error, 6.631 mm buffer sensor-to-oracle error, 3,521 commands, and 177.926 mm lift. Both had zero unexpected contacts, zero motion-limit violations, zero product pose writes after grasp, monotonic traces, matching stage and video hashes, and acknowledged delivery.
+
+The corrected buffer-timeout check recovered through `settle -> recover -> idle` with the expected `buffer_timeout` reason. It recorded bilateral contact, 177.059 mm lift, 3,755 articulation commands, 6.610 ms interception timing error, zero collisions, zero motion-limit violations, zero product pose writes after grasp, a matching reloaded USD, and 376 H.264 frames. Visual inspection confirmed contact, retained lift, buffer release, the bounded timeout wait, and recovery with the product left on the buffer. Its overhead depth array contained 307,200 finite positive values. Buffer RGBD was correctly absent and is no longer claimed by the metrics.
+
+Known joystick, deprecation, material, muted USD diagnostic, DLSS, render-variable, host-copy, and transform-history warnings remain. Final logs contained zero Isaac error lines and zero PhysX failure lines. No threshold changed. No Isaac or Kit process remained after any batch. `PRODUCT_RECIPES.md` remained untouched. T015 and the external ROS2 and MoveIt item in T016 remain blocked as previously documented. The machine record is `results/overnight/20260827_071500_solution_b_buffer_timeout_seed2702_v2/automation_summary.json`. The next dedicated check should alternate to Solution A with seed 2703, preferably `stale_observation`.
+
 ## Scheduled release validation, 2026-08-27 06:15 EDT
 
 The complete documented release gate passed headlessly in Isaac Sim 6.0.1 from a clean Isaac and Kit process state with `.\run_tests.ps1`. Fresh evidence is in `results/full_suite/20260827_060502246`. Ordinary Python reported 147 passed in 0.90 seconds. Setup, Scene 2, the ROS command probe, the compliant gripper mechanism gate, Solution A nominal seed 2601, Solution B nominal seed 2601, both fail-closed audits, USD reload checks, and deterministic media checks all passed. The full gate had zero failures.

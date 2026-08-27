@@ -75,6 +75,32 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _artifact_manifest(output_root: Path, event_path: Path, solution: str) -> dict[str, str]:
+    artifacts = {
+        "rgb": output_root / "overhead_rgb.png",
+        "depth_png": output_root / "overhead_depth.png",
+        "depth_npy": output_root / "overhead_depth_m.npy",
+        "segmentation": output_root / "yolo26_segmentation.png",
+        "trace": event_path,
+    }
+    missing = [str(path) for path in artifacts.values() if not path.is_file() or path.stat().st_size == 0]
+    if missing:
+        raise RuntimeError(f"Required integrated artifacts are missing or empty: {missing}")
+
+    if solution == "b":
+        buffer_artifacts = {
+            "buffer_rgb": output_root / "buffer_rgb.png",
+            "buffer_depth_npy": output_root / "buffer_depth_m.npy",
+        }
+        present = {name: path.is_file() and path.stat().st_size > 0 for name, path in buffer_artifacts.items()}
+        if any(present.values()) and not all(present.values()):
+            raise RuntimeError(f"Solution B buffer artifact set is incomplete: {present}")
+        if all(present.values()):
+            artifacts.update(buffer_artifacts)
+
+    return {name: str(path) for name, path in artifacts.items()}
+
+
 def _as_uint8(image: object) -> object:
     import numpy as np
 
@@ -1587,21 +1613,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         },
         "recording": recording.__dict__,
         "recording_sha256": _sha256(video_path),
-        "artifacts": {
-            "rgb": str(output_root / "overhead_rgb.png"),
-            "depth_png": str(output_root / "overhead_depth.png"),
-            "depth_npy": str(output_root / "overhead_depth_m.npy"),
-            "segmentation": str(output_root / "yolo26_segmentation.png"),
-            "trace": str(event_path),
-        }
-        | (
-            {
-                "buffer_rgb": str(output_root / "buffer_rgb.png"),
-                "buffer_depth_npy": str(output_root / "buffer_depth_m.npy"),
-            }
-            if args.solution == "b"
-            else {}
-        ),
+        "artifacts": _artifact_manifest(output_root, event_path, args.solution),
         "approximations": [
             "The belt coupling is a deterministic kinematic fixture, not a simulated belt-friction model.",
             "The product is rigid. Tissue deformation and surface moisture are not modeled.",
