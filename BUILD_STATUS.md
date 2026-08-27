@@ -1,5 +1,19 @@
 # Build status
 
+## Solution map, learning research, and report revision, 2026-08-27
+
+The project page now opens with a five-route branch diagram. Solutions A and B are clearly marked as implemented. Solution C is a learned grasp-candidate scorer, Solution D is closed-loop reactive interception, and Solution E is a bounded learned contact skill. C, D, and E are research proposals. They are not presented as completed simulator evidence.
+
+Three durable documents were added. `END_TO_END_CHAIN.md` defines every stage, input, output, handoff, check, and recovery boundary. `DECISIONS_AND_TESTS.md` records the main design decisions, why they were made, what was built, and the measured A/B evidence. `GENERALIZED_SOLUTION_RESEARCH.md` compares the current deterministic routes with three learning-based extensions and cites the primary or official sources used.
+
+The recovery evidence videos now use two wide columns on desktop and one column on narrow screens. This replaces the compressed four-video row while retaining all four fault cases. The Pages workflow includes the three new documents.
+
+`DEMO_COMMANDS.md` keeps the visible Scene 2 command, final A and B runs, speed and orientation matrix, recovery scenarios, and full regression command in one copy-ready place. C, D, and E have no launchers and remain discussion-only.
+
+The complete ordinary Python suite passed 188 tests after these changes.
+
+The private Synphony Cue pack now includes `CARVE-PROJECT-BRIEF.md`. It contains short and long project explanations, the exact method chain, measured results, likely technical questions, claim boundaries, and a one-line message for Neil. Cue was opened and left ready. This private interview material is not part of the public repository.
+
 ## ROS 2, MoveIt, responsive report, and Pages, 2026-08-27
 
 The detailed report now clips page overflow, lets every image, video, SVG, table, code block, and grid shrink to the viewport, and converts wide tables to labeled mobile rows. The focused responsive regression passes. Recipe images were moved into the published asset tree so the public report has no ignored result-file dependencies.

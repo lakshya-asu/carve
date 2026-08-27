@@ -1303,3 +1303,32 @@ These numbers measure this reference simulation. They do not measure physical ac
 ### Publication and visual review
 
 Commit `17a45a9` was pushed to `feature/moveit-bridge` and `main`. GitHub Pages run `33121725567` completed successfully. The published accuracy section was reviewed at desktop width and a 390 by 844 narrow viewport. The heading, metrics, chart, notes, and evidence links rendered. The page reported no horizontal overflow at either width.
+
+## Solution map and communication documentation, 2026-08-27
+
+The public report now starts with a branch diagram comparing five solution routes. It separates implemented evidence from researched extensions. A and B remain the only completed routes. C proposes learned grasp scoring. D proposes reactive target correction. E proposes a bounded contact skill.
+
+The report now includes a plain-language end-to-end chain, a hybrid learning architecture, a direct A/B metric comparison, and a decision log. Four recovery videos were enlarged from a compressed four-column row to a two-column desktop layout and a one-column narrow layout.
+
+New durable documents:
+
+- `END_TO_END_CHAIN.md`
+- `DECISIONS_AND_TESTS.md`
+- `GENERALIZED_SOLUTION_RESEARCH.md`
+
+The Pages workflow was extended to publish all three documents. Focused tests now check the new diagram IDs, section IDs, local references, implemented-versus-researched language, publication list, and responsive recovery-video layout.
+
+The learning research used primary papers and official project documentation. It covered GraspNet, Dex-Net, Contact-GraspNet, VGN, Graspness, AnyGrasp, reactive grasping, Robomimic, ACT, Diffusion Policy, DAgger, residual reinforcement learning, Isaac Lab, MoveIt Servo, cuMotion, OpenVLA, Octo, tactile slip sensing, and food-handling grippers. C, D, and E remain discussion-only. If a later learning experiment is approved, C is the first candidate while deterministic motion, PLC, limits, verification, and recovery stay below the learned scorer.
+
+`DEMO_COMMANDS.md` records the exact visible Scene 2 command, final A and B runs, speed and orientation matrix, four recovery cases, and complete regression command.
+
+Validation command:
+
+```powershell
+$env:PYTHONPATH='C:\Users\jainl\is6\Lib\site-packages'
+python -m pytest -q
+```
+
+Result: 188 tests passed. The local HTML browser URL was blocked by the browser security policy, so visual review was deferred to the deployed HTTPS page. No simulator code or A/B runtime behavior changed in this documentation pass.
+
+The private Synphony Cue context was updated with a CARVE project brief and Cue was opened for review. Private interview files were not added to this public repository.

@@ -23,6 +23,13 @@ def test_pages_workflow_publishes_the_report_as_the_site_index() -> None:
     assert "actions/deploy-pages@v4" in workflow
     assert "actions/configure-pages@v5" in workflow
     assert "actions/upload-pages-artifact@v4" in workflow
+    for name in (
+        "END_TO_END_CHAIN.md",
+        "DECISIONS_AND_TESTS.md",
+        "GENERALIZED_SOLUTION_RESEARCH.md",
+        "DEMO_COMMANDS.md",
+    ):
+        assert name in workflow
 
 
 def test_all_local_report_media_is_inside_the_published_asset_tree() -> None:

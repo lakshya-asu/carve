@@ -90,9 +90,25 @@ def test_report_has_no_forced_horizontal_scroll() -> None:
     assert ".table-wraptd{display:grid" in compact
 
 
+def test_recovery_videos_are_large_and_responsive() -> None:
+    text, _ = parse_report()
+    compact = "".join(text.lower().split())
+    assert ".failures{display:grid;grid-template-columns:repeat(2,1fr)" in compact
+    assert "@media(max-width:640px)" in compact
+    assert ".route-grid,.failures,.criteria" in compact
+    assert "grid-template-columns:1fr" in compact
+
+
 def test_report_contains_real_visual_explanations() -> None:
     _, parser = parse_report()
-    assert {"system-map", "cycle-map", "speed-chart"} <= parser.svg_ids
+    assert {
+        "solution-branches",
+        "system-map",
+        "cycle-map",
+        "speed-chart",
+        "learning-map",
+        "ab-result-map",
+    } <= parser.svg_ids
     assert {
         "How the cell communicates",
         "How one workpiece reaches the cutter",
@@ -106,6 +122,7 @@ def test_report_keeps_required_sections_and_local_evidence() -> None:
     _, parser = parse_report()
     assert {
         "top",
+        "solutions",
         "evidence",
         "system",
         "cycle",
@@ -114,6 +131,8 @@ def test_report_keeps_required_sections_and_local_evidence() -> None:
         "speed",
         "control",
         "routes",
+        "learning",
+        "decisions",
         "io",
         "failures",
         "implementation",
@@ -125,6 +144,32 @@ def test_report_keeps_required_sections_and_local_evidence() -> None:
         if not target.exists():
             missing.append(reference)
     assert missing == []
+
+
+def test_report_distinguishes_completed_routes_from_research() -> None:
+    text, parser = parse_report()
+    assert "A and B are implemented" in text
+    assert "C, D, and E are researched extensions, not completed simulator results" in text
+    assert "Learned grasp score" in text
+    assert "Reactive intercept" in text
+    assert "Bounded manipulation skill" in text
+    assert "What we chose, why, and what the tests said" in parser.headings
+    for name in (
+        "END_TO_END_CHAIN.md",
+        "DECISIONS_AND_TESTS.md",
+        "GENERALIZED_SOLUTION_RESEARCH.md",
+        "DEMO_COMMANDS.md",
+    ):
+        assert name in text
+
+
+def test_learning_routes_are_discussion_only() -> None:
+    text, _ = parse_report()
+    assert "C, D, and E are not being built now" in text
+    assert "C  DISCUSSION" in text
+    assert "D  DISCUSSION" in text
+    assert "E  DISCUSSION" in text
+    assert "No C, D, or E runtime is implemented" in text
 
 
 def test_report_includes_durable_design_rules_and_research_sources() -> None:

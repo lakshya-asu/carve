@@ -462,3 +462,20 @@ The runner records simulator ground truth at camera exposure time only for scori
 The core regression limits are 12 mm mean position and 2 degrees mean yaw for camera and tracking, 15 mm position and 3 degrees yaw at interception, 120 ms intercept timing, 55 mm final position, and 7 degrees final angle. These are internal simulation limits. They are not physical process requirements. Every core case must also have an interior mask grasp, bilateral contact, verified delivery, valid artifacts, stage reload, event-log readback, and zero joint, velocity, or acceleration violations.
 
 Repeated A and B seeds are checked with bounded tolerances because separately launched RTX renders are not bitwise identical. Exact scalar equality is reported separately and is not claimed. Current bounded tolerances include 0.25 mm for camera and tracking position, 0.5 mm at interception, 0.2 mm at delivery, and 5 ms for intercept timing.
+
+## Generalization roadmap
+
+The cell keeps one shared deterministic execution boundary. Camera data, recipe data, tracks, PLC state, collision checks, joint limits, verification, and recovery remain explicit. A learned component may propose a grasp or a local correction. It may not bypass those checks.
+
+The current implemented routes are:
+
+- Solution A: perceive on the main conveyor, intercept once, then deliver directly to the cutter-entry tray.
+- Solution B: intercept, place in a centering buffer, observe again, correct the pose, then deliver to the cutter-entry tray.
+
+The researched extensions are:
+
+- Solution C: learn a grasp-candidate score from RGBD, mask geometry, product recipe, contact outcome, and slip outcome. The planner still owns timing, limits, collision checks, and execution.
+- Solution D: update the target and command a bounded Cartesian correction while the product moves. This is useful when latency and conveyor variation make a single open-loop intercept brittle.
+- Solution E: learn only the short contact-rich segment around closure, stabilization, reorientation, and release. This should be trained only after representative physical demonstrations and force or tactile measurements exist.
+
+No C, D, or E runtime is approved for the current build. They remain discussion-only options. If a later evidence review approves a learning experiment, the research order is C, then D, then E. C addresses the clearest current weakness without replacing the working timing and recovery architecture. D requires a commissioned reactive controller. E requires physical data and the largest validation effort. The full rationale and source list are in `GENERALIZED_SOLUTION_RESEARCH.md`.
