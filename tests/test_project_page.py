@@ -5,7 +5,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = ROOT / "PROJECT_PAGE.html"
-REAL_PICKUP_METRICS = ROOT / "assets" / "project_page" / "fanuc_real_pickup_metrics.json"
+SOLUTION_A_METRICS = ROOT / "assets" / "project_page" / "scene2_solution_a_metrics.json"
+SOLUTION_B_METRICS = ROOT / "assets" / "project_page" / "scene2_solution_b_metrics.json"
 
 
 class PageParser(HTMLParser):
@@ -41,14 +42,14 @@ def test_project_page_has_required_views_and_sections() -> None:
     for phrase in {
         "YOLO26",
         "Instance segmentation",
-        "Rendered RGB stream",
+        "Rendered cell view",
         "Depth stream",
         "Robot control",
-        "A real pickup, shown without a hidden cut.",
-        "Zero workpiece teleports",
+        "Two complete cycles, with no hidden pickup.",
+        "Pose writes after grasp",
         "Solution A",
         "Solution B",
-        "Active integration gap",
+        "External integration boundary",
     }:
         assert phrase in text
 
@@ -63,26 +64,30 @@ def test_project_page_local_references_exist() -> None:
     assert missing == []
 
 
-def test_project_page_publishes_only_the_continuous_pickup_recording() -> None:
+def test_project_page_publishes_both_final_scene2_recordings() -> None:
     text, parser = parse_page()
-    assert parser.video_sources == ["assets/project_page/fanuc_real_pickup.mp4"]
+    assert parser.video_sources == [
+        "assets/project_page/scene2_solution_a.mp4",
+        "assets/project_page/scene2_solution_b.mp4",
+    ]
     assert "fanuc_presentation.mp4" not in text
 
 
-def test_published_pickup_passes_contact_clearance_and_continuity_gates() -> None:
-    payload = json.loads(REAL_PICKUP_METRICS.read_text(encoding="utf-8"))
-    assert payload["passed"] is True
-    assert payload["moving_conveyor_interception"] is False
-    assert payload["product_visible_before_approach"] is True
-    assert payload["teleport_calls_after_record_start"] == 0
-    assert payload["joint_limit_violations"] == 0
-    assert payload["grasp_validation"]["bilateral_contact"] is True
-    assert payload["grasp_validation"]["unexpected_contact_pairs"] == []
-    assert payload["grasp_validation"]["lift_distance_m"] >= 0.10
-    assert payload["grasp_validation"]["maximum_relative_drift_m"] <= 0.020
-    assert payload["grasp_validation"]["release_displacement_m"] >= 0.020
-    assert payload["clearance_validation"]["minimum_approach_pad_clearance_m"] >= 0.005
-    assert payload["continuity_validation"]["maximum_product_step_m"] <= 0.020
+def test_published_cycles_pass_integrated_contact_motion_and_delivery_gates() -> None:
+    for path, solution in ((SOLUTION_A_METRICS, "a"), (SOLUTION_B_METRICS, "b")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        assert payload["passed"] is True
+        assert payload["solution"] == solution
+        assert payload["product_pose_sets_after_confirmed_grasp"] == 0
+        assert payload["perception"]["model_name"].startswith("ultralytics_yolo26")
+        assert payload["grasp"]["bilateral_contact"] is True
+        assert payload["grasp"]["unexpected_contact_pairs"] == []
+        assert payload["grasp"]["lift_distance_m"] >= 0.10
+        assert payload["grasp"]["maximum_product_to_tcp_distance_m"] <= payload["grasp"]["retention_limit_m"]
+        assert payload["delivery"]["delivered"] is True
+        assert payload["motion"]["joint_limit_violations"] == 0
+        assert payload["motion"]["velocity_limit_violations"] == 0
+        assert payload["motion"]["acceleration_limit_violations"] == 0
 
 
 def test_project_page_uses_no_forbidden_dash_characters() -> None:

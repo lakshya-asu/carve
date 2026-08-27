@@ -414,7 +414,13 @@ def run_scene(simulation_app: object, args: argparse.Namespace, output_root: Pat
 
     gripper_metrics: dict[str, object] | None = None
     if args.gripper_self_test:
-        compliance_pose = np.array([-1.40, 0.40, 0.20, 0.00, -0.40, 0.00], dtype=np.float32)
+        # Lula solution for a top-down product center at (0.05, 0.0, 1.10).
+        # This keeps the focused mechanism test above the conveyor and clear of
+        # both the belt and cutter guard instead of using a station-wall fixture.
+        compliance_pose = np.array(
+            [0.23561304, 0.86532727, 0.69016657, 0.00118465, -1.39579104, -1.80635822],
+            dtype=np.float32,
+        )
         if np.any(compliance_pose <= lower) or np.any(compliance_pose >= upper):
             raise RuntimeError("The compliant gripper test pose exceeds a FANUC joint limit")
         start = np.asarray(articulation.get_joint_positions(), dtype=float)[robot_indices]

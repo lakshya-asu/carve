@@ -840,6 +840,37 @@ def run_cycle(
             supervisor.transition(CellState.VERIFY_GRASP, adapter.simulation_time, "grasp_closure_complete")
             event_cursor = _append_new_events(writer, supervisor, event_cursor)
             grasped = adapter.attach_grasp(PRODUCT_ID)
+            if not grasped and failure_mode != "failed_grasp":
+                retry_duration_s = 0.20
+                retry_state = adapter.read_robot_state()
+                retry_start = retry_state.tcp_pose_world
+                retry_target = Transform.planar(
+                    retry_start.translation.x_m + BELT_SPEED_MPS * retry_duration_s,
+                    retry_start.translation.y_m,
+                    retry_start.translation.z_m,
+                    retry_start.yaw_rad,
+                )
+                writer.append(
+                    "grasp_contact_retry",
+                    adapter.simulation_time,
+                    retry_state,
+                )
+                evidence.add(
+                    move_tcp(
+                        adapter,
+                        retry_target,
+                        retry_duration_s,
+                        fingers=_closed_finger_targets(adapter),
+                        start_tcp_x_velocity_mps=BELT_SPEED_MPS,
+                        end_tcp_x_velocity_mps=BELT_SPEED_MPS,
+                        start_joint_velocities=retry_state.velocities,
+                    )
+                )
+                retry_contacts = adapter.read_contacts()
+                evidence.intentional_contact_count += sum(1 for item in retry_contacts if item.intentional)
+                for contact in retry_contacts:
+                    writer.append("grasp_retry_contact", adapter.simulation_time, contact)
+                grasped = adapter.attach_grasp(PRODUCT_ID)
             if not grasped:
                 adapter.set_plc_inputs(fault_active=True, result_acknowledged=False)
                 writer.append("plc_state", adapter.simulation_time, _plc(adapter))

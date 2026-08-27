@@ -20,6 +20,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base", default="models/yolo26n-seg.pt")
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--seed", type=int, default=2601)
+    parser.add_argument("--name", default="yolo26_meat_reference")
     parser.add_argument("--validate-only", action="store_true")
     return parser.parse_args()
 
@@ -46,7 +47,7 @@ def main() -> int:
                 workers=0,
                 device=0,
                 project=str(output_root),
-                name="yolo26_meat_reference",
+                name=args.name,
                 exist_ok=True,
                 seed=args.seed,
                 deterministic=True,
@@ -65,7 +66,7 @@ def main() -> int:
             # Validate it below on CPU without modifying Isaac's environment.
             gpu_nms_workaround_used = True
             print("Isaac TorchVision has no CUDA NMS kernel. Continuing with CPU validation.")
-    best = output_root / "yolo26_meat_reference" / "weights" / "best.pt"
+    best = output_root / args.name / "weights" / "best.pt"
     if not best.is_file():
         raise RuntimeError("YOLO training did not produce best.pt")
     validation = yolo(str(best), task="segment").val(

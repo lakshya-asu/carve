@@ -1,5 +1,23 @@
 # Build status
 
+## Final integrated FANUC Scene 2 gate, 2026-08-27
+
+The complete simulator vertical slice now runs on the FANUC M-10iD/12 official-description reference articulation in Scene 2. Solution A and Solution B both passed from rendered RGBD and YOLO26 perception through tracking, prediction, timed moving-conveyor interception, bilateral PhysX contact, dynamic rigid-body lift, Cartesian transport, reorientation, `cut_target_frame` alignment, stationary cutter-entry tray release, verification, PLC acknowledgment, retract, and trace audit.
+
+The final Solution A release evidence is `results/scene2_release/solution_a_seed2601_v2`. It passed with 201 rendered frames, 1,999 articulation-controller commands, 10.31 mm cutter position error, 0.119 degree angle error, 25.00 ms delivery timing error, 177.92 mm physical lift, 70.09 mm maximum product-to-TCP distance, zero unexpected gripper contacts, and zero joint, velocity, or acceleration violations.
+
+The final Solution B release evidence is `results/scene2_release/solution_b_seed2601`. It passed with 353 rendered frames, 3,521 articulation-controller commands, 20.93 mm cutter position error, 0.481 degree angle error, 16.67 ms delivery timing error, 6.52 mm buffer RGBD oracle position error, 177.96 mm physical lift, 79.51 mm maximum product-to-TCP distance, zero unexpected gripper contacts, and zero joint, velocity, or acceleration violations.
+
+Solution A also passed seeds 2602 and 2603. The integrated recovery runs passed failed grasp, cutter unavailable, emergency stop, stale observation, Solution B buffer timeout, and forced slip correction. Workpiece control uses a fixed-step conveyor fixture before bilateral contact. After grasp confirmation the product is a dynamic PhysX body and the program performs zero product pose writes.
+
+The exported USDA files contain the conveyor, moving workpiece, FANUC articulation, compact compliant gripper reference, overhead and buffer cameras, camera mounts, cutter station, stationary tray, centering buffer, guards, reject bin, PLC attributes, and named frames. Each final run reopens the saved stage and verifies required prims before it can pass. The fail-closed audit also checks video and stage hashes, sensor output, YOLO identity, track count, controller commands, limits, contact, lift, retention, state order, delivery tolerance, and the terminal event trace.
+
+The final page-ready videos, contact sheets, RGBD views, metrics, audits, and USDA stages are under `assets/project_page`. `PROJECT_PAGE.html` is the visual overview and `TECHNICAL_REPORT.html` is the detailed implementation report.
+
+The external ROS 2 and MoveIt `FollowJointTrajectory` process was not installed or commissioned. The final integrated runner uses Isaac Sim Lula inverse kinematics and the real Isaac articulation controller. External MoveIt execution remains a review item in T016, not a claimed result. T015 remains blocked on real camera, conveyor, product, gripper, cutter, OEM controller, hygienic design, and safety data.
+
+The final `run_tests.ps1` command passed from a clean process state. Evidence is `results/full_suite/20260827_045748119`. It reported 147 Python tests passed, setup validation passed, the focused Scene 2 ROS and compliant-gripper gate passed, and both final integrated artifact audits passed. No Isaac Sim or Kit process remained afterward.
+
 ## Continuous pickup correction, 2026-08-27
 
 The previous page video is rejected as pickup evidence. It moved a test workpiece to the grasp pose after a camera cut and allowed the oversized pads to intersect the conveyor. The file remains only as historical screening evidence. It is no longer linked or presented on the project page.

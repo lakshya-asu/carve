@@ -1,14 +1,24 @@
 # Carve kinematics and MoveIt plan
 
-Date: 2026-08-26
+Date: 2026-08-27
 
 ## Decision
 
-Use ROS 2 Humble and MoveIt 2 outside Isaac Sim. Isaac Sim owns physics, rendered sensors, contacts, simulation time, and articulation execution. MoveIt owns collision-aware arm planning and trajectory timing.
+The final in-simulator pipeline uses Isaac Sim Lula inverse kinematics and the Isaac articulation controller. Isaac Sim owns physics, rendered sensors, contacts, simulation time, collision-clear motion phases, trajectory sampling, and actuator execution.
+
+ROS 2 Humble and MoveIt 2 remain the proposed external production-style planner boundary. A live MoveIt process was not installed or commissioned during this build.
 
 Windows 11 is the supported Humble configuration for the installed Isaac Sim 6.0.1 bridge. Ubuntu under WSL 2 is already present on this workstation, but ROS 2 and MoveIt are not installed there. The project does not install them automatically.
 
-## Deliberate limits
+## Implemented in-simulator kinematics
+
+`isaac_sim/run_scene2_integrated.py` solves FANUC flange targets with the project Lula robot description. It uses a collision-clear pregrasp, vertical descent, timed interception, finger-only closure while the arm holds measured state, Cartesian lift and carry segments, cutter-frame alignment, release, and retract. Each controller command is checked against joint position, velocity, and acceleration limits. The final A and B runs recorded zero violations.
+
+The product is coupled to the moving conveyor through a deterministic fixed-step kinematic fixture before grasp. Bilateral pad contact is mandatory. After confirmation the product becomes a dynamic PhysX rigid body. Lift, transport, buffer handling, alignment, and release perform no product pose writes.
+
+This internal controller is the validated simulator path. It is not an OEM controller model and does not claim real collision margins or dynamic performance.
+
+## Deliberate external MoveIt limits
 
 The first version does not use MoveIt Task Constructor, MoveIt Servo, or a custom planner. It uses:
 
@@ -79,7 +89,7 @@ Outputs:
 
 - reserve, plan, execute, cancel, reject, and recover decisions
 
-## Command path
+## Proposed external command path
 
 MoveIt sends `control_msgs/action/FollowJointTrajectory` to the Carve trajectory bridge. The bridge validates joint names, limits, timestamps, and start-state tolerance. It samples the accepted trajectory using `/clock` and publishes one six-joint command for each Isaac physics step. Isaac applies the command through the FANUC articulation controller and returns measured state.
 
@@ -108,7 +118,9 @@ The viewer should show:
 
 The headless gate passed twice on 2026-08-26 with the same saved-stage hash and identical ROS metrics. Each run published 720 clock messages, 180 measured joint states, 45 RGB frames, 45 depth frames, and 45 camera calibration messages. The in-process DDS probe received every stream type. Isaac rejected the deliberately partial command. It accepted one complete command and applied it through the FANUC articulation controller. The maximum final joint error was 0.000836 rad.
 
-The gate does not test MoveIt, a trajectory action server, stale trajectory cancellation, dynamic collision objects, or conveyor interception. ROS 2 and MoveIt are not installed in the existing WSL 2 environment, and this project does not install system software without separate authorization.
+The focused ROS gate does not test MoveIt, a trajectory action server, stale trajectory cancellation, or dynamic MoveIt collision objects. ROS 2 and MoveIt are not installed in the existing WSL 2 environment, and this project does not install system software without separate authorization.
+
+The complete conveyor interception task is nevertheless validated inside Isaac Sim through the internal Lula and articulation path described above. This is separate from, and does not imply, MoveIt validation.
 
 The next gate implements the standard trajectory action bridge, builds the FANUC MoveIt configuration in an existing ROS 2 environment, and replaces the probe command with a collision-checked trajectory.
 

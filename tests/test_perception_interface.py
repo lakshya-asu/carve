@@ -90,3 +90,28 @@ def test_yolo_adapter_converts_learned_mask_and_depth_to_observation(tmp_path, m
     assert observations[0].class_name == "meat_reference"
     assert observations[0].instance_mask_rle
     assert observations[0].detection_id.startswith("yolo26-")
+
+
+def test_yolo_adapter_converts_visible_surface_depth_to_object_center(tmp_path, monkeypatch) -> None:
+    weights = tmp_path / "best.pt"
+    weights.write_bytes(b"test-checkpoint")
+    monkeypatch.setattr("isaac_sim.yolo_perception.ultralytics_version", lambda: "test")
+    model = YOLO26SegmentationModel(
+        weights_path=weights,
+        seed=7,
+        latency_sigma_s=0.0,
+        timestamp_jitter_sigma_s=0.0,
+        position_noise_sigma_m=0.0,
+        yaw_noise_sigma_rad=0.0,
+        surface_to_center_offset_m=0.04,
+    )
+    mask = np.zeros((100, 120), dtype=bool)
+    mask[40:60, 50:80] = True
+    monkeypatch.setattr(model, "_predict_masks", lambda image: ((mask, 0.91, "item"),))
+    rgb = np.zeros((100, 120, 3), dtype=np.uint8)
+    depth = np.full((100, 120), 2.05, dtype=np.float32)
+    calibration = PinholeCalibration(1.0, 0.0, 3.0, 100.0, 100.0, 60.0, 50.0, 0.84, 0.0, 0.0)
+
+    observation = model.infer(rgb, depth, SimTime(0), calibration)[0]
+
+    assert observation.pose_belt.translation.z_m == pytest.approx(0.91)

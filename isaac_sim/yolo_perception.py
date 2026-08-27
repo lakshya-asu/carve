@@ -39,6 +39,9 @@ class YOLO26SegmentationModel:
         yaw_noise_sigma_rad: float = math.radians(0.8),
         minimum_component_pixels: int = 40,
         device: str = "cpu",
+        refine_color_mask: bool = False,
+        refinement_species: str = "pork",
+        surface_to_center_offset_m: float = 0.0,
     ) -> None:
         path = Path(weights_path).resolve()
         if not path.is_file():
@@ -47,7 +50,12 @@ class YOLO26SegmentationModel:
             raise ValueError("YOLO confidence threshold must be in (0, 1]")
         if latency_mean_s < 0.0 or latency_sigma_s < 0.0 or timestamp_jitter_sigma_s < 0.0:
             raise ValueError("Perception latency and jitter values must be nonnegative")
-        if position_noise_sigma_m < 0.0 or yaw_noise_sigma_rad < 0.0 or minimum_component_pixels <= 0:
+        if (
+            position_noise_sigma_m < 0.0
+            or yaw_noise_sigma_rad < 0.0
+            or minimum_component_pixels <= 0
+            or surface_to_center_offset_m < 0.0
+        ):
             raise ValueError("Perception noise must be nonnegative and component size positive")
         self.weights_path = path
         self.weights_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -60,7 +68,17 @@ class YOLO26SegmentationModel:
         self.position_noise_sigma_m = position_noise_sigma_m
         self.yaw_noise_sigma_rad = yaw_noise_sigma_rad
         self.minimum_component_pixels = minimum_component_pixels
+        self.surface_to_center_offset_m = surface_to_center_offset_m
         self.device = device
+        if refinement_species not in {"beef", "pork", "chicken"}:
+            raise ValueError("Refinement species must be beef, pork, or chicken")
+        self.refine_color_mask = refine_color_mask
+        self.refinement_species = refinement_species
+        if refine_color_mask:
+            self.model_name = (
+                f"ultralytics_yolo26_seg_plus_{refinement_species}_color_refinement_v1@"
+                f"{self.weights_sha256[:12]}"
+            )
         self._rng = random.Random(seed)
         self._frame_index = 0
         self.last_wall_inference_s: float | None = None
@@ -143,6 +161,46 @@ class YOLO26SegmentationModel:
             # Both labels refer to class index zero in this dedicated checkpoint.
             if class_name not in {"meat_reference", "item"}:
                 continue
+            if self.refine_color_mask:
+                colors = image[..., :3].astype(np.float32)
+                if colors.max(initial=0.0) > 1.5:
+                    colors /= 255.0
+                red, green, blue = colors[..., 0], colors[..., 1], colors[..., 2]
+                if self.refinement_species == "chicken":
+                    color_mask = (
+                        (red > 0.50)
+                        & (green > red * 0.45)
+                        & (green < red * 0.90)
+                        & (blue > red * 0.35)
+                        & (blue < red * 0.85)
+                    )
+                elif self.refinement_species == "pork":
+                    color_mask = (
+                        (red > 0.45)
+                        & (red > green * 1.45)
+                        & (red > blue * 1.35)
+                        & (green < 0.55)
+                        & (blue < 0.60)
+                    )
+                else:
+                    color_mask = (red > 0.28) & (red > green * 1.45) & (red > blue * 1.45) & (green < 0.38)
+                from scipy import ndimage
+
+                labels, label_count = ndimage.label(color_mask)
+                proposal = np.asarray(component, dtype=bool)
+                overlapping_labels, overlap_counts = np.unique(
+                    labels[proposal & (labels > 0)],
+                    return_counts=True,
+                )
+                if overlapping_labels.size:
+                    # Keep exactly one connected component. A broad proposal can
+                    # touch red machine geometry as well as the product. Unioning
+                    # every touched component biases the centroid toward that
+                    # stationary geometry even while the product is moving.
+                    selected_label = int(overlapping_labels[int(np.argmax(overlap_counts))])
+                    refined = labels == selected_label
+                    if int(np.count_nonzero(refined)) >= self.minimum_component_pixels:
+                        component = refined
             rows, columns = np.nonzero(component)
             if rows.size < self.minimum_component_pixels:
                 continue
@@ -155,7 +213,11 @@ class YOLO26SegmentationModel:
             v = float(rows.mean())
             x_world = calibration.camera_x_world_m + (u - calibration.cx_px) / calibration.fx_px * distance
             y_world = calibration.camera_y_world_m - (v - calibration.cy_px) / calibration.fy_px * distance
-            z_world = calibration.camera_z_world_m - distance
+            # A depth camera observes the visible top surface. Downstream robot
+            # planning consumes an object-center pose, so a recipe-specific
+            # surface-to-center offset is applied explicitly instead of hiding
+            # the correction in a task script.
+            z_world = calibration.camera_z_world_m - distance - self.surface_to_center_offset_m
             centered = np.column_stack((columns - u, -(rows - v)))
             covariance = centered.T @ centered / max(1, centered.shape[0] - 1)
             eigenvalues, eigenvectors = np.linalg.eigh(covariance)

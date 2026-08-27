@@ -29,8 +29,21 @@ def main() -> int:
         top_down = np.asarray((2.0**-0.5, 0.0, 2.0**-0.5, 0.0), dtype=float)
         warm_start = np.asarray((0.0, 1.2, 0.4, 0.0, -0.77, 0.0), dtype=float)
         targets = []
-        for product_x in (-0.55, -0.25, 0.05, 0.35):
-            product_center = np.asarray((product_x, 0.0, 0.875), dtype=float)
+        probes = (
+            ("intercept_start", (-0.55, 0.0, 0.875)),
+            ("intercept_mid", (-0.25, 0.0, 0.875)),
+            ("intercept_end", (0.05, 0.0, 0.875)),
+            ("compliance_high", (0.05, 0.0, 1.10)),
+            ("intercept_limit", (0.35, 0.0, 0.875)),
+            ("cutter_tray_current", (1.92, 0.0, 0.88)),
+            ("cutter_candidate_140", (1.40, 0.0, 0.88)),
+            ("cutter_candidate_130", (1.30, 0.0, 0.88)),
+            ("cutter_candidate_120", (1.20, 0.0, 0.88)),
+            ("buffer", (1.25, -0.55, 0.88)),
+            ("reject", (1.25, -0.70, 0.98)),
+        )
+        for label, center in probes:
+            product_center = np.asarray(center, dtype=float)
             flange_position = product_center + np.asarray((0.0, 0.0, 0.35), dtype=float)
             joints, success = solver.compute_inverse_kinematics(
                 "ee_link",
@@ -41,6 +54,7 @@ def main() -> int:
                 orientation_tolerance=0.02,
             )
             entry = {
+                "label": label,
                 "product_center_m": product_center.tolist(),
                 "flange_target_m": flange_position.tolist(),
                 "success": bool(success),
@@ -53,7 +67,9 @@ def main() -> int:
                 warm_start = np.asarray(joints, dtype=float)
             targets.append(entry)
         print(json.dumps({"targets": targets}, indent=2))
-        return 0 if any(item["success"] for item in targets) else 1
+        required = {"intercept_mid", "intercept_end", "cutter_candidate_130", "buffer", "reject"}
+        passed = all(item["success"] for item in targets if item["label"] in required)
+        return 0 if passed else 1
     finally:
         app.close()
 

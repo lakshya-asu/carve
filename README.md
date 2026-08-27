@@ -8,18 +8,17 @@ Open `PROJECT_PAGE.html` for the visual project overview, rendered Isaac Sim vid
 .\open_project_page.ps1
 ```
 
-The main page video now uses the Scene 2 FANUC cell and a clear virtual presentation camera. It demonstrates standard-arm articulation, the rebuilt guided parallel jaws, bilateral contact, a gravity hold, and physical release. The workpiece is placed at the grasp test pose, so this is not a conveyor pickup claim. The older overhead recording remains available as the complete Scene 1 YOLO-to-delivery evidence. The final YOLO-to-FANUC connection remains T016.
+The main page now embeds the final Solution A and Solution B Scene 2 recordings. Both runs use rendered RGBD, YOLO26, tracking, prediction, moving-conveyor interception, the FANUC articulation controller, bilateral PhysX contact, dynamic rigid-body transport, cutter-frame alignment, tray release, verification, and retract. Solution B adds buffer re-observation, slip correction, and regrasp.
 
-Re-render the presentation angle or record the standard-arm demonstration with:
+Run both complete recorded cycles with:
 
 ```powershell
-.\render_scene2_camera_options.ps1
-.\record_scene2_demo.ps1
+.\run_scene2_full.ps1
 ```
 
-Carve is a runnable Isaac Sim 6.0.1 project for vision-guided robotic handling of beef, pork, and chicken cuts on a moving conveyor. The current reference cell operates at a nominal conveyor speed of 2.24 m/s and releases aligned products onto a stationary cutter-entry tray.
+Carve is a runnable Isaac Sim 6.0.1 project for vision-guided robotic handling of beef, pork, and chicken reference cuts on a moving conveyor. The final integrated demonstration operates at 0.10 m/s and releases aligned products into a stationary cutter-entry tray.
 
-The saved USD cell includes a conveyor, dynamic meat workpieces, a generic six-joint Cartesian articulation, a compliant two-finger gripper reference, overhead and wrist cameras, calibration frames, guards, a reject bin, `cut_target_frame`, a guarded cutter or feed reference, PLC state, and the Solution B buffer.
+The saved USD cell includes a conveyor, rigid meat reference workpieces, a FANUC M-10iD/12 official-description reference articulation, a compact compliant two-finger gripper reference, overhead and buffer cameras, calibration frames, guards, a reject bin, `cut_target_frame`, a guarded cutter reference, PLC state, and the Solution B centering buffer.
 
 All robot motion in the integrated demonstration goes through the Isaac articulation controller. All primary observations come from rendered RGB and depth through a replaceable segmentation interface. Simulator ground truth is not used as the primary perception result.
 
@@ -33,16 +32,22 @@ Run setup validation:
 .\validate_setup.ps1
 ```
 
-Run four seeded Solution A cycles:
+Run the final integrated Solution A cycle:
 
 ```powershell
 .\run_solution_a.ps1
 ```
 
-Run four seeded Solution B cycles:
+Run the final integrated Solution B cycle:
 
 ```powershell
 .\run_solution_b.ps1
+```
+
+Run both final integrated cycles:
+
+```powershell
+.\run_scene2_full.ps1
 ```
 
 Run a catalog product recipe without replacing the baseline artifacts:
@@ -64,7 +69,7 @@ Audit all six recipe artifacts, rendered RGB and depth files, traces, expected r
 C:\Users\jainl\is6\Scripts\python.exe tools\audit_artifacts.py --root results\recipes --mode recipes --output results\recipes\artifact_audit.json
 ```
 
-The recipe runs currently use deterministic rendered color and depth segmentation. The existing YOLO26 checkpoint was trained on the earlier generic reference workpiece. It must be retrained and validated on the three recipe appearances before it can be claimed as multi-recipe perception.
+The recipe matrix is historical screening evidence from the earlier abstract cell. The final FANUC demonstration uses `models/yolo26_meat_reference_buffer_v2/weights/best.pt`. That checkpoint is trained on synthetic reference imagery and buffer augmentation. It is not validated as a real multi-recipe meat detector.
 
 Run the unit tests, setup validation, and both integrated suites:
 
@@ -84,7 +89,7 @@ Run the focused Scene 2.0 compliant-gripper load, hold, release, and recovery ga
 .\validate_compliant_gripper.ps1
 ```
 
-This gate uses the ROS 2 Humble libraries bundled with Isaac Sim. It publishes fixed simulation time, measured FANUC joint states, rendered RGB, rendered depth, and camera calibration over DDS. It also proves command rejection and real articulation-controller execution. The external MoveIt process is the next gate and is not yet installed or tested on this workstation.
+This focused bridge uses the ROS 2 Humble libraries bundled with Isaac Sim. It publishes fixed simulation time, measured FANUC joint states, rendered RGB, rendered depth, and camera calibration over DDS. It also proves command rejection and real articulation-controller execution. The complete task runner uses Isaac Lula IK and the articulation controller. The external MoveIt process is not installed or commissioned on this workstation.
 
 Run the bounded five-seed hardening matrix for both solutions:
 

@@ -1,0 +1,1969 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    endTimeCode = 1000000.0000000001
+    metersPerUnit = 1
+    startTimeCode = 0
+    timeCodesPerSecond = 240
+    upAxis = "Z"
+)
+
+def "Render" (
+    hide_in_stage_window = true
+    no_delete = true
+)
+{
+    def "OmniverseKit"
+    {
+        def "HydraTextures" (
+            hide_in_stage_window = true
+            no_delete = true
+        )
+        {
+            def RenderProduct "omni_kit_widget_viewport_ViewportTexture_0" (
+                prepend apiSchemas = ["OmniRtxSettingsCommonAdvancedAPI_1", "OmniRtxSettingsRtAdvancedAPI_1", "OmniRtxSettingsPtAdvancedAPI_1", "OmniRtxPostColorGradingAPI_1", "OmniRtxPostChromaticAberrationAPI_1", "OmniRtxPostBloomPhysicalAPI_1", "OmniRtxPostMatteObjectAPI_1", "OmniRtxPostCompositingAPI_1", "OmniRtxPostDofAPI_1", "OmniRtxPostMotionBlurAPI_1", "OmniRtxPostTvNoiseAPI_1", "OmniRtxPostTonemapIrayReinhardAPI_1", "OmniRtxPostDebugSettingsAPI_1", "OmniRtxDebugSettingsAPI_1"]
+                hide_in_stage_window = true
+                no_delete = true
+            )
+            {
+                rel camera = </OmniverseKit_Persp>
+                token omni:rtx:ambientOcclusion:denoiserMode = "none"
+                token omni:rtx:background:source:texture:textureMode = "repeatMirrored"
+                token omni:rtx:background:source:type = "domeLight"
+                bool omni:rtx:debug:view:pixelDebug:enableFixedTextPos = 1
+                token omni:rtx:directLighting:sampledLighting:denoisingTechnique = "None"
+                bool omni:rtx:dlss:frameGeneration = 0
+                float3 omni:rtx:domeLight:rotationAxis = (0, 0, 1)
+                bool omni:rtx:indirectDiffuse:denoiser:enabled = 0
+                bool omni:rtx:material:db:syncLoads = 1
+                token omni:rtx:post:dlss:execMode = "performance"
+                bool omni:rtx:post:registeredCompositing:invertColorCorrection = 1
+                bool omni:rtx:post:registeredCompositing:invertToneMap = 1
+                bool omni:rtx:pt:adaptiveSampling:filterError = 0
+                uint omni:rtx:pt:adaptiveSampling:fixedSppIterations = 2
+                int omni:rtx:pt:clampSpp = 64
+                uint omni:rtx:pt:limits:maxBounces = 3
+                uint omni:rtx:pt:limits:maxGlossyBounces = 3
+                uint omni:rtx:pt:maxSamplesPerLaunch = 2073600
+                uint omni:rtx:pt:mgpu:maxPixelsPerRegionExponent = 12
+                int omni:rtx:pt:samplesPerIteration = 64
+                uint omni:rtx:pt:samplesPerPixel = 64
+                bool omni:rtx:reflections:denoiser:enabled = 0
+                token omni:rtx:rendermode = "RealTimePathTracing"
+                color3f omni:rtx:rt:ambientLight:color = (0.1, 0.1, 0.1)
+                bool omni:rtx:rt:demoire = 0
+                bool omni:rtx:rt:ecoMode:enabled = 0
+                bool omni:rtx:rt:lightcache:spatialCache:dontResolveConflicts = 1
+                int omni:rtx:rt:sss:samples = 1
+                uint omni:rtx:rtpt:maxVolumeBounces = 15
+                float omni:rtx:rtpt:modulatingRoughnessThreshold = 0.08
+                bool omni:rtx:scene:hydra:materialSyncLoads = 1
+                bool omni:rtx:scene:hydra:mdlMaterialWarmup = 1
+                rel orderedVars = </Render/Vars/LdrColor>
+                custom bool overrideClipRange = 0
+                uniform int2 resolution = (1280, 720)
+            }
+        }
+    }
+
+    def RenderSettings "OmniverseGlobalRenderSettings" (
+        prepend apiSchemas = ["OmniRtxSettingsGlobalRtAdvancedAPI_1", "OmniRtxSettingsGlobalPtAdvancedAPI_1"]
+        no_delete = true
+    )
+    {
+        rel products = </Render/OmniverseKit/HydraTextures/omni_kit_widget_viewport_ViewportTexture_0>
+    }
+
+    def "Vars"
+    {
+        def RenderVar "LdrColor" (
+            hide_in_stage_window = true
+            no_delete = true
+        )
+        {
+            uniform string sourceName = "LdrColor"
+            uniform token sourceType = "raw"
+        }
+    }
+}
+over "OmniverseKit_Persp"
+{
+    float exposure:fStop = 5
+    float exposure:responsivity = 1.1026709
+    float exposure:time = 0.02
+}
+
+def Xform "World"
+{
+    custom double meatcell:conveyorSpeedMps = 0.1
+    custom string meatcell:referenceAssetNotice = "FANUC visual and kinematic reference from the official description. The cell equipment and tool are project reference models. No physical or safety validation is claimed."
+    custom bool meatcell:sceneReady = 1
+    custom string meatcell:sceneVersion = "2.0"
+
+    def PhysicsScene "PhysicsScene" (
+        prepend apiSchemas = ["NewtonSceneAPI", "PhysxSceneAPI"]
+    )
+    {
+        vector3f physics:gravityDirection = (0, 0, -1)
+        float physics:gravityMagnitude = 9.80665
+        uniform token physxScene:broadphaseType = "MBP"
+        bool physxScene:enableCCD = 1
+        bool physxScene:enableGPUDynamics = 0
+        bool physxScene:enableStabilization = 1
+        uniform token physxScene:solverType = "TGS"
+        uint physxScene:timeStepsPerSecond = 240
+    }
+
+    def Xform "Looks"
+    {
+        def Material "Floor"
+        {
+            token outputs:surface.connect = </World/Looks/Floor/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.32, 0.35, 0.38)
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.78
+                token outputs:surface
+            }
+        }
+
+        def Material "Steel"
+        {
+            token outputs:surface.connect = </World/Looks/Steel/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.58, 0.62, 0.65)
+                float inputs:metallic = 0.85
+                float inputs:opacity = 1
+                float inputs:roughness = 0.22
+                token outputs:surface
+            }
+        }
+
+        def Material "DarkSteel"
+        {
+            token outputs:surface.connect = </World/Looks/DarkSteel/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.16, 0.19, 0.22)
+                float inputs:metallic = 0.75
+                float inputs:opacity = 1
+                float inputs:roughness = 0.3
+                token outputs:surface
+            }
+        }
+
+        def Material "Belt"
+        {
+            token outputs:surface.connect = </World/Looks/Belt/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.055, 0.085, 0.105)
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.72
+                token outputs:surface
+            }
+        }
+
+        def Material "SafetyYellow"
+        {
+            token outputs:surface.connect = </World/Looks/SafetyYellow/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.96, 0.69, 0.04)
+                float inputs:metallic = 0.12
+                float inputs:opacity = 1
+                float inputs:roughness = 0.34
+                token outputs:surface
+            }
+        }
+
+        def Material "SafetyOrange"
+        {
+            token outputs:surface.connect = </World/Looks/SafetyOrange/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.92, 0.29, 0.045)
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.38
+                token outputs:surface
+            }
+        }
+
+        def Material "ToolBlue"
+        {
+            token outputs:surface.connect = </World/Looks/ToolBlue/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.025, 0.24, 0.31)
+                float inputs:metallic = 0.55
+                float inputs:opacity = 1
+                float inputs:roughness = 0.26
+                token outputs:surface
+            }
+        }
+
+        def Material "SoftPad" (
+            prepend apiSchemas = ["PhysicsMaterialAPI"]
+        )
+        {
+            token outputs:surface.connect = </World/Looks/SoftPad/PreviewSurface.outputs:surface>
+            float physics:dynamicFriction = 1
+            float physics:restitution = 0
+            float physics:staticFriction = 1.2
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.2, 0.78, 0.71)
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.88
+                token outputs:surface
+            }
+        }
+
+        def Material "Meat" (
+            prepend apiSchemas = ["PhysicsMaterialAPI"]
+        )
+        {
+            token outputs:surface.connect = </World/Looks/Meat/PreviewSurface.outputs:surface>
+            float physics:dynamicFriction = 0.5
+            float physics:restitution = 0
+            float physics:staticFriction = 0.65
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.62, 0.1, 0.11)
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.76
+                token outputs:surface
+            }
+        }
+
+        def Material "Glass"
+        {
+            token outputs:surface.connect = </World/Looks/Glass/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.42, 0.74, 0.82)
+                float inputs:metallic = 0
+                float inputs:opacity = 0.23
+                float inputs:roughness = 0.08
+                token outputs:surface
+            }
+        }
+
+        def Material "Sensor"
+        {
+            token outputs:surface.connect = </World/Looks/Sensor/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.035, 0.04, 0.05)
+                float inputs:metallic = 0.55
+                float inputs:opacity = 1
+                float inputs:roughness = 0.22
+                token outputs:surface
+            }
+        }
+
+        def Material "SignalGreen"
+        {
+            token outputs:surface.connect = </World/Looks/SignalGreen/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.05, 0.32, 0.08)
+                color3f inputs:emissiveColor = (0.1, 1, 0.2)
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.3
+                token outputs:surface
+            }
+        }
+    }
+
+    def Xform "Cell"
+    {
+        def Xform "Frames"
+        {
+            def Xform "conveyor"
+            {
+                custom string meatcell:frameName = "conveyor"
+                custom string meatcell:role = "named_coordinate_frame"
+                custom string meatcell:status = "defined"
+                double3 xformOp:translate = (0, 0, 0.78)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Xform "belt_surface"
+            {
+                custom string meatcell:frameName = "belt_surface"
+                custom string meatcell:role = "named_coordinate_frame"
+                custom string meatcell:status = "defined"
+                double3 xformOp:translate = (0, 0, 0.8075)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Xform "robot_base"
+            {
+                custom string meatcell:frameName = "robot_base"
+                custom string meatcell:role = "named_coordinate_frame"
+                custom string meatcell:status = "defined"
+                double3 xformOp:translate = (0.35, -1.25, 0.59)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Xform "tool0"
+            {
+                custom string meatcell:frameName = "tool0"
+                custom string meatcell:role = "named_coordinate_frame"
+                custom string meatcell:status = "defined"
+                double3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Xform "cut_target_frame"
+            {
+                custom string meatcell:frameName = "cut_target_frame"
+                custom string meatcell:role = "named_coordinate_frame"
+                custom string meatcell:status = "defined"
+                double3 xformOp:translate = (1.25, -0.82, 0.91)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Xform "cutter_feed_frame"
+            {
+                custom string meatcell:frameName = "cutter_feed_frame"
+                custom string meatcell:role = "named_coordinate_frame"
+                custom string meatcell:status = "defined"
+                double3 xformOp:translate = (1.43, -0.82, 0.94)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Xform "buffer_frame"
+            {
+                custom string meatcell:frameName = "buffer_frame"
+                custom string meatcell:role = "named_coordinate_frame"
+                custom string meatcell:status = "defined"
+                double3 xformOp:translate = (0.62, -0.7, 0.91)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Xform "reject_frame"
+            {
+                custom string meatcell:frameName = "reject_frame"
+                custom string meatcell:role = "named_coordinate_frame"
+                custom string meatcell:status = "defined"
+                double3 xformOp:translate = (1.45, -1.65, 0.38)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Xform "camera"
+            {
+                custom string meatcell:frameName = "camera"
+                custom string meatcell:role = "named_coordinate_frame"
+                custom string meatcell:status = "defined"
+                double3 xformOp:translate = (-0.35, 0, 2.31)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Xform "buffer_camera"
+            {
+                custom string meatcell:frameName = "buffer_camera"
+                custom string meatcell:role = "named_coordinate_frame"
+                custom string meatcell:status = "defined"
+                double3 xformOp:translate = (0.62, -0.7, 1.76)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Xform "camera_calibration_target"
+            {
+                custom string meatcell:frameName = "camera_calibration_target"
+                custom string meatcell:role = "named_coordinate_frame"
+                custom string meatcell:status = "defined"
+                double3 xformOp:translate = (-0.35, 0, 0.82)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+        }
+
+        def Cube "Floor" (
+            prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+        )
+        {
+            rel material:binding = </World/Looks/Floor>
+            custom string meatcell:role = "washdown_floor_reference"
+            custom string meatcell:status = "reference"
+            double size = 1
+            float3 xformOp:rotateXYZ = (0, 0, 0)
+            float3 xformOp:scale = (6.4, 4.8, 0.1)
+            double3 xformOp:translate = (0.3, 0, -0.05)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+        }
+
+        def Cube "Drain_R" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            rel material:binding = </World/Looks/DarkSteel>
+            custom string meatcell:role = "floor_drain_reference"
+            custom string meatcell:status = "reference"
+            double size = 1
+            float3 xformOp:rotateXYZ = (0, 0, 0)
+            float3 xformOp:scale = (5.6, 0.11, 0.018)
+            double3 xformOp:translate = (0.2, -1.72, 0.01)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+        }
+
+        def Cube "Drain_L" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            rel material:binding = </World/Looks/DarkSteel>
+            custom string meatcell:role = "floor_drain_reference"
+            custom string meatcell:status = "reference"
+            double size = 1
+            float3 xformOp:rotateXYZ = (0, 0, 0)
+            float3 xformOp:scale = (5.6, 0.11, 0.018)
+            double3 xformOp:translate = (0.2, 1.72, 0.01)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+        }
+
+        def Xform "Conveyor"
+        {
+            def Cube "Belt" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Belt>
+                custom string meatcell:role = "moving_conveyor_belt"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (4.4, 0.88, 0.055)
+                double3 xformOp:translate = (0, 0, 0.78)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Rail_R" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "conveyor_side_rail"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (4.55, 0.065, 0.14)
+                double3 xformOp:translate = (0, -0.49, 0.86)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Rail_L" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "conveyor_side_rail"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (4.55, 0.065, 0.14)
+                double3 xformOp:translate = (0, 0.49, 0.86)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cylinder "Roller_m1_9" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                uniform token axis = "Y"
+                double height = 0.82
+                rel material:binding = </World/Looks/DarkSteel>
+                custom string meatcell:role = "conveyor_roller"
+                custom string meatcell:status = "reference"
+                double radius = 0.095
+                double3 xformOp:translate = (-1.9, 0, 0.72)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Cube "Leg_m1_9_R" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "conveyor_support"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.09, 0.09, 0.72)
+                double3 xformOp:translate = (-1.9, -0.36, 0.37)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Leg_m1_9_L" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "conveyor_support"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.09, 0.09, 0.72)
+                double3 xformOp:translate = (-1.9, 0.36, 0.37)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cylinder "Roller_m0_65" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                uniform token axis = "Y"
+                double height = 0.82
+                rel material:binding = </World/Looks/DarkSteel>
+                custom string meatcell:role = "conveyor_roller"
+                custom string meatcell:status = "reference"
+                double radius = 0.095
+                double3 xformOp:translate = (-0.65, 0, 0.72)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Cube "Leg_m0_65_R" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "conveyor_support"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.09, 0.09, 0.72)
+                double3 xformOp:translate = (-0.65, -0.36, 0.37)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Leg_m0_65_L" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "conveyor_support"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.09, 0.09, 0.72)
+                double3 xformOp:translate = (-0.65, 0.36, 0.37)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cylinder "Roller_0_65" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                uniform token axis = "Y"
+                double height = 0.82
+                rel material:binding = </World/Looks/DarkSteel>
+                custom string meatcell:role = "conveyor_roller"
+                custom string meatcell:status = "reference"
+                double radius = 0.095
+                double3 xformOp:translate = (0.65, 0, 0.72)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Cube "Leg_0_65_R" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "conveyor_support"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.09, 0.09, 0.72)
+                double3 xformOp:translate = (0.65, -0.36, 0.37)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Leg_0_65_L" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "conveyor_support"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.09, 0.09, 0.72)
+                double3 xformOp:translate = (0.65, 0.36, 0.37)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cylinder "Roller_1_9" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                uniform token axis = "Y"
+                double height = 0.82
+                rel material:binding = </World/Looks/DarkSteel>
+                custom string meatcell:role = "conveyor_roller"
+                custom string meatcell:status = "reference"
+                double radius = 0.095
+                double3 xformOp:translate = (1.9, 0, 0.72)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Cube "Leg_1_9_R" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "conveyor_support"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.09, 0.09, 0.72)
+                double3 xformOp:translate = (1.9, -0.36, 0.37)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Leg_1_9_L" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "conveyor_support"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.09, 0.09, 0.72)
+                double3 xformOp:translate = (1.9, 0.36, 0.37)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+        }
+
+        def Cube "RobotPedestal" (
+            prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+        )
+        {
+            rel material:binding = </World/Looks/Steel>
+            custom string meatcell:role = "robot_pedestal"
+            custom string meatcell:status = "reference"
+            double size = 1
+            float3 xformOp:rotateXYZ = (0, 0, 0)
+            float3 xformOp:scale = (0.78, 0.78, 0.52)
+            double3 xformOp:translate = (0.35, -1.25, 0.26)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+        }
+
+        def Cube "RobotPedestalTop" (
+            prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+        )
+        {
+            rel material:binding = </World/Looks/DarkSteel>
+            custom string meatcell:role = "robot_mounting_plate"
+            custom string meatcell:status = "reference"
+            double size = 1
+            float3 xformOp:rotateXYZ = (0, 0, 0)
+            float3 xformOp:scale = (0.88, 0.88, 0.065)
+            double3 xformOp:translate = (0.35, -1.25, 0.55)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+        }
+
+        def "RobotBolts"
+        {
+            def Cylinder "B_m0_31_m0_31" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                uniform token axis = "Z"
+                double height = 0.09
+                rel material:binding = </World/Looks/DarkSteel>
+                custom string meatcell:role = "pedestal_anchor"
+                custom string meatcell:status = "reference"
+                double radius = 0.025
+                double3 xformOp:translate = (0.03999999999999998, -1.56, 0.605)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Cylinder "B_m0_31_0_31" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                uniform token axis = "Z"
+                double height = 0.09
+                rel material:binding = </World/Looks/DarkSteel>
+                custom string meatcell:role = "pedestal_anchor"
+                custom string meatcell:status = "reference"
+                double radius = 0.025
+                double3 xformOp:translate = (0.03999999999999998, -0.94, 0.605)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Cylinder "B_0_31_m0_31" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                uniform token axis = "Z"
+                double height = 0.09
+                rel material:binding = </World/Looks/DarkSteel>
+                custom string meatcell:role = "pedestal_anchor"
+                custom string meatcell:status = "reference"
+                double radius = 0.025
+                double3 xformOp:translate = (0.6599999999999999, -1.56, 0.605)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Cylinder "B_0_31_0_31" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                uniform token axis = "Z"
+                double height = 0.09
+                rel material:binding = </World/Looks/DarkSteel>
+                custom string meatcell:role = "pedestal_anchor"
+                custom string meatcell:status = "reference"
+                double radius = 0.025
+                double3 xformOp:translate = (0.6599999999999999, -0.94, 0.605)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+        }
+
+        def Xform "FANUC_M10iD12" (
+            prepend references = @C:/Users/jainl/meat-conveyor-robot-simulation/assets/robots/fanuc_m10id12/usd/fanuc_m10id12_reference.usda@
+        )
+        {
+            custom string meatcell:model = "FANUC M-10iD/12"
+            custom string meatcell:role = "fanuc_m10id12_official_description_reference"
+            custom string meatcell:sourceCommit = "fb40c9803a826ba68c7c8e28ba904a25efa7fcd2"
+            custom string meatcell:status = "imported"
+            float xformOp:rotateZ = 90
+            double3 xformOp:translate = (0.35, -1.25, 0.59)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateZ"]
+
+            over "Physics"
+            {
+                over "J1" (
+                    prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+                )
+                {
+                    float drive:angular:physics:damping = 1400
+                    float drive:angular:physics:maxForce = 2000
+                    float drive:angular:physics:stiffness = 18000
+                    float drive:angular:physics:targetPosition = 0
+                    uniform token drive:angular:physics:type = "force"
+                }
+
+                over "J2" (
+                    prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+                )
+                {
+                    float drive:angular:physics:damping = 1400
+                    float drive:angular:physics:maxForce = 3000
+                    float drive:angular:physics:stiffness = 18000
+                    float drive:angular:physics:targetPosition = 0
+                    uniform token drive:angular:physics:type = "force"
+                }
+
+                over "J3" (
+                    prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+                )
+                {
+                    float drive:angular:physics:damping = 1400
+                    float drive:angular:physics:maxForce = 1000
+                    float drive:angular:physics:stiffness = 18000
+                    float drive:angular:physics:targetPosition = 0
+                    uniform token drive:angular:physics:type = "force"
+                }
+
+                over "J4" (
+                    prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+                )
+                {
+                    float drive:angular:physics:damping = 450
+                    float drive:angular:physics:maxForce = 100
+                    float drive:angular:physics:stiffness = 6000
+                    float drive:angular:physics:targetPosition = 0
+                    uniform token drive:angular:physics:type = "force"
+                }
+
+                over "J5" (
+                    prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+                )
+                {
+                    float drive:angular:physics:damping = 450
+                    float drive:angular:physics:maxForce = 100
+                    float drive:angular:physics:stiffness = 6000
+                    float drive:angular:physics:targetPosition = 0
+                    uniform token drive:angular:physics:type = "force"
+                }
+
+                over "J6" (
+                    prepend apiSchemas = ["PhysicsDriveAPI:angular"]
+                )
+                {
+                    float drive:angular:physics:damping = 450
+                    float drive:angular:physics:maxForce = 50
+                    float drive:angular:physics:stiffness = 6000
+                    float drive:angular:physics:targetPosition = 0
+                    uniform token drive:angular:physics:type = "force"
+                }
+
+                def PhysicsPrismaticJoint "finger_left" (
+                    prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysxJointAPI"]
+                )
+                {
+                    float drive:linear:physics:damping = 125
+                    float drive:linear:physics:maxForce = 70
+                    float drive:linear:physics:stiffness = 6250
+                    float drive:linear:physics:targetPosition = 0
+                    uniform token drive:linear:physics:type = "force"
+                    custom double meatcell:accelerationLimitMps2 = 1.5
+                    custom string meatcell:role = "force_limited_compliant_finger_joint"
+                    custom string meatcell:status = "actuated_reference"
+                    uniform token physics:axis = "Y"
+                    rel physics:body0 = </World/Cell/FANUC_M10iD12/Geometry/world/base_link/J1_link/J2_link/J3_link/J4_link/J5_link/J6_link/flange/ee_link>
+                    rel physics:body1 = </World/Cell/FANUC_M10iD12/Geometry/world/base_link/J1_link/J2_link/J3_link/J4_link/J5_link/J6_link/flange/ee_link/CompliantGripperLeftFinger>
+                    point3f physics:localPos0 = (0.35, 0.155, 0)
+                    point3f physics:localPos1 = (0, 0, 0)
+                    quatf physics:localRot0 = (1, 0, 0, 0)
+                    quatf physics:localRot1 = (1, 0, 0, 0)
+                    float physics:lowerLimit = -0.14
+                    float physics:upperLimit = 0
+                    float physxJoint:maxJointVelocity = 0.25
+                }
+
+                def PhysicsPrismaticJoint "finger_right" (
+                    prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysxJointAPI"]
+                )
+                {
+                    float drive:linear:physics:damping = 125
+                    float drive:linear:physics:maxForce = 70
+                    float drive:linear:physics:stiffness = 6250
+                    float drive:linear:physics:targetPosition = 0
+                    uniform token drive:linear:physics:type = "force"
+                    custom double meatcell:accelerationLimitMps2 = 1.5
+                    custom string meatcell:role = "force_limited_compliant_finger_joint"
+                    custom string meatcell:status = "actuated_reference"
+                    uniform token physics:axis = "Y"
+                    rel physics:body0 = </World/Cell/FANUC_M10iD12/Geometry/world/base_link/J1_link/J2_link/J3_link/J4_link/J5_link/J6_link/flange/ee_link>
+                    rel physics:body1 = </World/Cell/FANUC_M10iD12/Geometry/world/base_link/J1_link/J2_link/J3_link/J4_link/J5_link/J6_link/flange/ee_link/CompliantGripperRightFinger>
+                    point3f physics:localPos0 = (0.35, -0.155, 0)
+                    point3f physics:localPos1 = (0, 0, 0)
+                    quatf physics:localRot0 = (1, 0, 0, 0)
+                    quatf physics:localRot1 = (1, 0, 0, 0)
+                    float physics:lowerLimit = 0
+                    float physics:upperLimit = 0.14
+                    float physxJoint:maxJointVelocity = 0.25
+                }
+            }
+
+            over "Geometry"
+            {
+                over "world"
+                {
+                    over "base_link"
+                    {
+                        vector3f physics:angularVelocity = (0.03756958, -0.005411052, -0.008022527)
+                        vector3f physics:velocity = (-0.00000985071, -0.000085739004, 0.0000082328625)
+                        quatf xformOp:orient = (1, 3.687871e-8, 0.000002586778, 5.7294835e-7)
+                        double3 xformOp:translate = (-9.5367431640625e-7, 6.556511067401516e-8, -8.583069188716763e-8)
+                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+                        over "J1_link"
+                        {
+                            vector3f physics:angularVelocity = (0.037569582, -0.005411098, -0.016682362)
+                            vector3f physics:velocity = (-0.000025775807, -0.00026893738, 0.000028175014)
+                            quatf xformOp:orient = (1, 5.0049426e-8, 0.000002573594, -0.0000042317893)
+                            double3 xformOp:translate = (0.0000023841857907935804, -5.960464627419171e-8, 0.45000004768371926)
+
+                            over "J2_link"
+                            {
+                                vector3f physics:angularVelocity = (0.1235047, -0.005411853, -0.016682358)
+                                vector3f physics:velocity = (-0.00005389503, -0.0009881852, 0.000016046435)
+                                quatf xformOp:orient = (1, -1.580507e-8, 0.000022195587, -0.0000042315432)
+                                double3 xformOp:translate = (0.07500004768371604, -5.662441253662109e-7, -4.76837158203125e-7)
+
+                                over "J3_link"
+                                {
+                                    vector3f physics:angularVelocity = (0.07634256, -0.0054114405, -0.016682357)
+                                    vector3f physics:velocity = (-0.000055904587, -0.0017908195, 0.00019630551)
+                                    quatf xformOp:orient = (1, -3.951267e-8, 0.00003363582, -0.0000043155173)
+                                    double3 xformOp:translate = (0.00002849102020263672, 8.940696716308594e-8, 0.6400001049041748)
+
+                                    over "J4_link"
+                                    {
+                                        vector3f physics:angularVelocity = (0.07634225, -0.040265143, -0.016680015)
+                                        vector3f physics:velocity = (0.000036483696, -0.0019379336, 0.00069029635)
+                                        quatf xformOp:orient = (1, -0.000008620924, 0.000033590793, -0.0000043154814)
+                                        double3 xformOp:translate = (0.000013113021850585938, 0, 0.1950000524520874)
+
+                                        over "J5_link"
+                                        {
+                                            vector3f physics:angularVelocity = (0.06923201, -0.040265083, -0.01668014)
+                                            vector3f physics:velocity = (0.00011265389, -0.0019310424, 0.0010196257)
+                                            quatf xformOp:orient = (1, -0.000008634836, 0.000034281195, -0.0000042311644)
+                                            double3 xformOp:translate = (0.700000077486038, -0.000006228685379194854, -0.00004696846008300781)
+
+                                            over "J6_link"
+                                            {
+                                                vector3f physics:angularVelocity = (0.06923216, -0.02347459, -0.016681293)
+                                                vector3f physics:velocity = (0.0001220567, -0.001926679, 0.0010481133)
+                                                quatf xformOp:orient = (1, -0.000008567005, 0.00003431873, -0.0000043154573)
+                                                double3 xformOp:translate = (1.1102230246251565e-16, -2.9802322387695312e-8, 1.1920928955078125e-7)
+
+                                                over "flange"
+                                                {
+                                                    over "ee_link"
+                                                    {
+                                                        def Xform "CompliantGripperReference"
+                                                        {
+                                                            custom double meatcell:complianceMPerN = 0.00016
+                                                            custom double meatcell:contactPadHeightM = 0.1
+                                                            custom double meatcell:contactPadLengthM = 0.14
+                                                            custom string meatcell:mechanismType = "guided_parallel_jaw_with_force_limited_series_compliance_proxy"
+                                                            custom double meatcell:normalForceLimitN = 70
+                                                            custom double meatcell:normalForceSetpointN = 50
+                                                            custom double meatcell:openInnerGapM = 0.22
+                                                            custom bool meatcell:referenceOnly = 1
+                                                            custom string meatcell:role = "wide_compliant_parallel_jaw_reference"
+                                                            custom string meatcell:status = "simulated_mechanism"
+                                                            double3 xformOp:translate = (0, 0, 0)
+                                                            uniform token[] xformOpOrder = ["xformOp:translate"]
+
+                                                            def Cylinder "WristAdapter" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                uniform token axis = "X"
+                                                                double height = 0.12
+                                                                rel material:binding = </World/Looks/DarkSteel>
+                                                                custom string meatcell:role = "gripper_wrist_adapter"
+                                                                custom string meatcell:status = "reference"
+                                                                double radius = 0.095
+                                                                double3 xformOp:translate = (0.06, 0, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate"]
+                                                            }
+
+                                                            def Cube "DriveHousing" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                rel material:binding = </World/Looks/ToolBlue>
+                                                                custom string meatcell:role = "enclosed_gripper_linear_drive"
+                                                                custom string meatcell:status = "reference"
+                                                                double size = 1
+                                                                float3 xformOp:rotateXYZ = (0, 0, 0)
+                                                                float3 xformOp:scale = (0.18, 0.32, 0.12)
+                                                                double3 xformOp:translate = (0.13, 0, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                                                            }
+
+                                                            def Cube "HousingCover" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                rel material:binding = </World/Looks/Steel>
+                                                                custom string meatcell:role = "washdown_cover_reference"
+                                                                custom string meatcell:status = "reference"
+                                                                double size = 1
+                                                                float3 xformOp:rotateXYZ = (0, 0, 0)
+                                                                float3 xformOp:scale = (0.1, 0.25, 0.025)
+                                                                double3 xformOp:translate = (0.22, 0, 0.067)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                                                            }
+
+                                                            def Cylinder "GuideRailLower" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                uniform token axis = "Y"
+                                                                double height = 0.25
+                                                                rel material:binding = </World/Looks/Steel>
+                                                                custom string meatcell:role = "linear_jaw_guide"
+                                                                custom string meatcell:status = "reference"
+                                                                double radius = 0.014
+                                                                double3 xformOp:translate = (0.15, 0, -0.045)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate"]
+                                                            }
+
+                                                            def Cylinder "GuideRailUpper" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                uniform token axis = "Y"
+                                                                double height = 0.25
+                                                                rel material:binding = </World/Looks/Steel>
+                                                                custom string meatcell:role = "linear_jaw_guide"
+                                                                custom string meatcell:status = "reference"
+                                                                double radius = 0.014
+                                                                double3 xformOp:translate = (0.15, 0, 0.045)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate"]
+                                                            }
+
+                                                            def Xform "grasp_tcp"
+                                                            {
+                                                                custom string meatcell:frameName = "grasp_tcp"
+                                                                custom string meatcell:role = "named_coordinate_frame"
+                                                                custom string meatcell:status = "defined"
+                                                                double3 xformOp:translate = (0.35, 0, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate"]
+                                                            }
+                                                        }
+
+                                                        def Xform "CompliantGripperLeftFinger" (
+                                                            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "PhysxContactReportAPI"]
+                                                        )
+                                                        {
+                                                            custom string meatcell:role = "guided_compliant_gripper_jaw"
+                                                            custom string meatcell:status = "actuated_reference"
+                                                            vector3f physics:angularVelocity = (0.06923216, -0.02347459, -0.016681293)
+                                                            float physics:mass = 0.55
+                                                            vector3f physics:velocity = (-0.000041995376, -0.0018887891, 0.0014435023)
+                                                            float physxContactReport:threshold = 0
+                                                            quatf xformOp:orient = (1, -0.000008572768, 0.000034324494, -0.0000043154573)
+                                                            float3 xformOp:scale = (1, 1, 1)
+                                                            double3 xformOp:translate = (0.3500015139579773, 0.1549961268901825, -0.000031948089599609375)
+                                                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+                                                            def Cube "Carrier" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                rel material:binding = </World/Looks/Steel>
+                                                                custom string meatcell:role = "guided_jaw_carriage"
+                                                                custom string meatcell:status = "reference"
+                                                                double size = 1
+                                                                float3 xformOp:rotateXYZ = (0, 0, 0)
+                                                                float3 xformOp:scale = (0.1, 0.075, 0.085)
+                                                                double3 xformOp:translate = (-0.14, 0, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                                                            }
+
+                                                            def Cube "FingerArm" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                rel material:binding = </World/Looks/ToolBlue>
+                                                                custom string meatcell:role = "gripper_finger_arm"
+                                                                custom string meatcell:status = "reference"
+                                                                double size = 1
+                                                                float3 xformOp:rotateXYZ = (0, 0, 0)
+                                                                float3 xformOp:scale = (0.18, 0.045, 0.055)
+                                                                double3 xformOp:translate = (-0.055, 0, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                                                            }
+
+                                                            def Cube "PadBacking" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                rel material:binding = </World/Looks/DarkSteel>
+                                                                custom string meatcell:role = "compliant_pad_backing"
+                                                                custom string meatcell:status = "reference"
+                                                                double size = 1
+                                                                float3 xformOp:rotateXYZ = (0, 0, 0)
+                                                                float3 xformOp:scale = (0.14, 0.05, 0.115)
+                                                                double3 xformOp:translate = (0, 0, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                                                            }
+
+                                                            def Cube "SoftPadCore" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+                                                            )
+                                                            {
+                                                                rel material:binding = </World/Looks/SoftPad>
+                                                                custom string meatcell:role = "food_contact_compliant_pad_reference"
+                                                                custom string meatcell:status = "reference"
+                                                                double size = 1
+                                                                float3 xformOp:rotateXYZ = (0, 0, 0)
+                                                                float3 xformOp:scale = (0.04, 0.04, 0.1)
+                                                                double3 xformOp:translate = (0, -0.025, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                                                            }
+
+                                                            def Cylinder "SoftPadRear" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+                                                            )
+                                                            {
+                                                                uniform token axis = "Y"
+                                                                double height = 0.04
+                                                                rel material:binding = </World/Looks/SoftPad>
+                                                                custom string meatcell:role = "food_contact_compliant_pad_reference"
+                                                                custom string meatcell:status = "reference"
+                                                                double radius = 0.05
+                                                                double3 xformOp:translate = (-0.020000000000000004, -0.025, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate"]
+                                                            }
+
+                                                            def Cylinder "SoftPadFront" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+                                                            )
+                                                            {
+                                                                uniform token axis = "Y"
+                                                                double height = 0.04
+                                                                rel material:binding = </World/Looks/SoftPad>
+                                                                custom string meatcell:role = "food_contact_compliant_pad_reference"
+                                                                custom string meatcell:status = "reference"
+                                                                double radius = 0.05
+                                                                double3 xformOp:translate = (0.020000000000000004, -0.025, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate"]
+                                                            }
+
+                                                            def IsaacContactSensor "integrated_contact_sensor_0"
+                                                            {
+                                                                float4 color = (1, 1, 1, 1)
+                                                                bool enabled = 1
+                                                                float radius = -1
+                                                                float2 threshold = (0, 100000)
+                                                                quatd xformOp:orient = (1, 0, 0, 0)
+                                                                double3 xformOp:scale = (1, 1, 1)
+                                                                double3 xformOp:translate = (0, 0, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                                            }
+                                                        }
+
+                                                        def Xform "CompliantGripperRightFinger" (
+                                                            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "PhysxContactReportAPI"]
+                                                        )
+                                                        {
+                                                            custom string meatcell:role = "guided_compliant_gripper_jaw"
+                                                            custom string meatcell:status = "actuated_reference"
+                                                            vector3f physics:angularVelocity = (0.06923216, -0.02347459, -0.016681293)
+                                                            float physics:mass = 0.55
+                                                            vector3f physics:velocity = (0.0011796826, -0.0019645016, 0.0015500432)
+                                                            float physxContactReport:threshold = 0
+                                                            quatf xformOp:orient = (1, -0.000008572768, 0.000034324494, -0.0000043154573)
+                                                            float3 xformOp:scale = (1, 1, 1)
+                                                            double3 xformOp:translate = (0.34999874234199524, -0.15500012040138245, -0.000026345252990722656)
+                                                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+                                                            def Cube "Carrier" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                rel material:binding = </World/Looks/Steel>
+                                                                custom string meatcell:role = "guided_jaw_carriage"
+                                                                custom string meatcell:status = "reference"
+                                                                double size = 1
+                                                                float3 xformOp:rotateXYZ = (0, 0, 0)
+                                                                float3 xformOp:scale = (0.1, 0.075, 0.085)
+                                                                double3 xformOp:translate = (-0.14, 0, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                                                            }
+
+                                                            def Cube "FingerArm" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                rel material:binding = </World/Looks/ToolBlue>
+                                                                custom string meatcell:role = "gripper_finger_arm"
+                                                                custom string meatcell:status = "reference"
+                                                                double size = 1
+                                                                float3 xformOp:rotateXYZ = (0, 0, 0)
+                                                                float3 xformOp:scale = (0.18, 0.045, 0.055)
+                                                                double3 xformOp:translate = (-0.055, 0, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                                                            }
+
+                                                            def Cube "PadBacking" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                rel material:binding = </World/Looks/DarkSteel>
+                                                                custom string meatcell:role = "compliant_pad_backing"
+                                                                custom string meatcell:status = "reference"
+                                                                double size = 1
+                                                                float3 xformOp:rotateXYZ = (0, 0, 0)
+                                                                float3 xformOp:scale = (0.14, 0.05, 0.115)
+                                                                double3 xformOp:translate = (0, 0, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                                                            }
+
+                                                            def Cube "SoftPadCore" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+                                                            )
+                                                            {
+                                                                rel material:binding = </World/Looks/SoftPad>
+                                                                custom string meatcell:role = "food_contact_compliant_pad_reference"
+                                                                custom string meatcell:status = "reference"
+                                                                double size = 1
+                                                                float3 xformOp:rotateXYZ = (0, 0, 0)
+                                                                float3 xformOp:scale = (0.04, 0.04, 0.1)
+                                                                double3 xformOp:translate = (0, 0.025, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                                                            }
+
+                                                            def Cylinder "SoftPadRear" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+                                                            )
+                                                            {
+                                                                uniform token axis = "Y"
+                                                                double height = 0.04
+                                                                rel material:binding = </World/Looks/SoftPad>
+                                                                custom string meatcell:role = "food_contact_compliant_pad_reference"
+                                                                custom string meatcell:status = "reference"
+                                                                double radius = 0.05
+                                                                double3 xformOp:translate = (-0.020000000000000004, 0.025, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate"]
+                                                            }
+
+                                                            def Cylinder "SoftPadFront" (
+                                                                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+                                                            )
+                                                            {
+                                                                uniform token axis = "Y"
+                                                                double height = 0.04
+                                                                rel material:binding = </World/Looks/SoftPad>
+                                                                custom string meatcell:role = "food_contact_compliant_pad_reference"
+                                                                custom string meatcell:status = "reference"
+                                                                double radius = 0.05
+                                                                double3 xformOp:translate = (0.020000000000000004, 0.025, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate"]
+                                                            }
+
+                                                            def IsaacContactSensor "integrated_contact_sensor_1"
+                                                            {
+                                                                float4 color = (1, 1, 1, 1)
+                                                                bool enabled = 1
+                                                                float radius = -1
+                                                                float2 threshold = (0, 100000)
+                                                                quatd xformOp:orient = (1, 0, 0, 0)
+                                                                double3 xformOp:scale = (1, 1, 1)
+                                                                double3 xformOp:translate = (0, 0, 0)
+                                                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        def Xform "CutterStation"
+        {
+            def Cube "Base" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "cutter_station_reference"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.72, 0.78, 0.82)
+                double3 xformOp:translate = (1.78, -0.82, 0.41)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "GuardHousing" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyOrange>
+                custom string meatcell:role = "guarded_cutter_housing_reference"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.62, 0.7, 0.72)
+                double3 xformOp:translate = (1.78, -0.82, 1.08)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "FeedOpening" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/DarkSteel>
+                custom string meatcell:role = "cutter_feed_opening"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.24, 0.52, 0.34)
+                double3 xformOp:translate = (1.43, -0.82, 0.93)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Tray" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "stationary_cutter_entry_tray"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.72, 0.48, 0.055)
+                double3 xformOp:translate = (1.25, -0.82, 0.84)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "TrayRail_R" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "tray_guide"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.72, 0.035, 0.12)
+                double3 xformOp:translate = (1.25, -1.08, 0.91)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "TrayRail_L" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "tray_guide"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.72, 0.035, 0.12)
+                double3 xformOp:translate = (1.25, -0.5599999999999999, 0.91)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cylinder "ReadyLamp" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                uniform token axis = "Z"
+                double height = 0.12
+                rel material:binding = </World/Looks/SignalGreen>
+                custom string meatcell:role = "cutter_ready_indicator"
+                custom string meatcell:status = "reference"
+                double radius = 0.055
+                double3 xformOp:translate = (1.78, -1.17, 1.55)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+        }
+
+        def Xform "BufferStation"
+        {
+            def Cube "Base" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "solution_b_stationary_buffer_tray"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.56, 0.44, 0.055)
+                double3 xformOp:translate = (0.62, -0.7, 0.84)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Rail_R" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/ToolBlue>
+                custom string meatcell:role = "solution_b_buffer_guide"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.56, 0.03, 0.1)
+                double3 xformOp:translate = (0.62, -0.94, 0.9)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Rail_L" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/ToolBlue>
+                custom string meatcell:role = "solution_b_buffer_guide"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.56, 0.03, 0.1)
+                double3 xformOp:translate = (0.62, -0.45999999999999996, 0.9)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+        }
+
+        def "RejectBin"
+        {
+            def Cube "Base" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyOrange>
+                custom string meatcell:role = "reject_bin"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.68, 0.56, 0.16)
+                double3 xformOp:translate = (1.45, -1.65, 0.1)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Wall_1" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyOrange>
+                custom string meatcell:role = "reject_bin_wall"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.04, 0.56, 0.44)
+                double3 xformOp:translate = (1.12, -1.65, 0.3)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Wall_2" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyOrange>
+                custom string meatcell:role = "reject_bin_wall"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.04, 0.56, 0.44)
+                double3 xformOp:translate = (1.78, -1.65, 0.3)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Wall_3" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyOrange>
+                custom string meatcell:role = "reject_bin_wall"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.68, 0.04, 0.44)
+                double3 xformOp:translate = (1.45, -1.92, 0.3)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Wall_4" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyOrange>
+                custom string meatcell:role = "reject_bin_wall"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.68, 0.04, 0.44)
+                double3 xformOp:translate = (1.45, -1.38, 0.3)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+        }
+
+        def Xform "Sensors"
+        {
+            def Cube "Post_R" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "camera_mount_post"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.09, 0.09, 2.5)
+                double3 xformOp:translate = (-0.35, -1, 1.25)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Post_L" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "camera_mount_post"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.09, 0.09, 2.5)
+                double3 xformOp:translate = (-0.35, 1, 1.25)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Crossbar" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Steel>
+                custom string meatcell:role = "camera_mount_crossbar"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.09, 2.1, 0.09)
+                double3 xformOp:translate = (-0.35, 0, 2.48)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "RGBHousing" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Sensor>
+                custom string meatcell:role = "rgb_camera_housing"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.2, 0.22, 0.13)
+                double3 xformOp:translate = (-0.42, -0.14, 2.36)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "DepthHousing" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Sensor>
+                custom string meatcell:role = "depth_camera_housing"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.2, 0.22, 0.13)
+                double3 xformOp:translate = (-0.42, 0.14, 2.36)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Camera "OverheadCamera"
+            {
+                float focalLength = 18
+                float horizontalAperture = 20.955
+                custom string meatcell:role = "calibrated_overhead_rgbd_camera"
+                custom string meatcell:status = "simulated_sensor"
+                custom uniform vector3d omni:kit:centerOfInterest = (0, 0, -2.938736052218037e-38)
+                float verticalAperture = 15.71625
+                float3 xformOp:rotateYXZ = (0, -0, -0)
+                float3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (-0.35, 0, 2.31)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateYXZ", "xformOp:scale"]
+            }
+
+            def Cube "BufferCameraHousing" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Sensor>
+                custom string meatcell:role = "buffer_rgbd_camera_housing"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.18, 0.2, 0.12)
+                double3 xformOp:translate = (0.62, -0.7, 1.88)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Camera "BufferCamera"
+            {
+                float focalLength = 18
+                float horizontalAperture = 20.955
+                custom string meatcell:role = "calibrated_buffer_rgbd_camera"
+                custom string meatcell:status = "simulated_sensor"
+                float verticalAperture = 15.71625
+                matrix4d xformOp:transform = ( (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0.62, -0.7, 1.76, 1) )
+                double3 xformOp:translate = (0.62, -0.7, 1.76)
+                uniform token[] xformOpOrder = ["xformOp:transform"]
+            }
+
+            def Camera "PresentationCamera"
+            {
+                float focalLength = 30
+                float horizontalAperture = 20.955
+                custom string meatcell:role = "cell_demonstration_camera"
+                custom string meatcell:status = "simulated_sensor"
+                custom uniform vector3d omni:kit:centerOfInterest = (0, -5.551115123125784e-16, -3.242391093005284)
+                float verticalAperture = 11.787188
+                float3 xformOp:rotateYXZ = (70.3562, -9.461103e-15, 140.31454)
+                float3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (2.35, 2.1500000000000004, 2.0500000000000003)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateYXZ", "xformOp:scale"]
+            }
+
+            def Cube "PhotoeyeTx" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Sensor>
+                custom string meatcell:role = "conveyor_photoeye_transmitter"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.08, 0.08, 0.17)
+                double3 xformOp:translate = (-1.45, -0.56, 0.95)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "PhotoeyeRx" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Sensor>
+                custom string meatcell:role = "conveyor_photoeye_receiver"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.08, 0.08, 0.17)
+                double3 xformOp:translate = (-1.45, 0.56, 0.95)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "PhotoeyeBeam" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SignalGreen>
+                custom string meatcell:role = "photoeye_beam"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.018, 1, 0.018)
+                double3 xformOp:translate = (-1.45, 0, 0.95)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+        }
+
+        def Xform "Guards"
+        {
+            def Cube "Post_0" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyYellow>
+                custom string meatcell:role = "guard_post"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.075, 0.075, 2.05)
+                double3 xformOp:translate = (-2.55, -2.15, 1.03)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Post_1" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyYellow>
+                custom string meatcell:role = "guard_post"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.075, 0.075, 2.05)
+                double3 xformOp:translate = (-2.55, 2.15, 1.03)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Post_2" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyYellow>
+                custom string meatcell:role = "guard_post"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.075, 0.075, 2.05)
+                double3 xformOp:translate = (3.2, -2.15, 1.03)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Post_3" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyYellow>
+                custom string meatcell:role = "guard_post"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.075, 0.075, 2.05)
+                double3 xformOp:translate = (3.2, 2.15, 1.03)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Post_4" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyYellow>
+                custom string meatcell:role = "guard_post"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.075, 0.075, 2.05)
+                double3 xformOp:translate = (0.3, -2.15, 1.03)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "Post_5" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyYellow>
+                custom string meatcell:role = "guard_post"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (0.075, 0.075, 2.05)
+                double3 xformOp:translate = (0.3, 2.15, 1.03)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "BackPanel" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Glass>
+                custom string meatcell:role = "transparent_guard_panel"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (5.75, 0.025, 1.65)
+                double3 xformOp:translate = (0.325, 2.15, 1.05)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "FrontLeftPanel" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Glass>
+                custom string meatcell:role = "transparent_guard_panel"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (2.8, 0.025, 1.65)
+                double3 xformOp:translate = (-1.15, -2.15, 1.05)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "FrontRightPanel" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/Glass>
+                custom string meatcell:role = "transparent_guard_panel"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (2.25, 0.025, 1.65)
+                double3 xformOp:translate = (2.05, -2.15, 1.05)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "FrontTopRail" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyYellow>
+                custom string meatcell:role = "guard_top_rail"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (5.75, 0.07, 0.07)
+                double3 xformOp:translate = (0.325, -2.15, 2.08)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+
+            def Cube "BackTopRail" (
+                prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI"]
+            )
+            {
+                rel material:binding = </World/Looks/SafetyYellow>
+                custom string meatcell:role = "guard_top_rail"
+                custom string meatcell:status = "reference"
+                double size = 1
+                float3 xformOp:rotateXYZ = (0, 0, 0)
+                float3 xformOp:scale = (5.75, 0.07, 0.07)
+                double3 xformOp:translate = (0.325, 2.15, 2.08)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+        }
+
+        def Xform "Workpieces"
+        {
+            def Xform "PorkLoin_01" (
+                prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+            )
+            {
+                custom string meatcell:recipeId = "pork_boneless_loin"
+                custom string meatcell:role = "pork_boneless_loin_reference"
+                custom string meatcell:status = "reference"
+                vector3f physics:angularVelocity = (0, 0, 0)
+                bool physics:kinematicEnabled = 1
+                float physics:mass = 2.75
+                vector3f physics:velocity = (0, 0, -0.08172209)
+                token visibility = "invisible"
+                quatf xformOp:orient = (0.9981348, 0, 0, 0.061048556)
+                float3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (-1.1799999475479126, 0.029999999329447746, 0.8744892477989197)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+                def Mesh "Geometry" (
+                    prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform bool doubleSided = 1
+                    int[] faceVertexCounts = [8, 8, 4, 4, 4, 4, 4, 4, 4, 4]
+                    int[] faceVertexIndices = [7, 6, 5, 4, 3, 2, 1, 0, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 9, 8, 1, 2, 10, 9, 2, 3, 11, 10, 3, 4, 12, 11, 4, 5, 13, 12, 5, 6, 14, 13, 6, 7, 15, 14, 7, 0, 8, 15]
+                    rel material:binding = </World/Looks/Meat>
+                    uniform token physics:approximation = "convexHull"
+                    bool physics:collisionEnabled = 0
+                    point3f[] points = [(-0.23, -0.03157, -0.04), (-0.184, -0.0574, -0.04), (0.161, -0.07, -0.04), (0.23, -0.0378, -0.04), (0.23, 0.0378, -0.04), (0.161, 0.07, -0.04), (-0.184, 0.0574, -0.04), (-0.23, 0.03157, -0.04), (-0.23, -0.03157, 0.04), (-0.184, -0.0574, 0.04), (0.161, -0.07, 0.04), (0.23, -0.0378, 0.04), (0.23, 0.0378, 0.04), (0.161, 0.07, 0.04), (-0.184, 0.0574, 0.04), (-0.23, 0.03157, 0.04)]
+                    uniform token subdivisionScheme = "none"
+                }
+            }
+
+            def Xform "PorkLoin_02" (
+                prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "PhysxRigidBodyAPI"]
+            )
+            {
+                custom string meatcell:recipeId = "pork_boneless_loin"
+                custom string meatcell:role = "pork_boneless_loin_reference"
+                custom string meatcell:status = "reference"
+                vector3f physics:angularVelocity = (0, 0, 0)
+                bool physics:kinematicEnabled = 1
+                float physics:mass = 2.75
+                vector3f physics:velocity = (0, 0, -0.08172209)
+                float physxRigidBody:sleepThreshold = 0
+                quatd xformOp:orient = (0.9993929285397933, 0, 0, 0.034839264984432905)
+                double3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (-0.1698821634054184, -0.07473187893629074, 0.8744892477989197)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+                def Mesh "Geometry" (
+                    prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform bool doubleSided = 1
+                    int[] faceVertexCounts = [8, 8, 4, 4, 4, 4, 4, 4, 4, 4]
+                    int[] faceVertexIndices = [7, 6, 5, 4, 3, 2, 1, 0, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 9, 8, 1, 2, 10, 9, 2, 3, 11, 10, 3, 4, 12, 11, 4, 5, 13, 12, 5, 6, 14, 13, 6, 7, 15, 14, 7, 0, 8, 15]
+                    rel material:binding = </World/Looks/Meat>
+                    uniform token physics:approximation = "convexHull"
+                    point3f[] points = [(-0.23, -0.03157, -0.04), (-0.184, -0.0574, -0.04), (0.161, -0.07, -0.04), (0.23, -0.0378, -0.04), (0.23, 0.0378, -0.04), (0.161, 0.07, -0.04), (-0.184, 0.0574, -0.04), (-0.23, 0.03157, -0.04), (-0.23, -0.03157, 0.04), (-0.184, -0.0574, 0.04), (0.161, -0.07, 0.04), (0.23, -0.0378, 0.04), (0.23, 0.0378, 0.04), (0.161, 0.07, 0.04), (-0.184, 0.0574, 0.04), (-0.23, 0.03157, 0.04)]
+                    uniform token subdivisionScheme = "none"
+                }
+            }
+
+            def Xform "PorkLoin_03" (
+                prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+            )
+            {
+                custom string meatcell:recipeId = "pork_boneless_loin"
+                custom string meatcell:role = "pork_boneless_loin_reference"
+                custom string meatcell:status = "reference"
+                vector3f physics:angularVelocity = (0, 0, 0)
+                bool physics:kinematicEnabled = 1
+                float physics:mass = 2.75
+                vector3f physics:velocity = (0, 0, -0.08172209)
+                token visibility = "invisible"
+                quatf xformOp:orient = (0.9969173, 0, 0, 0.078459114)
+                float3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (0.30000001192092896, 0.07999999821186066, 0.8744892477989197)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+                def Mesh "Geometry" (
+                    prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform bool doubleSided = 1
+                    int[] faceVertexCounts = [8, 8, 4, 4, 4, 4, 4, 4, 4, 4]
+                    int[] faceVertexIndices = [7, 6, 5, 4, 3, 2, 1, 0, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 9, 8, 1, 2, 10, 9, 2, 3, 11, 10, 3, 4, 12, 11, 4, 5, 13, 12, 5, 6, 14, 13, 6, 7, 15, 14, 7, 0, 8, 15]
+                    rel material:binding = </World/Looks/Meat>
+                    uniform token physics:approximation = "convexHull"
+                    bool physics:collisionEnabled = 0
+                    point3f[] points = [(-0.23, -0.03157, -0.04), (-0.184, -0.0574, -0.04), (0.161, -0.07, -0.04), (0.23, -0.0378, -0.04), (0.23, 0.0378, -0.04), (0.161, 0.07, -0.04), (-0.184, 0.0574, -0.04), (-0.23, 0.03157, -0.04), (-0.23, -0.03157, 0.04), (-0.184, -0.0574, 0.04), (0.161, -0.07, 0.04), (0.23, -0.0378, 0.04), (0.23, 0.0378, 0.04), (0.161, 0.07, 0.04), (-0.184, 0.0574, 0.04), (-0.23, 0.03157, 0.04)]
+                    uniform token subdivisionScheme = "none"
+                }
+            }
+        }
+
+        def Xform "PLC"
+        {
+            custom double meatcell:conveyorSpeedMps = 0.1
+            custom bool meatcell:cutterReady = 1
+            custom bool meatcell:emergencyStop = 0
+            custom bool meatcell:faultActive = 0
+            custom string meatcell:recipeId = "pork_boneless_loin"
+            custom string meatcell:role = "simulated_plc_machine_io"
+            custom string meatcell:status = "implemented"
+            custom bool meatcell:trayClear = 1
+        }
+    }
+
+    def "Lights"
+    {
+        def DomeLight "Dome"
+        {
+            color3f inputs:color = (0.82, 0.88, 1)
+            float inputs:intensity = 900
+        }
+
+        def RectLight "Panel_0"
+        {
+            color3f inputs:color = (1, 0.94, 0.84)
+            float inputs:height = 0.8
+            float inputs:intensity = 4500
+            float inputs:width = 1.6
+            double3 xformOp:translate = (-0.7, -1.1, 3.4)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def RectLight "Panel_1"
+        {
+            color3f inputs:color = (1, 0.94, 0.84)
+            float inputs:height = 0.8
+            float inputs:intensity = 4500
+            float inputs:width = 1.6
+            double3 xformOp:translate = (1.6, 1, 3.4)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def RectLight "Panel_2"
+        {
+            color3f inputs:color = (1, 0.94, 0.84)
+            float inputs:height = 0.8
+            float inputs:intensity = 4500
+            float inputs:width = 1.6
+            double3 xformOp:translate = (2.3, -1.4, 3.4)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+    }
+}

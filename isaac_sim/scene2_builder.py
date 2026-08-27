@@ -43,6 +43,10 @@ GRIPPER_PAD_THICKNESS_M = 0.040
 GRIPPER_PAD_LENGTH_M = 0.140
 GRIPPER_PAD_HEIGHT_M = 0.100
 GRIPPER_GRASP_CENTER_FLANGE_M = (0.350, 0.0, 0.0)
+CUTTER_TRAY_CENTER_M = (1.25, -0.82, 0.84)
+CUT_TARGET_CENTER_M = (1.25, -0.82, 0.91)
+BUFFER_TRAY_CENTER_M = (0.62, -0.70, 0.84)
+BUFFER_TARGET_CENTER_M = (0.62, -0.70, 0.91)
 
 
 def gripper_open_inner_gap_m() -> float:
@@ -433,15 +437,24 @@ class Scene2Builder:
     def _build_cutter_and_reject(self, stage: Any) -> None:
         UsdGeom = self._imports()[3]
         UsdGeom.Xform.Define(stage, "/World/Cell/CutterStation")
-        self._cube(stage, "/World/Cell/CutterStation/Base", (0.85, 1.15, 0.82), (2.65, 0.0, 0.41), self.materials["Steel"], role="cutter_station_reference")
-        self._cube(stage, "/World/Cell/CutterStation/GuardHousing", (0.65, 1.05, 0.72), (2.62, 0.0, 1.08), self.materials["SafetyOrange"], role="guarded_cutter_housing_reference")
-        self._cube(stage, "/World/Cell/CutterStation/FeedOpening", (0.24, 0.62, 0.34), (2.27, 0.0, 0.93), self.materials["DarkSteel"], collision=False, role="cutter_feed_opening")
-        self._cube(stage, "/World/Cell/CutterStation/Tray", (0.88, 0.52, 0.055), (1.92, 0.0, 0.84), self.materials["Steel"], role="stationary_cutter_entry_tray")
-        for y in (-0.28, 0.28):
-            self._cube(stage, f"/World/Cell/CutterStation/TrayRail_{'L' if y > 0 else 'R'}", (0.88, 0.035, 0.12), (1.92, y, 0.91), self.materials["Steel"], role="tray_guide")
-        self._cylinder(stage, "/World/Cell/CutterStation/ReadyLamp", 0.055, 0.12, (2.61, -0.48, 1.55), self.materials["SignalGreen"], role="cutter_ready_indicator")
-        self._frame(stage, "/World/Cell/Frames/cut_target_frame", "cut_target_frame", (1.92, 0.0, 0.88))
-        self._frame(stage, "/World/Cell/Frames/cutter_feed_frame", "cutter_feed_frame", (2.28, 0.0, 0.94))
+        # The original tray at x=1.92, y=0.0 was outside the imported
+        # M-10iD/12 top-down work envelope. This side-entry layout was selected
+        # from an executed Lula reachability map. The tray remains a stationary
+        # handoff surface at the cutter entrance.
+        self._cube(stage, "/World/Cell/CutterStation/Base", (0.72, 0.78, 0.82), (1.78, -0.82, 0.41), self.materials["Steel"], role="cutter_station_reference")
+        self._cube(stage, "/World/Cell/CutterStation/GuardHousing", (0.62, 0.70, 0.72), (1.78, -0.82, 1.08), self.materials["SafetyOrange"], role="guarded_cutter_housing_reference")
+        self._cube(stage, "/World/Cell/CutterStation/FeedOpening", (0.24, 0.52, 0.34), (1.43, -0.82, 0.93), self.materials["DarkSteel"], collision=False, role="cutter_feed_opening")
+        self._cube(stage, "/World/Cell/CutterStation/Tray", (0.72, 0.48, 0.055), CUTTER_TRAY_CENTER_M, self.materials["Steel"], role="stationary_cutter_entry_tray")
+        for y_offset, side in ((-0.26, "R"), (0.26, "L")):
+            self._cube(stage, f"/World/Cell/CutterStation/TrayRail_{side}", (0.72, 0.035, 0.12), (CUTTER_TRAY_CENTER_M[0], CUTTER_TRAY_CENTER_M[1] + y_offset, 0.91), self.materials["Steel"], role="tray_guide")
+        self._cylinder(stage, "/World/Cell/CutterStation/ReadyLamp", 0.055, 0.12, (1.78, -1.17, 1.55), self.materials["SignalGreen"], role="cutter_ready_indicator")
+        self._frame(stage, "/World/Cell/Frames/cut_target_frame", "cut_target_frame", CUT_TARGET_CENTER_M)
+        self._frame(stage, "/World/Cell/Frames/cutter_feed_frame", "cutter_feed_frame", (1.43, -0.82, 0.94))
+        UsdGeom.Xform.Define(stage, "/World/Cell/BufferStation")
+        self._cube(stage, "/World/Cell/BufferStation/Base", (0.56, 0.44, 0.055), BUFFER_TRAY_CENTER_M, self.materials["Steel"], role="solution_b_stationary_buffer_tray")
+        for y_offset, side in ((-0.24, "R"), (0.24, "L")):
+            self._cube(stage, f"/World/Cell/BufferStation/Rail_{side}", (0.56, 0.03, 0.10), (BUFFER_TRAY_CENTER_M[0], BUFFER_TRAY_CENTER_M[1] + y_offset, 0.90), self.materials["ToolBlue"], role="solution_b_buffer_guide")
+        self._frame(stage, "/World/Cell/Frames/buffer_frame", "buffer_frame", BUFFER_TARGET_CENTER_M)
         self._cube(stage, "/World/Cell/RejectBin/Base", (0.68, 0.56, 0.16), (1.45, -1.65, 0.10), self.materials["SafetyOrange"], role="reject_bin")
         for x, y, sx, sy in ((1.12, -1.65, 0.04, 0.56), (1.78, -1.65, 0.04, 0.56), (1.45, -1.92, 0.68, 0.04), (1.45, -1.38, 0.68, 0.04)):
             self._cube(stage, f"/World/Cell/RejectBin/Wall_{len(stage.GetPrimAtPath('/World/Cell/RejectBin').GetChildren())}", (sx, sy, 0.44), (x, y, 0.30), self.materials["SafetyOrange"], role="reject_bin_wall")
@@ -461,12 +474,35 @@ class Scene2Builder:
         overhead.CreateVerticalApertureAttr(15.71625)
         overhead.AddTranslateOp().Set(Gf.Vec3d(-0.35, 0.0, 2.31))
         self._label(overhead.GetPrim(), "calibrated_overhead_rgbd_camera", "simulated_sensor")
+        self._cube(
+            stage,
+            "/World/Cell/Sensors/BufferCameraHousing",
+            (0.18, 0.20, 0.12),
+            (BUFFER_TARGET_CENTER_M[0], BUFFER_TARGET_CENTER_M[1], 1.88),
+            self.materials["Sensor"],
+            collision=False,
+            role="buffer_rgbd_camera_housing",
+        )
+        buffer_camera = UsdGeom.Camera.Define(stage, "/World/Cell/Sensors/BufferCamera")
+        buffer_camera.CreateFocalLengthAttr(18.0)
+        buffer_camera.CreateHorizontalApertureAttr(20.955)
+        buffer_camera.CreateVerticalApertureAttr(15.71625)
+        buffer_camera.AddTranslateOp().Set(
+            Gf.Vec3d(BUFFER_TARGET_CENTER_M[0], BUFFER_TARGET_CENTER_M[1], 1.76)
+        )
+        self._label(buffer_camera.GetPrim(), "calibrated_buffer_rgbd_camera", "simulated_sensor")
         presentation = UsdGeom.Camera.Define(stage, "/World/Cell/Sensors/PresentationCamera")
         presentation.CreateFocalLengthAttr(24.0)
         presentation.CreateHorizontalApertureAttr(20.955)
         presentation.CreateVerticalApertureAttr(11.7871875)
         self._label(presentation.GetPrim(), "cell_demonstration_camera", "simulated_sensor")
         self._frame(stage, "/World/Cell/Frames/camera", "camera", (-0.35, 0.0, 2.31))
+        self._frame(
+            stage,
+            "/World/Cell/Frames/buffer_camera",
+            "buffer_camera",
+            (BUFFER_TARGET_CENTER_M[0], BUFFER_TARGET_CENTER_M[1], 1.76),
+        )
         self._frame(stage, "/World/Cell/Frames/camera_calibration_target", "camera_calibration_target", (-0.35, 0.0, 0.82))
         self._cube(stage, "/World/Cell/Sensors/PhotoeyeTx", (0.08, 0.08, 0.17), (-1.45, -0.56, 0.95), self.materials["Sensor"], collision=False, role="conveyor_photoeye_transmitter")
         self._cube(stage, "/World/Cell/Sensors/PhotoeyeRx", (0.08, 0.08, 0.17), (-1.45, 0.56, 0.95), self.materials["Sensor"], collision=False, role="conveyor_photoeye_receiver")
@@ -550,6 +586,7 @@ class Scene2Builder:
             "gripper_finger_paths": GRIPPER_FINGER_PATHS,
             "product_paths": tuple(str(product.GetPath()) for product in products),
             "camera_path": "/World/Cell/Sensors/OverheadCamera",
+            "buffer_camera_path": "/World/Cell/Sensors/BufferCamera",
             "presentation_camera_path": "/World/Cell/Sensors/PresentationCamera",
             "reference_notice": REFERENCE_NOTICE,
         }

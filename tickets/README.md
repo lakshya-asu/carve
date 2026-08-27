@@ -19,7 +19,7 @@ Tickets are executed in dependency order. Each ticket file contains its own acce
 | T013 | Isaac adapter source structure | T002, T003, T004 | done |
 | T014 | Integration tests and overnight report | T005 through T013 | done |
 | T015 | Physical calibration and OEM asset replacement | T014 | blocked |
-| T016 | Connect Scene 2.0 FANUC cell to the complete task pipeline | T014 | in_progress |
+| T016 | Connect Scene 2.0 FANUC cell to the complete task pipeline | T014 | review |
 
 The source of truth for scope is `PROBLEM_STATEMENT.md`. The source of truth for architecture is `SYSTEM_DESIGN.md`.
 
@@ -29,4 +29,4 @@ The durable T014 hardening profile has six scenario slots. It covers two nominal
 
 The 2026-08-26 learned-vision extension also passed T014 without changing ticket status. YOLO26 segmentation consumed rendered Isaac RGB, produced masks used with rendered depth, and drove complete four-cycle A and B suites. Evidence is under `results/yolo`.
 
-The robot selection and Scene 2.0 construction gate are complete. T016 is the exact next software ticket. T015 remains blocked on physical calibration, gripper selection, cutter I/O, and real safety evidence.
+The complete in-simulator FANUC pipeline now passes for Solution A and Solution B. T016 is in review because its simulator acceptance is complete but the separate ROS 2 and MoveIt `FollowJointTrajectory` bridge is not installed or commissioned. T015 remains blocked on physical calibration, production gripper selection, cutter I/O, and real safety evidence.

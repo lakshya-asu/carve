@@ -1,0 +1,15 @@
+{
+  "angle_error_rad": 0.008389741880390874,
+  "buffer_sensor_oracle_position_error_m": 0.006524692795376217,
+  "maximum_product_to_tcp_distance_m": 0.07951222806596692,
+  "passed": true,
+  "position_error_m": 0.0209312036820638,
+  "recording_frames": 353,
+  "recording_sha256": "19d213dec1063a5aa8b5bc5114e630a4b831b4d56f101a1e9ad4bc328ab10101",
+  "scenario": "nominal",
+  "seed": 2601,
+  "solution": "b",
+  "stage_sha256": "22454dc7444c78d907564cbbb5562e4600e90c07dd5be0003cbfb5bf2658c854",
+  "timing_error_s": 0.01666672500000388,
+  "trace_records": 22
+}

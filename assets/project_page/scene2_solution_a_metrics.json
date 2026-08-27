@@ -1,0 +1,228 @@
+{
+  "approximations": [
+    "The belt coupling is a deterministic kinematic fixture, not a simulated belt-friction model.",
+    "The product is rigid. Tissue deformation and surface moisture are not modeled.",
+    "Gripper compliance is a finite-effort linear-drive proxy.",
+    "The cutter, buffer, conveyor, and gripper are project reference geometry.",
+    "This is simulation evidence, not physical, food-safety, real-cell safety, or production validation."
+  ],
+  "artifacts": {
+    "depth_npy": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_release\\solution_a_seed2601_v2\\overhead_depth_m.npy",
+    "depth_png": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_release\\solution_a_seed2601_v2\\overhead_depth.png",
+    "rgb": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_release\\solution_a_seed2601_v2\\overhead_rgb.png",
+    "segmentation": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_release\\solution_a_seed2601_v2\\yolo26_segmentation.png",
+    "trace": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_release\\solution_a_seed2601_v2\\cycle_trace.jsonl"
+  },
+  "belt_speed_mps": 0.1,
+  "buffer_sensor_oracle_position_error_m": null,
+  "delivery": {
+    "cut_target_center_m": [
+      1.25,
+      -0.82,
+      0.91
+    ],
+    "delivered": true,
+    "final_product_position_m": [
+      1.2397170066833496,
+      -0.8207955360412598,
+      0.9074999094009399
+    ],
+    "final_product_yaw_rad": -0.002076206175357674,
+    "measurement": {
+      "__type__": "DeliveryMeasurement",
+      "angle_error_rad": 0.002076202217230166,
+      "position_error_m": 0.010313720431697765,
+      "schema_version": 1,
+      "speed_error_mps": 1.094395414164056e-06,
+      "timing_error_s": 0.025000058999999908
+    },
+    "plc_result_acknowledged": true
+  },
+  "demo_kind": "complete Scene 2 rendered YOLO26 to FANUC contact delivery",
+  "event_log_readback_passed": true,
+  "grasp": {
+    "bilateral_contact": true,
+    "lift_distance_m": 0.17791545391082764,
+    "maximum_product_to_tcp_distance_m": 0.07008643382475468,
+    "peak_contact_force_n": [
+      76.92869128188303,
+      2.16953149774166
+    ],
+    "retention_limit_m": 0.13,
+    "unexpected_contact_pairs": []
+  },
+  "gripper": "project compact compliant parallel-jaw reference",
+  "initial_product_pose_sets_before_recording": 1,
+  "interception": {
+    "actual_time_s": 5.904166975,
+    "maximum_conveyor_step_m": 0.0016666812356561644,
+    "planned_time_s": 5.895723176,
+    "planned_x_m": 0.3350000000000001,
+    "timing_error_s": 0.00844379900000014
+  },
+  "motion": {
+    "acceleration_limit_violations": 0,
+    "articulation_controller_commands": 1999,
+    "command_safety_limit_activations": 674,
+    "joint_limit_violations": 0,
+    "max_command_acceleration": {
+      "J1": 8.000000000004702,
+      "J2": 8.000000000003103,
+      "J3": 8.000000000001505,
+      "J4": 12.000000000000007,
+      "J5": 12.00000000000385,
+      "J6": 12.000000000003864,
+      "finger_left": 1.5000000000000808,
+      "finger_right": 1.5000000000000808
+    },
+    "max_command_velocity": {
+      "J1": 0.5169234372146677,
+      "J2": 0.3207789549474739,
+      "J3": 0.42267032828916595,
+      "J4": 0.11967151281078263,
+      "J5": 0.3060145894642385,
+      "J6": 1.150000059977236,
+      "finger_left": 0.12536523870502123,
+      "finger_right": 0.12536523870502123
+    },
+    "maximum_product_step_m": 0.007956426248707698,
+    "minimum_precontact_pad_clearance_m": 0.06568784188278809,
+    "simulator_step_calls": 1999,
+    "velocity_limit_violations": 0
+  },
+  "passed": true,
+  "perception": {
+    "buffer_calibration": {
+      "belt_surface_z_world_m": 0.87,
+      "calibration_position_sigma_m": 0.002,
+      "calibration_yaw_sigma_rad": 0.003490658503988659,
+      "camera_x_world_m": 0.62,
+      "camera_y_world_m": -0.7,
+      "camera_z_world_m": 1.76,
+      "cx_px": 320.0,
+      "cy_px": 240.0,
+      "fx_px": 549.7494506835938,
+      "fy_px": 549.7494506835938
+    },
+    "calibration": {
+      "belt_surface_z_world_m": 0.8075,
+      "calibration_position_sigma_m": 0.002,
+      "calibration_yaw_sigma_rad": 0.003490658503988659,
+      "camera_x_world_m": -0.35,
+      "camera_y_world_m": 0.0,
+      "camera_z_world_m": 2.31,
+      "cx_px": 320.0,
+      "cy_px": 240.0,
+      "fx_px": 549.7494506835938,
+      "fy_px": 549.7494506835938
+    },
+    "checkpoint": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\models\\yolo26_meat_reference_buffer_v2\\weights\\best.pt",
+    "checkpoint_sha256": "8baaf05e63a5e654215dbdcf58e106ea62c24e75a54ae9f9c45e8c9c1ed9ceab",
+    "confidence": 0.7338836193084717,
+    "depth_nonempty": true,
+    "latency_s": [
+      0.030062355999999957,
+      0.03129241000000005
+    ],
+    "model_name": "ultralytics_yolo26_seg_plus_pork_color_refinement_v1@8baaf05e63a5",
+    "observation_count": 2,
+    "rgb_nonempty": true,
+    "scene2_optical_axis_correction": "none; synchronized USD and PhysX transforms use the standard pinhole calibration",
+    "track_id": "track-0001",
+    "track_velocity_mps": 0.1,
+    "ultralytics_version": "8.4.129"
+  },
+  "physics_dt_s": 0.004166666666666667,
+  "product_pose_sets_after_confirmed_grasp": 0,
+  "recording": {
+    "codec": "h264",
+    "duration_s": 16.75,
+    "file_bytes": 1583538,
+    "first_sim_time_ns": 900000047,
+    "fps": 12,
+    "frame_count": 201,
+    "height": 720,
+    "last_sim_time_ns": 17550000915,
+    "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_release\\solution_a_seed2601_v2\\scene2_solution_a_nominal.mp4",
+    "source": "rendered_scene2_rgb_with_telemetry_overlay",
+    "width": 1280
+  },
+  "recording_sha256": "604bd150ef753ee500229fb5786c343b28eb8cc8472daa09ab5e2e4cb50a786a",
+  "reference_notice": "FANUC visual and kinematic reference from the official description. The cell equipment and tool are project reference models. No physical or safety validation is claimed.",
+  "robot": "FANUC M-10iD/12 official description reference",
+  "scenario": "nominal",
+  "seed": 2601,
+  "sequence": [
+    {
+      "duration_s": 0.5,
+      "label": "show moving workpiece and ready robot"
+    },
+    {
+      "duration_s": 4.224889756,
+      "label": "timed approach with near-width jaw preshape"
+    },
+    {
+      "duration_s": 0.35,
+      "label": "short matched-velocity force-limited closure"
+    },
+    {
+      "duration_s": 0.45,
+      "label": "contact-confirmed dynamic hold"
+    },
+    {
+      "duration_s": 1.8,
+      "label": "collision-clear physics lift"
+    },
+    {
+      "duration_s": 3.6,
+      "label": "collision-clear Cartesian transport to cutter entrance"
+    },
+    {
+      "duration_s": 1.6,
+      "label": "align product to cut_target_frame"
+    },
+    {
+      "duration_s": 0.65,
+      "label": "release on stationary cutter-entry tray"
+    },
+    {
+      "duration_s": 0.45,
+      "label": "verify stationary tray delivery"
+    },
+    {
+      "duration_s": 1.25,
+      "label": "retract clear of cutter"
+    },
+    {
+      "duration_s": 0.65,
+      "label": "final evidence view"
+    }
+  ],
+  "slip_detected": false,
+  "solution": "a",
+  "stage": {
+    "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_release\\solution_a_seed2601_v2\\carve_scene2_a.usda",
+    "reload_passed": true,
+    "required_reload_paths": [
+      "/World/Cell/Conveyor",
+      "/World/Cell/FANUC_M10iD12/Geometry/world/base_link",
+      "/World/Cell/FANUC_M10iD12/Geometry/world/base_link/J1_link/J2_link/J3_link/J4_link/J5_link/J6_link/flange/ee_link/CompliantGripperReference",
+      "/World/Cell/Sensors/OverheadCamera",
+      "/World/Cell/Sensors/BufferCamera",
+      "/World/Cell/CutterStation",
+      "/World/Cell/PLC",
+      "/World/Cell/Workpieces/PorkLoin_02"
+    ],
+    "sha256": "22454dc7444c78d907564cbbb5562e4600e90c07dd5be0003cbfb5bf2658c854"
+  },
+  "state_sequence": [
+    "plan",
+    "intercept",
+    "verify_grasp",
+    "transfer_direct",
+    "align_direct",
+    "retract"
+  ],
+  "trace_records": 33,
+  "workpiece_fixture": "Fixed-step kinematic conveyor coupling before bilateral contact, then dynamic PhysX rigid body. No pose writes after confirmed grasp."
+}

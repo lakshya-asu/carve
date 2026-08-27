@@ -202,6 +202,9 @@ dt { color: var(--muted); }
 dd { margin: 0; font-weight: 700; }
 .video-shell { background: var(--surface-strong); padding: .8rem; border-radius: var(--radius); }
 .video-shell video { width: 100%; aspect-ratio: 16/9; object-fit: contain; background: #0e1315; border-radius: calc(var(--radius) - 5px); }
+.video-grid { display: grid; gap: 1rem; }
+.video-grid .video-shell { min-width: 0; }
+.video-grid .video-shell > strong { display: block; padding: .9rem 1rem 0; }
 .text-link { display: inline-block; margin: .75rem .2rem .1rem; color: var(--accent); font-weight: 750; }
 .secondary-link { margin-left: 1rem; color: var(--muted); }
 

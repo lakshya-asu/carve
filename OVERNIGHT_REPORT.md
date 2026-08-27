@@ -947,3 +947,129 @@ python -m pytest tests\test_video_recorder.py tests\test_scene2_camera_options.p
 ```
 
 Isaac and Kit closed after both passing render batches. Known render-variable host-copy warnings remained visible. No system software, Windows setting, or unrelated project was changed.
+
+## Final integrated FANUC pipeline and hardening, 2026-08-27
+
+### Outcome
+
+The complete Scene 2 simulator milestone now passes for Solution A and Solution B. The final path starts with actual rendered RGB and metric depth. YOLO26 produces the instance mask through a replaceable vision interface. Depth and calibration produce a planar product pose. Two timestamped observations create a track and velocity estimate. The interception planner predicts a future contact pose and time. Lula inverse kinematics and the Isaac articulation controller drive the FANUC M-10iD/12 reference to the moving product.
+
+The compact gripper closes only after a clear vertical approach. Both PhysX pad contacts must be recent before the grasp is accepted. The product uses a fixed-step kinematic conveyor fixture before capture. After grasp confirmation it becomes a dynamic PhysX rigid body. The program performs zero product pose writes during lift, transport, buffer handling, alignment, and release.
+
+Solution A carries the product directly to `cut_target_frame`, aligns it, releases into the stationary cutter-entry tray, verifies the result, acknowledges the PLC, and retracts. Solution B releases on the centering buffer, renders a new RGBD observation, measures the pose change, corrects the regrasp target, makes new bilateral contact, and feeds the same cutter-entry tray.
+
+The cell USD includes the conveyor, moving workpieces, robot pedestal and arm, compact compliant gripper reference, overhead and buffer camera mounts, sensors, photoeye, buffer, cutter housing, stationary tray, guards, reject bin, PLC attributes, lighting, and named frames. Every integrated run exports the stage, reopens it, and verifies the required prim paths before it can pass.
+
+### Final nominal commands
+
+```powershell
+.\validate_setup.ps1
+.\run_solution_a.ps1 -Seed 2601 -Scenario nominal -OutputRoot results/scene2_release/solution_a_seed2601_v2
+.\run_solution_b.ps1 -Seed 2601 -Scenario nominal -OutputRoot results/scene2_release/solution_b_seed2601
+python tools/audit_scene2_integrated.py results/scene2_release/solution_a_seed2601_v2/scene2_integrated_metrics.json --solution a --output results/scene2_release/solution_a_seed2601_v2/integrated_audit.json
+python tools/audit_scene2_integrated.py results/scene2_release/solution_b_seed2601/scene2_integrated_metrics.json --solution b --output results/scene2_release/solution_b_seed2601/integrated_audit.json
+```
+
+Both PowerShell launchers returned exit code 0. Both integrated audits returned `passed: true`.
+
+### Final nominal metrics
+
+| Metric | Solution A | Solution B |
+|---|---:|---:|
+| Seed | 2601 | 2601 |
+| Rendered video frames | 201 | 353 |
+| Video bytes | 1,583,538 | 2,834,395 |
+| Articulation-controller commands | 1,999 | 3,521 |
+| Cutter position error | 10.31 mm | 20.93 mm |
+| Cutter angle error | 0.119 deg | 0.481 deg |
+| Delivery timing error | 25.00 ms | 16.67 ms |
+| Physical lift | 177.92 mm | 177.96 mm |
+| Maximum product-to-TCP distance | 70.09 mm | 79.51 mm |
+| Buffer RGBD oracle position error | not applicable | 6.52 mm |
+| Product pose writes after grasp | 0 | 0 |
+| Unexpected gripper contacts | 0 | 0 |
+| Joint-limit violations | 0 | 0 |
+| Velocity-limit violations | 0 | 0 |
+| Acceleration-limit violations | 0 | 0 |
+
+The Solution A delivery gate is 55 mm position, 7 degrees angle, and 0.10 m/s stationary release speed. Solution B uses the same delivery gate and adds a 50 mm buffer RGBD oracle-error gate. These are simulation thresholds, not measured production capability.
+
+### Seed and scenario hardening
+
+| Solution | Seed | Scenario | Result | Evidence |
+|---|---:|---|---|---|
+| A | 2601 | nominal | passed | `results/scene2_release/solution_a_seed2601_v2` |
+| A | 2602 | nominal | passed | `results/scene2_integrated_a_2602_v4` |
+| A | 2603 | nominal | passed | integrated seed matrix output |
+| B | 2601 | nominal | passed | `results/scene2_release/solution_b_seed2601` |
+| B | 2602 | slip correction | passed | `results/scene2_final/solution_b_slip_seed2602` |
+| A | 2610 | failed grasp | passed expected recovery | `results/scene2_recovery/a_failed_grasp_seed2610_v3` |
+| A | 2611 | cutter unavailable | passed expected reject | `results/scene2_recovery/a_cutter_unavailable_seed2611` |
+| A | 2612 | emergency stop | passed expected safe stop | `results/scene2_recovery/a_emergency_stop_seed2612` |
+| A | 2613 | stale observation | passed expected recovery | `results/scene2_recovery/a_stale_observation_seed2613` |
+| B | 2614 | buffer timeout | passed expected recovery | `results/scene2_recovery/b_buffer_timeout_seed2614` |
+
+The forced-slip run reported `slip_detected: true`, 17.38 mm cutter position error, 0.453 degree angle error, 25.00 ms timing error, 17.50 mm buffer RGBD oracle error, and zero limit violations.
+
+### YOLO26 model
+
+The final checkpoint is `models/yolo26_meat_reference_buffer_v2/weights/best.pt`. Its SHA-256 is `8baaf05e63a5e654215dbdcf58e106ea62c24e75a54ae9f9c45e8c9c1ed9ceab`. It uses Ultralytics 8.4.129. Synthetic validation reported box precision 0.9440, mask precision 0.96267, box recall 0.79033, mask recall 0.80596, box mAP50 0.89715, mask mAP50 0.91762, box mAP50-95 0.70795, and mask mAP50-95 0.75210.
+
+The training data under `results/yolo/dataset_v4_buffer` is synthetic simulator data. Simulator ground truth generated training labels and remains available as a test oracle. Ground truth is not presented as learned perception and does not control the final demonstration. No real meat accuracy claim is made.
+
+### Failures found and fixed
+
+1. The original gripper was visually oversized and collided with the conveyor. It was replaced by a 220 mm clear-opening compact tool with a 140 mm pad depth and a 350 mm flange-to-grasp-center offset.
+2. The earlier recording moved a product into the tool after a camera cut. That evidence was rejected. The final runner keeps the product visible, requires bilateral contact, and records zero product pose writes after grasp.
+3. Raw depth initially returned the visible top surface while control expected the rigid-body center. A documented 40 mm surface-to-center correction was added and tested.
+4. Solution B initially used oracle pose for slip and regrasp control. It now uses the rendered buffer RGBD observation. Oracle state is retained only for the 50 mm camera-error gate.
+5. The secondary authored Isaac camera render product remained stale after dynamic PhysX motion. The working capture binds the active Fabric render camera to the authored buffer-camera pose and intrinsics. The metrics record both paths and the reason. This is a documented Isaac limitation, not hidden ground-truth control.
+6. A direct diagonal approach swept the open gripper through conveyor geometry. Motion now uses a clearance pose, vertical descent, open-jaw clearance gate, and finger-only closure while holding the measured arm state.
+7. Direct joint interpolation during carry caused the product to peel out of the jaws. Lift, carry, reorientation, alignment, and feed now use Cartesian TCP segments with live bilateral contact age and product-to-TCP retention gates.
+8. Solution A timing originally used the plan time before controller settling. The reference now starts after measured convergence.
+9. Opening exactly onto hard finger limits created avoidable acceleration spikes. The open target now retains a 2 mm margin inside each limit.
+10. Startup exported rigid products in the wrong kinematic order and produced PhysX warnings. Products now reset dynamic first, then receive their kinematic fixture state before export.
+
+### Media and artifact checks
+
+The public page assets contain both MP4 files, posters, contact sheets, YOLO26 segmentation, overhead depth, Solution B buffer RGB, metrics, audits, and saved USDA stages. The A video is 1,583,538 bytes and the B video is 2,834,395 bytes. Both contain more than 100 rendered frames. Audit records confirm matching video and stage hashes.
+
+The integrated audit requires the saved stage to contain the FANUC articulation, two gripper prismatic joints, conveyor, workpieces, overhead and buffer cameras, cutter station, buffer station, reject bin, guards, PLC, and frames. The runner independently reopens the USDA and checks the required paths before writing a passing metric.
+
+### Warnings
+
+Final logs contain no Isaac `[Error]` lines and no PhysX errors. Solution B reports one `rtx.scenedb.plugin` transform-history warning because the simulated history request exceeds the configured transform count. Motion blur is disabled. The camera is static and uses one exposure. The RGB and depth arrays are nonempty, and the 6.52 mm nominal and 17.50 mm forced-slip oracle gates pass. The warning is retained because it may matter if long-exposure motion rendering is introduced later.
+
+The renderer also reports low-resolution DLSS, host-copy performance, and initial render-variable warnings. They are performance or startup warnings, not suppressed validation failures.
+
+### Documentation and launchers
+
+- `run_solution_a.ps1`: complete fail-closed Solution A runner and nominal artifact audit
+- `run_solution_b.ps1`: complete fail-closed Solution B runner and nominal or slip artifact audit
+- `run_scene2_full.ps1`: setup validation followed by A and B
+- `run_tests.ps1`: ordinary unit tests, setup validation, historical regression suites, artifact audit, focused Scene 2 ROS and compliant-gripper gate, and final integrated A and B
+- `PROJECT_PAGE.html`: visual overview with both final recordings
+- `TECHNICAL_REPORT.html`: detailed architecture, data flow, I/O, controls, evidence, limitations, and commands
+- `SYSTEM_DESIGN.md`: durable final architecture
+- `BUILD_STATUS.md`: current truth plus historical sections
+- `tickets/T016.md`: simulator acceptance complete, external MoveIt item in review
+
+### Remaining blockers and exact next work
+
+The complete Isaac Sim pipeline is runnable under documented assumptions. The exact next software integration task is to commission an external ROS 2 and MoveIt `FollowJointTrajectory` environment against the tested core-message bridge. This requires an existing authorized ROS 2 and MoveIt environment. It was not installed during this build.
+
+T015 remains blocked on real inputs: representative workpieces, real annotated camera data, lens calibration, conveyor timing and encoder logs, measured friction and tissue deformation, production gripper tests, cutter PLC traces, OEM controller limits, hygienic design review, machine safety engineering, and physical commissioning. The project does not claim OEM fidelity, physical accuracy, food-safety validation, real-cell safety validation, or production readiness.
+
+### Final clean suite
+
+The final documented release command was:
+
+```powershell
+.\run_tests.ps1
+```
+
+It passed from a clean process state. Evidence is `results/full_suite/20260827_045748119`. The command reported 147 Python tests passed, setup validation passed, the focused Scene 2 FANUC ROS and compliant-gripper gate passed, the integrated Solution A audit passed, and the integrated Solution B audit passed. The focused gripper gate measured bilateral product-only contact, 0.898 mm hold slip, 62.03 mm release displacement, zero unexpected contact pairs, and zero joint-limit violations. The ROS probe received clock, joint state, RGB, depth, and camera calibration, rejected a partial command, accepted a full six-joint command, and reached 0.000846 rad maximum joint error.
+
+Two issues were exposed during the clean-suite repetitions and fixed without weakening a gate. The historical abstract-cell buffer-timeout cycle could fail its initial contact check before reaching the intended injected timeout. It now receives one typed, physically simulated matched-velocity contact-settle retry for every non-failed-grasp scenario. The superseded abstract-cell physics matrix is no longer part of the release command because it is not the current FANUC implementation. Its files and historical results remain untouched. The focused Scene 2 compliance fixture was also too close to the cutter guard. It now uses a Lula-verified top-down pose at product center `(0.05, 0.0, 1.10)` m and still fails on any non-product contact.
+
+No Isaac Sim or Kit process remained after the command. The final unit tests and both published integrated artifact audits were run once more after shutdown and all passed.
