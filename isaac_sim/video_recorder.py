@@ -42,7 +42,15 @@ class VideoRecording:
 class RawVideoRecorder:
     """Write RGB24 frames to ffmpeg without retaining them in memory."""
 
-    def __init__(self, output_path: Path, *, fps: int, width: int, height: int) -> None:
+    def __init__(
+        self,
+        output_path: Path,
+        *,
+        fps: int,
+        width: int,
+        height: int,
+        source: str = "rendered_overhead_rgb",
+    ) -> None:
         if fps <= 0 or width <= 0 or height <= 0:
             raise ValueError("Video dimensions and frame rate must be positive")
         ffmpeg = shutil.which("ffmpeg")
@@ -53,6 +61,7 @@ class RawVideoRecorder:
         self.fps = fps
         self.width = width
         self.height = height
+        self.source = source
         self.frame_count = 0
         self.first_sim_time_ns: int | None = None
         self.last_sim_time_ns: int | None = None
@@ -140,4 +149,5 @@ class RawVideoRecorder:
             self.last_sim_time_ns,
             duration_s,
             self.output_path.stat().st_size,
+            source=self.source,
         )

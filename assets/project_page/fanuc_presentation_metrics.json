@@ -1,0 +1,104 @@
+{
+  "articulation_command_count": 3300,
+  "camera": {
+    "eye": [
+      3.65,
+      -2.2,
+      2.4
+    ],
+    "focal_length_mm": 18.0,
+    "role": "virtual demonstration camera inside the guard envelope",
+    "target": [
+      0.3,
+      0.0,
+      0.86
+    ]
+  },
+  "demo_kind": "standard arm articulation and compliant jaw presentation",
+  "end_to_end_delivery": false,
+  "end_to_end_note": "This is the Scene 2 robot and gripper presentation. Full YOLO-to-FANUC delivery remains T016.",
+  "joint_limit_violations": 0,
+  "max_joint_acceleration": {
+    "J1": 1.7271375820214985,
+    "J2": 0.9869358294452013,
+    "J3": 0.24673394816545624,
+    "J4": 0.34542751456640985,
+    "J5": 0.5181412672516927,
+    "J6": 0.5304779894778733,
+    "finger_left": 0.2960585380051839,
+    "finger_right": 0.2960585380051839
+  },
+  "max_joint_velocity": {
+    "J1": 1.0995495597899207,
+    "J2": 0.6283140776349239,
+    "J3": 0.15707851355709845,
+    "J4": 0.21990991078765898,
+    "J5": 0.32986486325567554,
+    "J6": 0.3377188047329316,
+    "finger_left": 0.0942450881136786,
+    "finger_right": 0.0942450881136786
+  },
+  "passed": true,
+  "physics_dt_seconds": 0.004166666666666667,
+  "physics_steps": 3300,
+  "poster_path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_presentation_final\\scene2_fanuc_demo_poster.png",
+  "poster_sha256": "880527d6702e1a4fa925cc3b8d6b7daef5c38ad4e738082133889a580e8e2862",
+  "recording": {
+    "codec": "h264",
+    "duration_s": 13.75,
+    "file_bytes": 1549950,
+    "first_sim_time_ns": 1466666743,
+    "fps": 12,
+    "frame_count": 165,
+    "height": 720,
+    "last_sim_time_ns": 25383334657,
+    "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_presentation_final\\scene2_fanuc_demo.mp4",
+    "source": "rendered_presentation_rgb",
+    "width": 1280
+  },
+  "recording_sha256": "6de0030a2b7df173744d44035c956ce63eb0d5d5b5bec0405562c1607f55c59e",
+  "reference_notice": "FANUC visual and kinematic reference from the official description. The cell equipment and tool are project reference models. No physical or safety validation is claimed.",
+  "robot": "FANUC M-10iD/12 official description reference",
+  "sequence": [
+    {
+      "duration_s": 1.0,
+      "label": "establish cell"
+    },
+    {
+      "duration_s": 2.0,
+      "label": "move toward belt"
+    },
+    {
+      "duration_s": 0.75,
+      "label": "show belt approach"
+    },
+    {
+      "duration_s": 2.0,
+      "label": "transfer across cell"
+    },
+    {
+      "duration_s": 2.0,
+      "label": "present compliant gripper"
+    },
+    {
+      "duration_s": 1.25,
+      "label": "close compliant jaws"
+    },
+    {
+      "duration_s": 0.75,
+      "label": "show closed jaws"
+    },
+    {
+      "duration_s": 1.0,
+      "label": "open compliant jaws"
+    },
+    {
+      "duration_s": 2.0,
+      "label": "return to overview"
+    },
+    {
+      "duration_s": 1.0,
+      "label": "finish"
+    }
+  ]
+}

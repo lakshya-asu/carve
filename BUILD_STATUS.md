@@ -2,7 +2,13 @@
 
 ## Visual project page, 2026-08-27
 
-`PROJECT_PAGE.html` is now the main visual entry point for the repository. It shows the saved YOLO26 segmentation output, rendered overhead RGB and depth, Scene 2 FANUC articulation and compliant gripper, the recorded 31.42 second Solution B MP4, the complete communication path, inputs and outputs, control states, A and B behavior, validation metrics, commands, and limitations.
+`PROJECT_PAGE.html` is now the main visual entry point for the repository. It shows the saved YOLO26 segmentation output, rendered overhead RGB and depth, Scene 2 FANUC articulation and compliant gripper, a clear 13.75 second standard-arm presentation, a link to the older 31.42 second complete-pipeline recording, the communication path, inputs and outputs, control states, A and B behavior, validation metrics, commands, and limitations.
+
+The main presentation was corrected after review. The old overhead Scene 1 video is no longer the primary demo because that sensor angle is hard to read and does not contain the selected FANUC arm. The new main video is `assets/project_page/fanuc_presentation.mp4`. It is rendered from a virtual three-quarter presentation camera inside the guard envelope and shows the standard arm, conveyor, product path, compliant jaws, and cutter entrance in one frame. The calibrated overhead view remains in the perception section where it belongs.
+
+The corrected recording is 13.75 seconds at 1280 by 720 and 12 FPS. It contains 165 rendered frames and 3,300 actual articulation-controller commands with zero joint-limit violations. It is labeled as a Scene 2 articulation and jaw-motion presentation, not as the unfinished YOLO-to-FANUC delivery cycle. The first recording attempt was rejected after 763 joint-limit violations exposed a command-state bug. The script now maintains one continuous commanded state for all eight joints. The passing evidence is under `results/scene2_presentation_final`. The failed attempt remains under `results/scene2_presentation_demo`.
+
+Selected page media is now copied into `assets/project_page` so the public repository carries the page visuals and videos. The earlier page depended on ignored `results` paths and therefore did not package its media correctly.
 
 The page draws only from checked-in implementation documents and executed artifacts. It states the current integration boundary directly. Scene 1 is the complete camera-to-delivery vertical slice. Scene 2 validates the standard articulated arm, ROS 2 boundary, RGBD publication, and compliant gripper, but the complete YOLO-to-FANUC interception loop remains T016.
 

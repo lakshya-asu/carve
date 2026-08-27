@@ -1,0 +1,206 @@
+{
+  "articulation_dof_names": [
+    "J1",
+    "J2",
+    "J3",
+    "J4",
+    "J5",
+    "J6",
+    "finger_left",
+    "finger_right"
+  ],
+  "compliant_gripper": {
+    "assumption": "Rigid product and linear series-compliance reference. No tissue deformation or pressure validation.",
+    "bilateral_contact": true,
+    "close_target_m": [
+      -0.07888,
+      0.07888
+    ],
+    "contact_pairs": [
+      [
+        [
+          "/World/Cell/FANUC_M10iD12/Geometry/world/base_link/J1_link/J2_link/J3_link/J4_link/J5_link/J6_link/flange/ee_link/CompliantGripperLeftFinger",
+          "/World/Cell/Workpieces/PorkLoin_01"
+        ]
+      ],
+      [
+        [
+          "/World/Cell/FANUC_M10iD12/Geometry/world/base_link/J1_link/J2_link/J3_link/J4_link/J5_link/J6_link/flange/ee_link/CompliantGripperRightFinger",
+          "/World/Cell/Workpieces/PorkLoin_01"
+        ]
+      ]
+    ],
+    "contact_source": "Isaac contact sensors on both articulated finger links",
+    "elastic_deflection_m": [
+      0.010033595447540289,
+      0.00998544234514237
+    ],
+    "force_limit_n": 70.0,
+    "force_proxy_n": [
+      62.7099715471268,
+      62.40901465713981
+    ],
+    "hold_slip_m": 0.0,
+    "measured_closed_m": [
+      -0.06884640455245972,
+      0.06889455765485764
+    ],
+    "mechanism": "force-limited parallel jaw with elastic drive compliance",
+    "passed": true,
+    "peak_contact_force_n": [
+      48.04382671530728,
+      56.843361046927576
+    ],
+    "product_path": "/World/Cell/Workpieces/PorkLoin_01",
+    "recovered_open_position_m": [
+      -7.391745526774685e-08,
+      1.114557790060644e-06
+    ],
+    "release_displacement_m": 1.3830238580703735
+  },
+  "controller_motion_segments": 3,
+  "depth_finite_positive_pixels": 629968,
+  "depth_path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_compliance_ros\\scene2_fanuc_cell_depth.npy",
+  "depth_sha256": "ced6ddf1fd7076295b23ab44a0a0e2f5100fe286b4371cd4e92a1a7600ac8ee2",
+  "dof_names": [
+    "J1",
+    "J2",
+    "J3",
+    "J4",
+    "J5",
+    "J6"
+  ],
+  "final_joint_positions_rad": {
+    "J1": -1.3600010871887207,
+    "J2": 0.3663775324821472,
+    "J3": 0.2295335829257965,
+    "J4": 0.02526876889169216,
+    "J5": -0.42003607749938965,
+    "J6": 0.030026625841856003
+  },
+  "gripper_dof_names": [
+    "finger_left",
+    "finger_right"
+  ],
+  "imported_joint_limits_rad": {
+    "J1": [
+      -3.2288591861724854,
+      3.2288591861724854
+    ],
+    "J2": [
+      -1.5707963705062866,
+      2.5307273864746094
+    ],
+    "J3": [
+      -1.5707963705062866,
+      3.874630928039551
+    ],
+    "J4": [
+      -3.3161256313323975,
+      3.3161256313323975
+    ],
+    "J5": [
+      -3.1415927410125732,
+      3.1415927410125732
+    ],
+    "J6": [
+      -7.8539814949035645,
+      7.8539814949035645
+    ]
+  },
+  "joint_limit_violations": 0,
+  "max_command_acceleration_rad_s2": {
+    "J1": 1.9757934449039283,
+    "J2": 0.43784511074704824,
+    "J3": 1.6831335287179172,
+    "J4": 3.0974728254946626,
+    "J5": 0.8557174980126092,
+    "J6": 0.9009857408116773
+  },
+  "max_command_velocity_rad_s": {
+    "J1": 0.9434018148766876,
+    "J2": 0.20906227478560524,
+    "J3": 0.8036625639032735,
+    "J4": 1.478981263262975,
+    "J5": 0.40858797397445024,
+    "J6": 0.4302026536481818
+  },
+  "passed": true,
+  "physics_dt_seconds": 0.004166666666666667,
+  "physics_steps": 3408,
+  "reference_notice": "FANUC visual and kinematic reference from the official description. The cell equipment and tool are project reference models. No physical or safety validation is claimed.",
+  "rgb_nonempty_pixels": 921600,
+  "rgb_path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_compliance_ros\\scene2_fanuc_cell.png",
+  "rgb_sha256": "4ce25ad9b4f36daa4dbdd5625966c90bfbf23c528a8589cce4426d8e1d92fad0",
+  "robot": "FANUC M-10iD/12 official description reference",
+  "robot_closeup_path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_compliance_ros\\scene2_fanuc_robot_closeup.png",
+  "robot_closeup_sha256": "e5e898e38f76723441e254c64aca8043b134c092b923b0da263774273327c026",
+  "ros2": {
+    "bridge": {
+      "accepted_commands": 1,
+      "last_rejection": "Expected exact joint order ('J1', 'J2', 'J3', 'J4', 'J5', 'J6'), received ('J1', 'J2', 'J3', 'J4', 'J5')",
+      "published_clock": 720,
+      "published_depth": 45,
+      "published_joint_states": 180,
+      "published_rgb": 45,
+      "rejected_commands": 1
+    },
+    "command_applied_by_articulation_controller": true,
+    "max_joint_error_rad": 0.0006787514686584784,
+    "measured_joint_positions_rad": [
+      -1.3600010871887207,
+      0.3663775324821472,
+      0.2295335829257965,
+      0.02526876889169216,
+      -0.42003607749938965,
+      0.030026625841856003
+    ],
+    "passed": true,
+    "probe": {
+      "camera_info_received": 45,
+      "clocks_received": 502,
+      "commands_published": 2,
+      "depth_images_received": 45,
+      "joint_states_received": 180,
+      "last_depth_bytes": 1228800,
+      "last_rgb_bytes": 921600,
+      "rgb_images_received": 45
+    },
+    "target_joint_positions_rad": [
+      -1.3599934196472168,
+      0.36569878101348874,
+      0.22976697862148285,
+      0.025142445715027863,
+      -0.4200154435634613,
+      0.029999738896406142
+    ],
+    "transport": "ROS 2 DDS using Isaac Sim bundled Humble libraries"
+  },
+  "save_reload_manifest_match": true,
+  "scene": "2.0",
+  "stage_manifest": {
+    "articulation_roots": [
+      "/World/Cell/FANUC_M10iD12/Geometry/world/base_link"
+    ],
+    "camera_paths": [
+      "/World/Cell/Sensors/OverheadCamera",
+      "/World/Cell/Sensors/PresentationCamera"
+    ],
+    "prim_count": 200,
+    "prismatic_joint_paths": [
+      "/World/Cell/FANUC_M10iD12/Physics/finger_left",
+      "/World/Cell/FANUC_M10iD12/Physics/finger_right"
+    ],
+    "revolute_joint_paths": [
+      "/World/Cell/FANUC_M10iD12/Physics/J1",
+      "/World/Cell/FANUC_M10iD12/Physics/J2",
+      "/World/Cell/FANUC_M10iD12/Physics/J3",
+      "/World/Cell/FANUC_M10iD12/Physics/J4",
+      "/World/Cell/FANUC_M10iD12/Physics/J5",
+      "/World/Cell/FANUC_M10iD12/Physics/J6"
+    ],
+    "role_count": 82
+  },
+  "stage_path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_compliance_ros\\meatcell_scene2_fanuc.usda",
+  "stage_sha256": "f1e26d44328a8138e27470ffb68c9cf00569fa84429817a2ad19a72f9465b052"
+}

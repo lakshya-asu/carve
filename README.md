@@ -8,6 +8,15 @@ Open `PROJECT_PAGE.html` for the visual project overview, rendered Isaac Sim vid
 .\open_project_page.ps1
 ```
 
+The main page video now uses the Scene 2 FANUC cell and a clear virtual presentation camera. It demonstrates the standard-arm articulation and compliant jaw motion. The older overhead recording remains available as the complete Scene 1 YOLO-to-delivery evidence. The final YOLO-to-FANUC connection remains T016.
+
+Re-render the presentation angle or record the standard-arm demonstration with:
+
+```powershell
+.\render_scene2_camera_options.ps1
+.\record_scene2_demo.ps1
+```
+
 Carve is a runnable Isaac Sim 6.0.1 project for vision-guided robotic handling of beef, pork, and chicken cuts on a moving conveyor. The current reference cell operates at a nominal conveyor speed of 2.24 m/s and releases aligned products onto a stationary cutter-entry tray.
 
 The saved USD cell includes a conveyor, dynamic meat workpieces, a generic six-joint Cartesian articulation, a compliant two-finger gripper reference, overhead and wrist cameras, calibration frames, guards, a reject bin, `cut_target_frame`, a guarded cutter or feed reference, PLC state, and the Solution B buffer.

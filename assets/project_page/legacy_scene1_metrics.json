@@ -1,0 +1,330 @@
+{
+  "cycle_evidence": [
+    {
+      "actual_controller_command_count": 2201,
+      "deterministic_replay_passed": true,
+      "episode_id": "isaac-b-000-seed-2601",
+      "failure_mode": "nominal",
+      "intentional_contact_samples": 5578,
+      "intercept_timing_error_s": 0.003720124999999852,
+      "max_actual_joint_velocity": 2.6292481422424316,
+      "max_commanded_acceleration": 11.914403292181088,
+      "max_commanded_velocity": 2.794798272015443,
+      "rendered_observation_count": 2,
+      "safe_stop_hold_max_joint_delta": null,
+      "trace": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\yolo\\recorded_demo\\isaac_b\\traces\\cycle_000.jsonl",
+      "vision_model": "ultralytics_yolo26_seg_meat_reference_v1@cf280497427a"
+    },
+    {
+      "actual_controller_command_count": 2200,
+      "deterministic_replay_passed": true,
+      "episode_id": "isaac-b-001-seed-2602",
+      "failure_mode": "nominal",
+      "intentional_contact_samples": 5486,
+      "intercept_timing_error_s": 0.0016915599999993702,
+      "max_actual_joint_velocity": 2.592679500579834,
+      "max_commanded_acceleration": 11.914403292181088,
+      "max_commanded_velocity": 2.748911840237901,
+      "rendered_observation_count": 2,
+      "safe_stop_hold_max_joint_delta": null,
+      "trace": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\yolo\\recorded_demo\\isaac_b\\traces\\cycle_001.jsonl",
+      "vision_model": "ultralytics_yolo26_seg_meat_reference_v1@cf280497427a"
+    },
+    {
+      "actual_controller_command_count": 849,
+      "deterministic_replay_passed": true,
+      "episode_id": "isaac-b-002-seed-2603",
+      "failure_mode": "failed_grasp",
+      "intentional_contact_samples": 75,
+      "intercept_timing_error_s": 0.002734831000001492,
+      "max_actual_joint_velocity": 2.610602617263794,
+      "max_commanded_acceleration": 7.515691949297725,
+      "max_commanded_velocity": 2.6216031973437177,
+      "rendered_observation_count": 2,
+      "safe_stop_hold_max_joint_delta": null,
+      "trace": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\yolo\\recorded_demo\\isaac_b\\traces\\cycle_002.jsonl",
+      "vision_model": "ultralytics_yolo26_seg_meat_reference_v1@cf280497427a"
+    },
+    {
+      "actual_controller_command_count": 1353,
+      "deterministic_replay_passed": true,
+      "episode_id": "isaac-b-003-seed-2604",
+      "failure_mode": "buffer_timeout",
+      "intentional_contact_samples": 1903,
+      "intercept_timing_error_s": 0.0009211570000005054,
+      "max_actual_joint_velocity": 2.564781904220581,
+      "max_commanded_acceleration": 11.914403292181088,
+      "max_commanded_velocity": 2.728511607282305,
+      "rendered_observation_count": 2,
+      "safe_stop_hold_max_joint_delta": null,
+      "trace": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\yolo\\recorded_demo\\isaac_b\\traces\\cycle_003.jsonl",
+      "vision_model": "ultralytics_yolo26_seg_meat_reference_v1@cf280497427a"
+    }
+  ],
+  "cycle_results": [
+    {
+      "__type__": "CellResult",
+      "collision_count": 0,
+      "delivered": true,
+      "episode_id": "isaac-b-000-seed-2601",
+      "finished_at": {
+        "__type__": "SimTime",
+        "nanoseconds": 9458333333,
+        "schema_version": 1
+      },
+      "grasped": true,
+      "joint_limit_violation_count": 0,
+      "perceived": true,
+      "placement_angle_error_rad": 0.0011728918390016946,
+      "placement_position_error_m": 0.0033226234298539296,
+      "schema_version": 1,
+      "slip_detected": true,
+      "solution": "b",
+      "started_at": {
+        "__type__": "SimTime",
+        "nanoseconds": 1000000000,
+        "schema_version": 1
+      },
+      "terminal_path": {
+        "__enum__": "TerminalPath",
+        "value": "success"
+      },
+      "terminal_reason": "delivery_verified",
+      "timing_error_s": 0.008333332999999499,
+      "tracked": true,
+      "transfer_speed_error_mps": 8.418560028078392e-05
+    },
+    {
+      "__type__": "CellResult",
+      "collision_count": 0,
+      "delivered": true,
+      "episode_id": "isaac-b-001-seed-2602",
+      "finished_at": {
+        "__type__": "SimTime",
+        "nanoseconds": 18908333333,
+        "schema_version": 1
+      },
+      "grasped": true,
+      "joint_limit_violation_count": 0,
+      "perceived": true,
+      "placement_angle_error_rad": 0.0005935630425741128,
+      "placement_position_error_m": 0.003314662732643412,
+      "schema_version": 1,
+      "slip_detected": true,
+      "solution": "b",
+      "started_at": {
+        "__type__": "SimTime",
+        "nanoseconds": 10458333333,
+        "schema_version": 1
+      },
+      "terminal_path": {
+        "__enum__": "TerminalPath",
+        "value": "success"
+      },
+      "terminal_reason": "delivery_verified",
+      "timing_error_s": 0.008333332999999499,
+      "tracked": true,
+      "transfer_speed_error_mps": 0.0003400385379791482
+    },
+    {
+      "__type__": "CellResult",
+      "collision_count": 0,
+      "delivered": false,
+      "episode_id": "isaac-b-002-seed-2603",
+      "finished_at": {
+        "__type__": "SimTime",
+        "nanoseconds": 22541666667,
+        "schema_version": 1
+      },
+      "grasped": false,
+      "joint_limit_violation_count": 0,
+      "perceived": true,
+      "placement_angle_error_rad": null,
+      "placement_position_error_m": null,
+      "schema_version": 1,
+      "slip_detected": false,
+      "solution": "b",
+      "started_at": {
+        "__type__": "SimTime",
+        "nanoseconds": 19908333333,
+        "schema_version": 1
+      },
+      "terminal_path": {
+        "__enum__": "TerminalPath",
+        "value": "recovered"
+      },
+      "terminal_reason": "failed_grasp_contact_confirmation",
+      "timing_error_s": null,
+      "tracked": true,
+      "transfer_speed_error_mps": null
+    },
+    {
+      "__type__": "CellResult",
+      "collision_count": 0,
+      "delivered": false,
+      "episode_id": "isaac-b-003-seed-2604",
+      "finished_at": {
+        "__type__": "SimTime",
+        "nanoseconds": 31354166667,
+        "schema_version": 1
+      },
+      "grasped": true,
+      "joint_limit_violation_count": 0,
+      "perceived": true,
+      "placement_angle_error_rad": null,
+      "placement_position_error_m": null,
+      "schema_version": 1,
+      "slip_detected": false,
+      "solution": "b",
+      "started_at": {
+        "__type__": "SimTime",
+        "nanoseconds": 23541666667,
+        "schema_version": 1
+      },
+      "terminal_path": {
+        "__enum__": "TerminalPath",
+        "value": "recovered"
+      },
+      "terminal_reason": "buffer_timeout",
+      "timing_error_s": null,
+      "tracked": true,
+      "transfer_speed_error_mps": null
+    }
+  ],
+  "cycles": 4,
+  "gates": {
+    "alignment_and_timing": {
+      "passed": true,
+      "successful_measurements": 2
+    },
+    "calibration_consistency": {
+      "belt_surface_z_world_m": 0.04,
+      "camera_world_translation_m": [
+        1.0,
+        0.0,
+        3.0
+      ],
+      "passed": true,
+      "position_sigma_m": 0.002
+    },
+    "collision_and_joint_limits": {
+      "collision_count": 0,
+      "joint_limit_violation_count": 0,
+      "passed": true
+    },
+    "controller_execution": {
+      "command_count": 6603,
+      "joint_names": [
+        "x_axis",
+        "y_axis",
+        "z_axis",
+        "wrist_yaw",
+        "finger_left",
+        "finger_right"
+      ],
+      "passed": true
+    },
+    "deterministic_replay": {
+      "passed": true,
+      "verified_cycles": 4
+    },
+    "integrated_vertical_slice": {
+      "passed": true,
+      "successful_cycles": 2
+    },
+    "nominal_delivery": {
+      "nominal_cycles": 2,
+      "passed": true,
+      "successful_nominal_cycles": 2
+    },
+    "recovery_behavior": {
+      "passed": true,
+      "recovered_or_rejected_cycles": 2
+    },
+    "sensor_publication": {
+      "backend": "yolo26",
+      "ground_truth_primary": false,
+      "model": [
+        "ultralytics_yolo26_seg_meat_reference_v1@cf280497427a"
+      ],
+      "observations": 8,
+      "passed": true
+    },
+    "stage_contents": {
+      "missing": [],
+      "passed": true
+    },
+    "stage_save_reload": {
+      "passed": true,
+      "signature": "e82e054d76e255d5cafded5f1b5a5a516f9d5f0208e50e3a58fef6bb4014306a"
+    },
+    "successful_and_failed_grasps": {
+      "failed_contact_grasps": 1,
+      "passed": true,
+      "successful_contact_grasps": 2
+    },
+    "video_recording": {
+      "duration_s": 31.416666666666668,
+      "frame_count": 377,
+      "passed": true,
+      "source": "rendered_overhead_rgb"
+    }
+  },
+  "nominal_belt_speed_mps": 2.24,
+  "passed": true,
+  "recording": {
+    "codec": "h264",
+    "duration_s": 31.416666666666668,
+    "file_bytes": 885131,
+    "first_sim_time_ns": 0,
+    "fps": 12,
+    "frame_count": 377,
+    "height": 480,
+    "last_sim_time_ns": 31333333333,
+    "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\yolo\\recorded_demo\\isaac_b\\demo.mp4",
+    "source": "rendered_overhead_rgb",
+    "width": 640
+  },
+  "reference_asset_notice": "Abstract reference model for simulation integration only. Not OEM accurate, physically calibrated, food-safe validated, or production ready.",
+  "scenario_profile": "baseline",
+  "schema_version": 1,
+  "seed": 2601,
+  "solution": "b",
+  "stage": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\yolo\\recorded_demo\\isaac_cell_b.usda",
+  "summary": {
+    "collision_count": 0,
+    "complete_episodes": 4,
+    "episodes": 4,
+    "failure_counts": {
+      "buffer_timeout": 1,
+      "failed_grasp_contact_confirmation": 1
+    },
+    "joint_limit_violation_count": 0,
+    "partial_episodes": 0,
+    "perception_latency_s": {
+      "p50": 0.026649827999999598,
+      "p95": 0.028378495400001112
+    },
+    "placement_angle_error_rad": {
+      "p50": 0.0008832274407879037,
+      "p95": 0.0011439253991803156
+    },
+    "placement_position_error_m": {
+      "p50": 0.0033186430812486706,
+      "p95": 0.0033222253949934037
+    },
+    "schema_version": 1,
+    "success_rate_complete": 0.5,
+    "successes": 2,
+    "timing_error_s": {
+      "p50": 0.008333332999999499,
+      "p95": 0.008333332999999499
+    },
+    "transfer_speed_error_mps": {
+      "p50": 0.00021211206912996605,
+      "p95": 0.00032724589109422997
+    }
+  },
+  "vision_model_backend": "yolo26",
+  "yolo_weights": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\models\\yolo26_meat_reference\\weights\\best.pt"
+}

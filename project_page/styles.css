@@ -196,11 +196,14 @@ figcaption { color: var(--muted); font-size: .86rem; margin-top: .7rem; }
 .demo-copy p { color: var(--muted); }
 .recording-facts { margin: 2rem 0 0; }
 .recording-facts div { display: grid; grid-template-columns: 7rem 1fr; padding: .65rem 0; border-bottom: 1px solid var(--line); }
+.demo-boundary { margin-top: 1.5rem; padding-left: 1rem; border-left: 4px solid var(--accent); }
+.demo-boundary strong { color: var(--ink); }
 dt { color: var(--muted); }
 dd { margin: 0; font-weight: 700; }
 .video-shell { background: var(--surface-strong); padding: .8rem; border-radius: var(--radius); }
 .video-shell video { width: 100%; aspect-ratio: 4/3; object-fit: contain; background: #0e1315; border-radius: calc(var(--radius) - 5px); }
 .text-link { display: inline-block; margin: .75rem .2rem .1rem; color: var(--accent); font-weight: 750; }
+.secondary-link { margin-left: 1rem; color: var(--muted); }
 
 .architecture { width: min(1480px, calc(100% - 48px)); }
 .system-flow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2rem; margin-top: 3.5rem; }

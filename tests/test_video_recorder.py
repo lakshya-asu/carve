@@ -29,4 +29,19 @@ def test_video_recorder_writes_h264_container(tmp_path: Path) -> None:
     assert result.first_sim_time_ns == 0
     assert result.last_sim_time_ns == 916_666_663
     assert result.file_bytes > 0
+    assert result.source == "rendered_overhead_rgb"
+
+
+def test_video_recorder_preserves_camera_source(tmp_path: Path) -> None:
+    target = tmp_path / "presentation.mp4"
+    recorder = RawVideoRecorder(
+        target,
+        fps=12,
+        width=16,
+        height=16,
+        source="rendered_presentation_rgb",
+    )
+    recorder.write_frame(bytes([32, 48, 64]) * (16 * 16), 0)
+    result = recorder.close()
+    assert result.source == "rendered_presentation_rgb"
     assert target.read_bytes()[4:8] == b"ftyp"

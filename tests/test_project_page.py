@@ -42,6 +42,8 @@ def test_project_page_has_required_views_and_sections() -> None:
         "Rendered RGB stream",
         "Depth stream",
         "Robot control",
+        "The final cell, from a readable angle.",
+        "It is not yet the complete YOLO pick-and-deliver cycle.",
         "Solution A",
         "Solution B",
         "Active integration gap",
@@ -63,6 +65,7 @@ def test_project_page_embeds_nonempty_recorded_video() -> None:
     _, parser = parse_page()
     assert len(parser.video_sources) == 1
     video = ROOT / parser.video_sources[0]
+    assert parser.video_sources[0] == "assets/project_page/fanuc_presentation.mp4"
     assert video.suffix.lower() == ".mp4"
     assert video.stat().st_size > 100_000
 

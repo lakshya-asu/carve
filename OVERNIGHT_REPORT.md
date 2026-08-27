@@ -870,3 +870,26 @@ Direct `file:` navigation through the in-app browser automation interface was bl
 - Complete-suite evidence: `results/full_suite/20260826_205915468`
 
 No simulator implementation or metric changed in this documentation pass, so Isaac Sim was not rerun. The page reports the latest completed simulator suite without recasting historical data as a new run. No Isaac Sim or Kit process was started.
+
+## Presentation-camera correction, 2026-08-27
+
+The first project-page version mixed the current Scene 2 FANUC cell image with an older overhead Scene 1 video. The overhead camera is appropriate for segmentation and pose estimation, but it gives a poor explanation of the robot task. It also made the page appear to switch robot systems without warning.
+
+Four Scene 2 presentation-camera candidates were rendered in one headless Isaac run. The operator and process-side views were rejected because the yellow rail and transparent guard obscured the robot. The selected view is a virtual 18 mm three-quarter camera at eye `[3.65, -2.20, 2.40]` m looking toward `[0.30, 0.00, 0.86]` m. It sits inside the guard envelope for explanation only. It is not presented as a physically mounted sensor.
+
+The first video run failed its own gate. It wrote 165 frames, but the command generator rebuilt partially specified commands from measured joint state. That created 763 joint-limit violations and unrealistic spikes. The recording was rejected. The fixed generator maintains a continuous eight-joint commanded state and changes only the selected joints inside that state.
+
+The repeated run passed with 3,300 articulation commands, 0 joint-limit violations, 165 frames, 1280 by 720 resolution, 12 FPS, H.264 encoding, and 13.75 seconds of video. The output is `results/scene2_presentation_final/scene2_fanuc_demo.mp4`. The page-ready copy is `assets/project_page/fanuc_presentation.mp4`.
+
+The new recording demonstrates the Scene 2 FANUC articulation and jaw motion. It does not show complete vision-guided product delivery, and both the metrics and project page say so directly. The older Scene 1 video remains linked as the complete YOLO-to-delivery evidence until T016 joins that pipeline to the FANUC arm.
+
+Commands used:
+
+```powershell
+.\render_scene2_camera_options.ps1
+.\record_scene2_demo.ps1
+ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate -show_entries format=duration,size -of json results\scene2_presentation_final\scene2_fanuc_demo.mp4
+python -m pytest tests\test_video_recorder.py tests\test_scene2_camera_options.py tests\test_project_page.py -q
+```
+
+Isaac and Kit closed after both passing render batches. Known render-variable host-copy warnings remained visible. No system software, Windows setting, or unrelated project was changed.
