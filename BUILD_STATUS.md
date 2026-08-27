@@ -12,6 +12,8 @@ The recovery evidence videos now use two wide columns on desktop and one column 
 
 The complete ordinary Python suite passed 188 tests after these changes.
 
+GitHub Pages run `33124349285` passed. The deployed recovery section was reviewed at a 1280-pixel desktop viewport and a 390 by 844 narrow viewport. Desktop recovery videos rendered at about 597 pixels wide in two columns. Narrow recovery videos rendered at 347 pixels wide in one column. Neither viewport had horizontal overflow.
+
 The private Synphony Cue pack now includes `CARVE-PROJECT-BRIEF.md`. It contains short and long project explanations, the exact method chain, measured results, likely technical questions, claim boundaries, and a one-line message for Neil. Cue was opened and left ready. This private interview material is not part of the public repository.
 
 ## ROS 2, MoveIt, responsive report, and Pages, 2026-08-27

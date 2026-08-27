@@ -1331,4 +1331,6 @@ python -m pytest -q
 
 Result: 188 tests passed. The local HTML browser URL was blocked by the browser security policy, so visual review was deferred to the deployed HTTPS page. No simulator code or A/B runtime behavior changed in this documentation pass.
 
+Commit `2b18fe0` was pushed to `feature/moveit-bridge` and `main`. GitHub Pages run `33124349285` passed. The deployed page was reviewed at a 1280-pixel desktop viewport and a 390 by 844 narrow viewport. The recovery grid rendered as two 597-pixel video columns on desktop and one 347-pixel video column on the narrow viewport. The measured document width equaled the viewport width in both checks, so no horizontal overflow was present. The deployed page contained the demo-command link and the discussion-only C, D, and E language.
+
 The private Synphony Cue context was updated with a CARVE project brief and Cue was opened for review. Private interview files were not added to this public repository.
