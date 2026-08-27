@@ -1,5 +1,23 @@
 # Overnight build report
 
+## Scheduled release validation, 2026-08-27 09:09 EDT
+
+The documented headless release gate passed from a clean Isaac and Kit process state. `run_tests.ps1` reported 151 Python tests passed and zero failures. Fresh evidence is `results/full_suite/20260827_090134758`. Setup, the focused FANUC Scene 2 gate, ROS command handling, compliant-gripper contact, nominal Solution A and B, USD reload, rendered RGBD, YOLO26 segmentation, tracking, prediction, Lula IK, articulation control, bilateral PhysX contact, lift retention, cutter-frame delivery, PLC acknowledgement, event traces, H.264 media, and both fail-closed audits passed.
+
+Solution A recorded 11.823 mm position error, 0.003145 rad angle error, 25.000 ms delivery timing error, 7.556 ms interception timing error, 1,999 articulation commands, and 177.922 mm lift. Solution B recorded 21.591 mm position error, 0.002851 rad angle error, 16.667 ms delivery timing error, 6.940 ms interception timing error, 6.578 mm buffer sensor-to-oracle error, 3,521 articulation commands, and 177.915 mm lift. Both had zero unexpected contacts, zero motion-limit violations, zero product pose writes after grasp, passing stage reloads, and visible final idle states.
+
+The alternating bounded check used Solution B, seed 2704, and `slip_correction`:
+
+```powershell
+.\run_solution_b.ps1 -Seed 2704 -Scenario slip_correction -OutputRoot 'results/overnight/20260827_090527_solution_b_slip_correction_seed2704'
+```
+
+It passed with the expected forced slip correction and completed delivery. The result recorded 20.945 mm position error, 0.016372 rad angle error, 12.500 ms delivery timing error, 15.749 ms interception timing error, 7.607 mm buffer sensor-to-oracle error, 3,533 articulation commands, 177.945 mm lift, bilateral contact, six retained-grasp checks, PLC acknowledgement, zero unexpected contacts, zero motion-limit violations, and zero product pose writes after grasp. The 22 JSONL records are timestamp-monotonic and end in `idle`.
+
+The generated USD, RGB, segmentation, buffer RGB, both depth arrays, metrics, audit, trace, PLC records, contact evidence, robot evidence, and video were nonempty and internally consistent. Each depth array contained 307,200 finite positive values. Stage and video hashes matched the metrics. The H.264 recording contains 354 frames at 1280 by 720 and 12 FPS. Visual inspection confirmed the interception, retained lift, buffer release, RGBD re-observation, corrected regrasp, cutter transfer, and final `STATE IDLE` with `PLC READY`.
+
+Known joystick, deprecation, material, muted USD diagnostic, DLSS, host-copy, and transform-history warnings remained nonfatal. The five Isaac logs contained zero actual error lines and zero PhysX failure lines. No threshold changed. No fix was justified. No Isaac or Kit process remained after either batch. `PRODUCT_RECIPES.md` remained untouched. T015 and the external ROS2 and MoveIt item in T016 remain blocked as previously documented. The machine record is `results/overnight/20260827_090527_solution_b_slip_correction_seed2704/automation_summary.json`. The next dedicated check should alternate to Solution A with seed 2705 and `failed_grasp`.
+
 ## Scheduled release validation and terminal-media fix, 2026-08-27 08:17 EDT
 
 The documented headless release gate passed from a clean Isaac and Kit process state. The initial `run_tests.ps1` run passed with 150 Python tests and fresh evidence at `results/full_suite/20260827_080339742`. The alternating bounded check then ran Solution A, seed 2703, with `stale_observation`. Isaac rejected the stale interception before commit and recovered with the expected `interception_stale` reason, but visual inspection found that the event log had returned to `idle` while the final saved-media overlay still showed `recover`.
