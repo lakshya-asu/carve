@@ -7,9 +7,15 @@ ordinary unit tests independent of the Isaac Sim bundled ROS environment.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import asyncio
 import math
 from typing import Any
 
+from meatcell.follow_joint_trajectory import (
+    FollowJointTrajectoryExecution,
+    TrajectoryExecutionStatus,
+    TrajectoryTolerances,
+)
 from meatcell.trajectory import JointTrajectoryCommand, TrajectoryPoint, sample_joint_trajectory, validate_joint_trajectory
 
 
@@ -25,6 +31,7 @@ class Ros2TopicNames:
     rgb: str = "/carve/camera/overhead/color/image_raw"
     depth: str = "/carve/camera/overhead/depth/image_rect_raw"
     camera_info: str = "/carve/camera/overhead/camera_info"
+    follow_joint_trajectory: str = "/carve/arm_controller/follow_joint_trajectory"
 
 
 @dataclass(frozen=True)
@@ -116,6 +123,56 @@ class Scene2RosBridge:
         self.last_rejection = ""
         self.accepted_trajectories = 0
         self.completed_trajectories = 0
+        self.action_server_available = False
+        self.accepted_action_goals = 0
+        self.completed_action_goals = 0
+        self.canceled_action_goals = 0
+        self.aborted_action_goals = 0
+        self._latest_sim_seconds = 0.0
+        self._action_goal_handle: Any | None = None
+        self._action_execution = FollowJointTrajectoryExecution()
+        self._configure_action_server()
+
+    def _configure_action_server(self) -> None:
+        """Expose the standard action when control_msgs is in the ROS runtime."""
+        try:
+            from control_msgs.action import FollowJointTrajectory
+            from rclpy.action import ActionServer, CancelResponse, GoalResponse
+        except ImportError:
+            self._FollowJointTrajectory = None
+            self._CancelResponse = None
+            self._GoalResponse = None
+            self.action_server = None
+            return
+        self._FollowJointTrajectory = FollowJointTrajectory
+        self._CancelResponse = CancelResponse
+        self._GoalResponse = GoalResponse
+        self.action_server = ActionServer(
+            self.node,
+            FollowJointTrajectory,
+            self.topics.follow_joint_trajectory,
+            execute_callback=self._execute_action_goal,
+            goal_callback=self._action_goal_callback,
+            cancel_callback=self._action_cancel_callback,
+        )
+        self.action_server_available = True
+
+    def _trajectory_from_message(self, message: Any) -> JointTrajectoryCommand:
+        points = tuple(
+            TrajectoryPoint(
+                self._duration_seconds(item.time_from_start),
+                tuple(float(value) for value in item.positions),
+                tuple(float(value) for value in item.velocities) if item.velocities else None,
+            )
+            for item in message.points
+        )
+        return validate_joint_trajectory(
+            expected_joint_names=JOINT_NAMES,
+            joint_names=message.joint_names,
+            points=points,
+            lower_limits=self.lower_limits,
+            upper_limits=self.upper_limits,
+        )
 
     @staticmethod
     def _stamp(seconds: float) -> Any:
@@ -149,22 +206,12 @@ class Scene2RosBridge:
         return float(value.sec) + float(value.nanosec) / 1_000_000_000.0
 
     def _trajectory_callback(self, message: Any) -> None:
+        if self._action_goal_handle is not None:
+            self.rejected_commands += 1
+            self.last_rejection = "A FollowJointTrajectory action goal is active"
+            return
         try:
-            points = tuple(
-                TrajectoryPoint(
-                    self._duration_seconds(item.time_from_start),
-                    tuple(float(value) for value in item.positions),
-                    tuple(float(value) for value in item.velocities) if item.velocities else None,
-                )
-                for item in message.points
-            )
-            trajectory = validate_joint_trajectory(
-                expected_joint_names=JOINT_NAMES,
-                joint_names=message.joint_names,
-                points=points,
-                lower_limits=self.lower_limits,
-                upper_limits=self.upper_limits,
-            )
+            trajectory = self._trajectory_from_message(message)
         except ValueError as exc:
             self.rejected_commands += 1
             self.last_rejection = str(exc)
@@ -177,6 +224,76 @@ class Scene2RosBridge:
         )
         self._trajectory_started_s = None
 
+    def _action_goal_callback(self, goal_request: Any) -> Any:
+        if self._action_goal_handle is not None or self._active_trajectory is not None:
+            return self._GoalResponse.REJECT
+        try:
+            self._trajectory_from_message(goal_request.trajectory)
+        except ValueError as exc:
+            self.rejected_commands += 1
+            self.last_rejection = str(exc)
+            return self._GoalResponse.REJECT
+        return self._GoalResponse.ACCEPT
+
+    def _action_cancel_callback(self, goal_handle: Any) -> Any:
+        if goal_handle == self._action_goal_handle:
+            self._action_execution.cancel()
+            return self._CancelResponse.ACCEPT
+        return self._CancelResponse.REJECT
+
+    def _measured_joint_positions(self) -> tuple[float, ...]:
+        values = self.articulation.get_joint_positions()
+        return tuple(float(values[index]) for index in self.joint_indices)
+
+    @staticmethod
+    def _largest_positive_tolerance(items: Any, default: float) -> float:
+        values = [float(item.position) for item in items if float(item.position) > 0.0]
+        return max(values, default=default)
+
+    async def _execute_action_goal(self, goal_handle: Any) -> Any:
+        goal = goal_handle.request
+        command = self._trajectory_from_message(goal.trajectory)
+        requested_goal_time_s = self._duration_seconds(goal.goal_time_tolerance)
+        tolerances = TrajectoryTolerances(
+            path_position_rad=self._largest_positive_tolerance(goal.path_tolerance, 0.20),
+            goal_position_rad=self._largest_positive_tolerance(goal.goal_tolerance, 0.02),
+            goal_time_s=requested_goal_time_s if requested_goal_time_s > 0.0 else 0.50,
+        )
+        self._action_execution = FollowJointTrajectoryExecution(tolerances)
+        try:
+            self._action_execution.start(
+                command,
+                measured_positions=self._measured_joint_positions(),
+                sim_seconds=self._latest_sim_seconds,
+            )
+        except ValueError as exc:
+            result = self._FollowJointTrajectory.Result()
+            result.error_code = self._FollowJointTrajectory.Result.INVALID_GOAL
+            result.error_string = str(exc)
+            self.aborted_action_goals += 1
+            goal_handle.abort()
+            return result
+        self._action_goal_handle = goal_handle
+        self.accepted_action_goals += 1
+        while self._action_execution.status == TrajectoryExecutionStatus.ACTIVE:
+            await asyncio.sleep(0)
+        result = self._FollowJointTrajectory.Result()
+        result.error_string = self._action_execution.message
+        if self._action_execution.status == TrajectoryExecutionStatus.SUCCEEDED:
+            result.error_code = self._FollowJointTrajectory.Result.SUCCESSFUL
+            self.completed_action_goals += 1
+            goal_handle.succeed()
+        elif self._action_execution.status == TrajectoryExecutionStatus.CANCELED:
+            result.error_code = self._FollowJointTrajectory.Result.SUCCESSFUL
+            self.canceled_action_goals += 1
+            goal_handle.canceled()
+        else:
+            result.error_code = self._FollowJointTrajectory.Result.PATH_TOLERANCE_VIOLATED
+            self.aborted_action_goals += 1
+            goal_handle.abort()
+        self._action_goal_handle = None
+        return result
+
     def spin_once(self) -> None:
         self._rclpy.spin_once(self.node, timeout_sec=0.0)
 
@@ -186,6 +303,23 @@ class Scene2RosBridge:
         return command
 
     def consume_trajectory_sample(self, sim_seconds: float) -> JointCommand | None:
+        if self._action_goal_handle is not None:
+            update = self._action_execution.update(
+                measured_positions=self._measured_joint_positions(),
+                sim_seconds=sim_seconds,
+            )
+            if update.status != TrajectoryExecutionStatus.ACTIVE:
+                return None
+            if update.desired_positions is not None:
+                feedback = self._FollowJointTrajectory.Feedback()
+                feedback.joint_names = list(JOINT_NAMES)
+                feedback.desired.positions = list(update.desired_positions)
+                feedback.actual.positions = list(update.measured_positions)
+                feedback.error.positions = list(update.error_positions)
+                self._action_goal_handle.publish_feedback(feedback)
+                self._command_sequence += 1
+                return JointCommand(update.desired_positions, None, self._command_sequence)
+            return None
         if self._active_trajectory is None:
             return None
         if self._trajectory_started_s is None:
@@ -201,6 +335,7 @@ class Scene2RosBridge:
         return command
 
     def publish_clock(self, sim_seconds: float) -> None:
+        self._latest_sim_seconds = float(sim_seconds)
         message = self._Clock()
         message.clock = self._stamp(sim_seconds)
         self.clock_pub.publish(message)
@@ -273,6 +408,8 @@ class Scene2RosBridge:
         self.published_depth += 1
 
     def close(self) -> None:
+        if self.action_server is not None:
+            self.action_server.destroy()
         self.node.destroy_node()
 
     def metrics(self) -> dict[str, object]:
@@ -286,4 +423,9 @@ class Scene2RosBridge:
             "published_depth": self.published_depth,
             "accepted_trajectories": self.accepted_trajectories,
             "completed_trajectories": self.completed_trajectories,
+            "action_server_available": self.action_server_available,
+            "accepted_action_goals": self.accepted_action_goals,
+            "completed_action_goals": self.completed_action_goals,
+            "canceled_action_goals": self.canceled_action_goals,
+            "aborted_action_goals": self.aborted_action_goals,
         }

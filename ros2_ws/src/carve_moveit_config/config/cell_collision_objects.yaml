@@ -1,0 +1,12 @@
+frame_id: world
+objects:
+  - {id: conveyor_belt, size: [4.40, 0.88, 0.055], position: [0.0, 0.0, 0.78]}
+  - {id: robot_pedestal, size: [0.78, 0.78, 0.52], position: [0.35, -1.25, 0.26]}
+  - {id: cutter_base, size: [0.72, 0.78, 0.82], position: [1.78, -0.82, 0.41]}
+  - {id: cutter_guard, size: [0.62, 0.70, 0.72], position: [1.78, -0.82, 1.08]}
+  - {id: cutter_tray, size: [0.72, 0.48, 0.055], position: [1.25, -0.82, 0.84]}
+  - {id: reject_bin, size: [0.68, 0.56, 0.16], position: [1.45, -1.65, 0.10]}
+  - {id: rear_guard, size: [5.75, 0.07, 2.08], position: [0.325, 2.15, 1.04]}
+  - {id: front_guard_left, size: [2.80, 0.07, 2.08], position: [-1.15, -2.15, 1.04]}
+  - {id: front_guard_right, size: [2.25, 0.07, 2.08], position: [2.05, -2.15, 1.04]}
+

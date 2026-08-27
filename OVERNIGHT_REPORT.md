@@ -1,5 +1,21 @@
 # Overnight build report
 
+## ROS 2, MoveIt, responsive report, and public page, 2026-08-27
+
+The technical report now fits the viewport without horizontal scrolling. Images, videos, SVGs, tables, code blocks, and grids shrink or reflow. Wide data tables become labeled rows on narrow screens. The three recipe images now live under `assets/project_page/recipes`, so the public report does not depend on ignored result files.
+
+The ROS bridge now includes an optional `control_msgs/action/FollowJointTrajectory` server. It uses the same fixed simulation clock and joint sampler as the already executed JointTrajectory topic path. It checks the measured start state, path error, goal error, and goal time. It supports cancellation and reports action results. A runtime-neutral test suite covers success, start rejection, path failure, goal timeout, and cancellation.
+
+The new `ros2_ws` workspace contains a FANUC M-10iD/12 model wrapper at the simulated base pose, SRDF, KDL inverse kinematics, OMPL RRTConnect, conservative joint limits, a MoveIt simple-controller action mapping, fixed cell collision objects, and a timed collision-aware pose client. The client can stretch a safe MoveIt trajectory to a later requested arrival. It rejects an earlier arrival that would shorten the planned trajectory.
+
+Focused report, action, ROS contract, and MoveIt package tests passed. `validate_moveit.ps1` was also executed. It stopped with a clear blocker because the existing WSL image has no ROS 2 Humble setup or colcon. Isaac's bundled ROS libraries have no `control_msgs` or MoveIt packages. No software was installed. A live MoveIt process therefore did not generate or execute a trajectory in this run.
+
+The exact complete command was `run_tests.ps1`. It passed with 180 Python tests and fresh evidence under `results/full_suite/20260827_133350136`. The focused headless Scene 2 bridge published rendered RGBD and calibration, accepted and completed one standard JointTrajectory, and finished at 0.000842 rad maximum joint error. Its action-server availability flag was false because `control_msgs` is absent.
+
+Solution A passed with 10.84 mm cutter position error, 0.145 degree angle error, 37.50 ms delivery timing error, 17.67 ms intercept timing error, 2,145 articulation commands, 176.84 mm lift, and zero motion-limit violations. Solution B passed with 21.56 mm position error, 0.629 degree angle error, 8.33 ms delivery timing error, 18.51 ms intercept timing error, 6.00 mm buffer sensor-to-oracle error, 3,673 articulation commands, 176.84 mm lift, and zero motion-limit violations. Both saved stages reloaded. Their H.264 recordings contain 215 and 369 frames. No Isaac or Kit process remained after the suite.
+
+The repository now contains a GitHub Pages workflow that publishes `TECHNICAL_REPORT.html` as the public site index with its checked-in media. The exact deployment run and public URL verification are added below after GitHub finishes the workflow.
+
 ## Scheduled release validation, 2026-08-27 09:09 EDT
 
 The documented headless release gate passed from a clean Isaac and Kit process state. `run_tests.ps1` reported 151 Python tests passed and zero failures. Fresh evidence is `results/full_suite/20260827_090134758`. Setup, the focused FANUC Scene 2 gate, ROS command handling, compliant-gripper contact, nominal Solution A and B, USD reload, rendered RGBD, YOLO26 segmentation, tracking, prediction, Lula IK, articulation control, bilateral PhysX contact, lift retention, cutter-frame delivery, PLC acknowledgement, event traces, H.264 media, and both fail-closed audits passed.

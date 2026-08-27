@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<robot name="carve_m10id12" xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:include filename="$(find fanuc_m10_description)/urdf/m10_12_14d_urdf_macro.xacro" />
+
+  <link name="world" />
+  <link name="ee_link" />
+  <xacro:m10_12_14d parent="world" child="ee_link">
+    <origin xyz="0.35 -1.25 0.59" rpy="0 0 1.5707963267948966" />
+  </xacro:m10_12_14d>
+
+  <link name="tool0" />
+  <joint name="ee_link-tool0" type="fixed">
+    <origin xyz="0.35 0 0" rpy="0 0 0" />
+    <parent link="ee_link" />
+    <child link="tool0" />
+  </joint>
+
+  <!-- Conservative swept envelope for the project reference gripper. -->
+  <link name="gripper_collision_envelope">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry><box size="0.35 0.22 0.14" /></geometry>
+      <material name="carve_reference_tool"><color rgba="0.42 0.45 0.46 0.55" /></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry><box size="0.35 0.22 0.14" /></geometry>
+    </collision>
+  </link>
+  <joint name="flange-gripper-envelope" type="fixed">
+    <origin xyz="0.175 0 0" rpy="0 0 0" />
+    <parent link="flange" />
+    <child link="gripper_collision_envelope" />
+  </joint>
+</robot>

@@ -1,0 +1,40 @@
+name: Publish technical report
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/configure-pages@v5
+      - name: Assemble site
+        run: |
+          mkdir -p _site/assets
+          cp TECHNICAL_REPORT.html _site/index.html
+          cp TECHNICAL_REPORT.html _site/TECHNICAL_REPORT.html
+          cp SCENE_DESIGN_REPORT.html _site/SCENE_DESIGN_REPORT.html
+          cp OVERNIGHT_REPORT.md REPORT_DESIGN_STANDARD.md SCENE_DESIGN_V2.md SYSTEM_DESIGN.md WRITING_STYLE_RESEARCH.md _site/
+          cp -R assets/project_page _site/assets/project_page
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -6,7 +6,7 @@ Date: 2026-08-27
 
 The final in-simulator pipeline uses Isaac Sim Lula inverse kinematics and the Isaac articulation controller. Isaac Sim owns physics, rendered sensors, contacts, simulation time, collision-clear motion phases, trajectory sampling, and actuator execution.
 
-ROS 2 Humble and MoveIt 2 remain the proposed external production-style planner boundary. A live MoveIt process was not installed or commissioned during this build.
+ROS 2 Humble and MoveIt 2 remain the external production-style planner boundary. The package and action adapter are implemented. A live MoveIt process was not installed or commissioned during this build.
 
 Windows 11 is the supported Humble configuration for the installed Isaac Sim 6.0.1 bridge. Ubuntu under WSL 2 is already present on this workstation, but ROS 2 and MoveIt are not installed there. The project does not install them automatically.
 
@@ -91,7 +91,7 @@ Outputs:
 
 ## Proposed external command path
 
-MoveIt sends `control_msgs/action/FollowJointTrajectory` to the Carve trajectory bridge. The bridge validates joint names, limits, timestamps, and start-state tolerance. It samples the accepted trajectory using `/clock` and publishes one six-joint command for each Isaac physics step. Isaac applies the command through the FANUC articulation controller and returns measured state.
+MoveIt sends `control_msgs/action/FollowJointTrajectory` to the Carve trajectory bridge. The bridge validates joint names, limits, timestamps, start-state tolerance, path tolerance, goal tolerance, and goal time. It samples the accepted trajectory using the Isaac clock and produces one six-joint command for each physics step. Isaac applies the command through the FANUC articulation controller and returns measured state. Cancellation stops the active goal without substituting another command.
 
 MoveIt never writes directly to an Isaac joint. YOLO never sends a robot command.
 
@@ -118,7 +118,7 @@ The viewer should show:
 
 The headless gate passed twice on 2026-08-26 with the same saved-stage hash and identical ROS metrics. Each run published 720 clock messages, 180 measured joint states, 45 RGB frames, 45 depth frames, and 45 camera calibration messages. The in-process DDS probe received every stream type. Isaac rejected the deliberately partial command. It accepted one complete command and applied it through the FANUC articulation controller. The maximum final joint error was 0.000836 rad.
 
-The focused ROS gate does not test MoveIt, a trajectory action server, stale trajectory cancellation, or dynamic MoveIt collision objects. ROS 2 and MoveIt are not installed in the existing WSL 2 environment, and this project does not install system software without separate authorization.
+The focused ROS gate does not test a live MoveIt process or the action transport because `control_msgs` is absent from the bundled Isaac ROS libraries. ROS 2 and MoveIt are not installed in the existing WSL 2 environment, and this project does not install system software without separate authorization.
 
 The complete conveyor interception task is nevertheless validated inside Isaac Sim through the internal Lula and articulation path described above. This is separate from, and does not imply, MoveIt validation.
 
@@ -130,7 +130,15 @@ The integrated task runner saves the articulation commands it actually executed 
 
 The focused ROS gate now publishes one standard JointTrajectory over DDS. The bridge accepted and completed it, sampled 113 commands against the Isaac clock, applied them through the actual FANUC articulation controller, and reached 0.000842 rad maximum final joint error. Evidence is `results/full_suite/20260827_114303264/scene2/scene2_validation.json`.
 
-The next external gate adds `control_msgs/action/FollowJointTrajectory`, starts a real MoveIt process in an authorized ROS 2 environment, builds the FANUC planning scene, and replaces at least one internal transit path with a collision-checked MoveIt result. That external gate remains open.
+## MoveIt workspace now implemented
+
+`ros2_ws/src/carve_moveit_config` defines the official-description FANUC model at the Scene 2 base pose. It adds the `manipulator` planning group from `base_link` to `flange`, KDL inverse kinematics, OMPL RRTConnect, conservative velocity and acceleration limits, and the MoveIt simple-controller mapping to the Carve action.
+
+The fixed planning scene includes the conveyor, pedestal, cutter body, cutter tray, reject bin, and guard boundaries. `ros2_ws/src/carve_moveit_demo` plans a flange pose with RRTConnect. It preserves MoveIt's time parameterization. A requested arrival can stretch a trajectory, but cannot shorten it past the planned duration. The launch file uses simulation time and remaps measured joint state from `/carve/joint_states`.
+
+The runtime-neutral action state machine and package contract tests pass. `validate_moveit.ps1` checks an existing WSL ROS environment and builds the workspace when prerequisites are present. On this machine it exits with a blocker because `/opt/ros/humble`, MoveIt, and colcon are absent. Nothing was installed.
+
+The next external gate starts a real MoveIt process in an authorized ROS 2 environment, activates the action server through `control_msgs`, and replaces at least one internal transit path with a collision-checked MoveIt result. That execution gate remains open.
 
 ## Sources
 

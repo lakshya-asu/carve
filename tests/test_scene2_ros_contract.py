@@ -15,6 +15,7 @@ def test_ros_topics_are_namespaced_and_clock_is_global() -> None:
     assert topics.clock == "/clock"
     for value in (topics.joint_states, topics.joint_command, topics.joint_trajectory, topics.rgb, topics.depth, topics.camera_info):
         assert value.startswith("/carve/")
+    assert topics.follow_joint_trajectory == "/carve/arm_controller/follow_joint_trajectory"
 
 
 def test_moveit_compatible_joint_trajectory_validates_and_samples() -> None:

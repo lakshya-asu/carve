@@ -73,6 +73,23 @@ def test_report_uses_the_project_anti_slop_standard() -> None:
         assert forbidden not in text
 
 
+def test_report_has_no_forced_horizontal_scroll() -> None:
+    text, _ = parse_report()
+    compact = "".join(text.lower().split())
+    for rejected in (
+        "overflow-x:auto",
+        "overflow-x:scroll",
+        "overflow:auto",
+        "min-width:900px",
+        "min-width:880px",
+        "width:900px",
+    ):
+        assert rejected not in compact
+    assert "overflow-x:clip" in compact
+    assert ".diagramsvg{width:100%;min-width:0;height:auto}" in compact
+    assert ".table-wraptd{display:grid" in compact
+
+
 def test_report_contains_real_visual_explanations() -> None:
     _, parser = parse_report()
     assert {"system-map", "cycle-map", "speed-chart"} <= parser.svg_ids

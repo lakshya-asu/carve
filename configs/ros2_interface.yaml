@@ -88,6 +88,8 @@ command_rules:
 
 moveit_boundary:
   available_now: trajectory_msgs/msg/JointTrajectory sampled on simulation time
-  planned_action: /carve/arm_controller/follow_joint_trajectory
-  planned_action_type: control_msgs/action/FollowJointTrajectory
-  limitation: control_msgs and a live MoveIt process are not installed on this workstation
+  implemented_action: /carve/arm_controller/follow_joint_trajectory
+  implemented_action_type: control_msgs/action/FollowJointTrajectory
+  action_activation: available when control_msgs is present in the active ROS environment
+  moveit_workspace: ros2_ws
+  limitation: control_msgs, colcon, and a live MoveIt process are not installed on this workstation

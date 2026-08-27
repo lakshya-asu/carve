@@ -2,7 +2,9 @@
 
 ## Project page
 
-Open `PROJECT_PAGE.html` for the visual project overview, rendered Isaac Sim video, subsystem views, architecture, inputs and outputs, implementation status, and validated results.
+The detailed visual report is published at [lakshya-asu.github.io/carve](https://lakshya-asu.github.io/carve/). It includes the rendered Isaac Sim videos, subsystem views, architecture, inputs and outputs, implementation status, and validated results.
+
+Open `TECHNICAL_REPORT.html` locally for the same report without a network connection.
 
 ```powershell
 .\open_project_page.ps1
@@ -97,7 +99,15 @@ Run the focused Scene 2.0 compliant-gripper load, hold, release, and recovery ga
 .\validate_compliant_gripper.ps1
 ```
 
-This focused bridge uses the ROS 2 Humble libraries bundled with Isaac Sim. It publishes fixed simulation time, measured FANUC joint states, rendered RGB, rendered depth, and camera calibration over DDS. It accepts strict six-joint commands and standard `trajectory_msgs/msg/JointTrajectory` messages, validates them, and samples accepted trajectories against simulation time. The complete task runner uses Isaac Lula IK and the articulation controller and saves its executed command stream in the same JointTrajectory-compatible shape. The `control_msgs` action package and external MoveIt process are not installed or commissioned on this workstation.
+This focused bridge uses the ROS 2 Humble libraries bundled with Isaac Sim. It publishes fixed simulation time, measured FANUC joint states, rendered RGB, rendered depth, and camera calibration over DDS. It accepts strict six-joint commands and standard `trajectory_msgs/msg/JointTrajectory` messages, validates them, and samples accepted trajectories against simulation time. The bridge now also exposes `control_msgs/action/FollowJointTrajectory` when that package exists in the active ROS environment.
+
+The external planning workspace is under `ros2_ws`. It contains the FANUC SRDF, KDL configuration, OMPL RRTConnect configuration, conservative joint limits, fixed cell collision objects, MoveIt controller mapping, and a timed pose client. Validate an existing ROS 2 Humble and MoveIt environment with:
+
+```powershell
+.\validate_moveit.ps1
+```
+
+The current WSL environment does not contain ROS 2, MoveIt, or colcon. The live MoveIt build and execution gate therefore remains blocked. The project does not install those packages automatically.
 
 Run the bounded five-seed hardening matrix for both solutions:
 

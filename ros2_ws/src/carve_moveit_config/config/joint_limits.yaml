@@ -1,0 +1,8 @@
+joint_limits:
+  J1: {has_velocity_limits: true, max_velocity: 4.537856, has_acceleration_limits: true, max_acceleration: 2.0}
+  J2: {has_velocity_limits: true, max_velocity: 4.188790, has_acceleration_limits: true, max_acceleration: 2.0}
+  J3: {has_velocity_limits: true, max_velocity: 4.537856, has_acceleration_limits: true, max_acceleration: 2.0}
+  J4: {has_velocity_limits: true, max_velocity: 7.504916, has_acceleration_limits: true, max_acceleration: 3.0}
+  J5: {has_velocity_limits: true, max_velocity: 7.853982, has_acceleration_limits: true, max_acceleration: 3.0}
+  J6: {has_velocity_limits: true, max_velocity: 12.566371, has_acceleration_limits: true, max_acceleration: 4.0}
+

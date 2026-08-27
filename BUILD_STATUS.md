@@ -1,5 +1,17 @@
 # Build status
 
+## ROS 2, MoveIt, responsive report, and Pages, 2026-08-27
+
+The detailed report now clips page overflow, lets every image, video, SVG, table, code block, and grid shrink to the viewport, and converts wide tables to labeled mobile rows. The focused responsive regression passes. Recipe images were moved into the published asset tree so the public report has no ignored result-file dependencies.
+
+The standard `FollowJointTrajectory` action adapter is implemented over the existing Isaac simulation-clock sampler. It validates measured start, path, goal, and goal-time tolerances and supports cancellation. The `ros2_ws` workspace adds the FANUC model and SRDF, KDL, OMPL RRTConnect, conservative limits, fixed cell collision objects, MoveIt controller mapping, launch file, and timed pose client. Twenty focused ROS and MoveIt contract tests pass.
+
+The complete `run_tests.ps1` gate passed with 180 Python tests. Fresh evidence is `results/full_suite/20260827_133350136`. The headless ROS gate accepted and completed one standard JointTrajectory with 0.000842 rad final error. Solution A delivered at 10.84 mm position error and 37.50 ms timing error. Solution B delivered at 21.56 mm position error and 8.33 ms timing error, with 6.00 mm buffer sensor-to-oracle error. Both reported zero joint, velocity, or acceleration violations. No Isaac or Kit process remained after the suite.
+
+The live MoveIt build was attempted with `validate_moveit.ps1`. It stopped before building because the existing WSL environment has no ROS 2 Humble installation or colcon. The Isaac bundled ROS library also lacks `control_msgs` and MoveIt. No package was installed. The existing JointTrajectory DDS path remains the executed ROS evidence. Live MoveIt execution remains the exact external gate.
+
+The GitHub Pages workflow publishes `TECHNICAL_REPORT.html` as the site index with all report media. The repository README links to the public page. Deployment status and URL verification are recorded in `OVERNIGHT_REPORT.md` after the workflow run.
+
 ## Technical report redesign, 2026-08-27
 
 `TECHNICAL_REPORT.html` now uses a single graphite and muted-amber theme with square geometry. The prior rounded cards, colored side-border warnings, top-border metric cards, blue palette, gradients, and glows were removed. The communication section is now a closed-loop physical and data-flow SVG. The workpiece cycle, perception transformation, speed envelope, motion feedback, cutter boundary, and PLC handshake each use a purpose-built visualization. The report embeds 13 simulator recordings.
