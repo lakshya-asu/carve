@@ -15,17 +15,17 @@
         ],
         "rgb_files": 1,
         "rgb_sha256": [
-          "c1953e4d3951e4c86cb9d381e0ecddf74bcc0b9ade9844f4eb6f3f46311f5b33"
+          "ffb2b6ea53ade628144a39a0852caa4211bcc702ee9ec74887d9b5ba82b944a7"
         ],
         "valid_depth_pixels": 307200,
         "valid_rgb_pixels": 307200
       },
-      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\full_suite\\20260826_205915468\\isaac_a\\metrics.json",
+      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\full_suite\\20260827_020951506\\isaac_a\\metrics.json",
       "seed": 7,
       "solution": "a",
       "stage": {
         "bytes": 52616,
-        "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\full_suite\\20260826_205915468\\isaac_cell_a.usda",
+        "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\full_suite\\20260827_020951506\\isaac_cell_a.usda",
         "required_tokens": 14,
         "sha256": "7fd77695aa9a35a3aab7edbc5e467befd212bcb83f885004018bdb51f1446916"
       },
@@ -46,17 +46,17 @@
         ],
         "rgb_files": 1,
         "rgb_sha256": [
-          "ba58368af1ad58cdb858e7f1b1c7401f7e6b1375c3877c2b380818f347830006"
+          "5166d84162ab4ac557dc9509358812039a869c7fdeee41c06d461cf8df277f1b"
         ],
         "valid_depth_pixels": 307200,
         "valid_rgb_pixels": 307200
       },
-      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\full_suite\\20260826_205915468\\isaac_b\\metrics.json",
+      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\full_suite\\20260827_020951506\\isaac_b\\metrics.json",
       "seed": 7,
       "solution": "b",
       "stage": {
         "bytes": 53682,
-        "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\full_suite\\20260826_205915468\\isaac_cell_b.usda",
+        "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\full_suite\\20260827_020951506\\isaac_cell_b.usda",
         "required_tokens": 15,
         "sha256": "9ca88f13d007910be45bf87179eb1d9246795ae17ad1ad26170bf41f2a92f7dc"
       },
@@ -76,10 +76,10 @@
   "metrics_distributions": {
     "intercept_timing_error_s": {
       "count": 8,
-      "max": 0.004162833999999949,
-      "min": 0.0002750139999996293,
-      "p50": 0.003394313500000301,
-      "p95": 0.004143502799999943
+      "max": 0.0036369660000001858,
+      "min": 9.369299999995029e-05,
+      "p50": 0.0006034345000003327,
+      "p95": 0.003618019099999881
     },
     "perception_latency_s": {
       "count": 16,
@@ -90,17 +90,17 @@
     },
     "placement_angle_error_rad": {
       "count": 4,
-      "max": 0.05425729333972225,
-      "min": 0.02004842890388029,
-      "p50": 0.028067749991398633,
-      "p95": 0.05087228804534125
+      "max": 0.05663258168668287,
+      "min": 0.008579978087091484,
+      "p50": 0.03710586317290705,
+      "p95": 0.05627482221487671
     },
     "placement_position_error_m": {
       "count": 4,
-      "max": 0.05002007781739876,
-      "min": 0.04661521675799128,
-      "p50": 0.04747898735303799,
-      "p95": 0.049654005113012975
+      "max": 0.04770019376883059,
+      "min": 0.04627392217537644,
+      "p50": 0.04744156158723095,
+      "p95": 0.047676771912572136
     },
     "safe_stop_hold_max_joint_delta": {
       "count": 0,
@@ -118,15 +118,15 @@
     },
     "transfer_speed_error_mps": {
       "count": 4,
-      "max": 0.00013853973359800875,
-      "min": 1.9173916143699898e-07,
-      "p50": 1.3720509173253959e-06,
-      "p95": 0.00011802712488133689
+      "max": 8.926009286369663e-06,
+      "min": 8.498318493366241e-08,
+      "p50": 9.859431884251535e-07,
+      "p95": 7.744170352452782e-06
     }
   },
   "mode": "baseline",
   "passed": true,
-  "root": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\full_suite\\20260826_205915468",
+  "root": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\full_suite\\20260827_020951506",
   "scenario_counts": {
     "buffer_timeout": 1,
     "cutter_unavailable": 1,
@@ -147,10 +147,10 @@
       "metrics_distributions": {
         "intercept_timing_error_s": {
           "count": 4,
-          "max": 0.0041076019999999325,
-          "min": 0.0002750139999996293,
-          "p50": 0.0019720600000008304,
-          "p95": 0.0040330329499999925
+          "max": 0.0036369660000001858,
+          "min": 9.369299999995029e-05,
+          "p50": 0.0004861690000002028,
+          "p95": 0.00316919385000025
         },
         "perception_latency_s": {
           "count": 8,
@@ -161,17 +161,17 @@
         },
         "placement_angle_error_rad": {
           "count": 2,
-          "max": 0.02444490860561493,
-          "min": 0.02004842890388029,
-          "p50": 0.02224666875474761,
-          "p95": 0.0242250846205282
+          "max": 0.019964207804505633,
+          "min": 0.008579978087091484,
+          "p50": 0.014272092945798558,
+          "p95": 0.019394996318634925
         },
         "placement_position_error_m": {
           "count": 2,
-          "max": 0.04737838158458244,
-          "min": 0.04661521675799128,
-          "p50": 0.046996799171286865,
-          "p95": 0.04734022334325288
+          "max": 0.04733907511402103,
+          "min": 0.04627392217537644,
+          "p50": 0.046806498644698734,
+          "p95": 0.0472858174670888
         },
         "safe_stop_hold_max_joint_delta": {
           "count": 0,
@@ -189,10 +189,10 @@
         },
         "transfer_speed_error_mps": {
           "count": 2,
-          "max": 0.00013853973359800875,
-          "min": 1.9173916143699898e-07,
-          "p50": 6.936573637972288e-05,
-          "p95": 0.00013162233387618017
+          "max": 1.0470830602571368e-06,
+          "min": 8.498318493366241e-08,
+          "p50": 5.660331225953996e-07,
+          "p95": 9.98978066490963e-07
         }
       },
       "rgb_files": 1,
@@ -225,10 +225,10 @@
       "metrics_distributions": {
         "intercept_timing_error_s": {
           "count": 4,
-          "max": 0.004162833999999949,
-          "min": 0.0008017010000003211,
-          "p50": 0.0035086670000001874,
-          "p95": 0.004114286199999972
+          "max": 0.003582831999999314,
+          "min": 0.00017604699999984597,
+          "p50": 0.0019842084999996956,
+          "p95": 0.0035374121499993196
         },
         "perception_latency_s": {
           "count": 8,
@@ -239,17 +239,17 @@
         },
         "placement_angle_error_rad": {
           "count": 2,
-          "max": 0.05425729333972225,
-          "min": 0.03169059137718233,
-          "p50": 0.04297394235845229,
-          "p95": 0.053128958241595255
+          "max": 0.05663258168668287,
+          "min": 0.054247518541308465,
+          "p50": 0.055440050113995665,
+          "p95": 0.05651332852941415
         },
         "placement_position_error_m": {
           "count": 2,
-          "max": 0.05002007781739876,
-          "min": 0.047579593121493534,
-          "p50": 0.04879983546944615,
-          "p95": 0.0498980535826035
+          "max": 0.04770019376883059,
+          "min": 0.04754404806044088,
+          "p50": 0.04762212091463573,
+          "p95": 0.047692386483411106
         },
         "safe_stop_hold_max_joint_delta": {
           "count": 0,
@@ -267,10 +267,10 @@
         },
         "transfer_speed_error_mps": {
           "count": 2,
-          "max": 1.7890088201966137e-06,
-          "min": 9.55093014454178e-07,
-          "p50": 1.3720509173253959e-06,
-          "p95": 1.7473130299094918e-06
+          "max": 8.926009286369663e-06,
+          "min": 9.248033165931702e-07,
+          "p50": 4.9254063014814164e-06,
+          "p95": 8.525948987880837e-06
         }
       },
       "rgb_files": 1,

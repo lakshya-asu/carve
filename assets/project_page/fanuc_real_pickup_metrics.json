@@ -1,0 +1,199 @@
+{
+  "articulation_command_count": 3312,
+  "camera": {
+    "eye": [
+      1.45,
+      1.65,
+      1.65
+    ],
+    "focal_length_mm": 28.0,
+    "role": "fixed virtual demonstration camera inside the guard envelope",
+    "target": [
+      0.35,
+      0.08,
+      0.98
+    ]
+  },
+  "clearance_validation": {
+    "belt_surface_z_m": 0.8075,
+    "minimum_approach_pad_clearance_m": 0.06617491290865629,
+    "minimum_pad_z_m": 0.8734880045340185,
+    "required_clearance_m": 0.005
+  },
+  "continuity_validation": {
+    "maximum_allowed_step_m": 0.02,
+    "maximum_product_step_m": 0.005904682624268355,
+    "sample_count": 3312
+  },
+  "demo_kind": "continuous stationary-belt physics pickup, transport, and release",
+  "grasp_validation": {
+    "bilateral_contact": true,
+    "contact_pairs": [
+      [
+        [
+          "/World/Cell/FANUC_M10iD12/Geometry/world/base_link/J1_link/J2_link/J3_link/J4_link/J5_link/J6_link/flange/ee_link/CompliantGripperLeftFinger",
+          "/World/Cell/Workpieces/PorkLoin_03"
+        ]
+      ],
+      [
+        [
+          "/World/Cell/FANUC_M10iD12/Geometry/world/base_link/J1_link/J2_link/J3_link/J4_link/J5_link/J6_link/flange/ee_link/CompliantGripperRightFinger",
+          "/World/Cell/Workpieces/PorkLoin_03"
+        ]
+      ]
+    ],
+    "lift_distance_m": 0.15965354442596436,
+    "maximum_relative_drift_m": 0.00038698067166032684,
+    "peak_contact_force_n": [
+      56.416342682820904,
+      55.98725034515343
+    ],
+    "release_displacement_m": 0.02369006909430027,
+    "unexpected_contact_pairs": []
+  },
+  "ik": {
+    "grasp_rad": [
+      0.03755118539300796,
+      0.975319458823845,
+      0.66374594536328,
+      -0.00046526728613645486,
+      -1.2589527875382651,
+      -1.4503068972710973
+    ],
+    "lift_rad": [
+      0.037594124665395204,
+      1.0231094998688728,
+      0.9688404380898413,
+      0.0003159113851864809,
+      -1.5164630655800384,
+      -1.451653290955528
+    ],
+    "pregrasp_rad": [
+      0.0376043838442292,
+      1.0227276038113156,
+      0.9681644487457367,
+      0.0005003633265620376,
+      -1.5150862526792632,
+      -1.4510099241456464
+    ],
+    "release_rad": [
+      -0.11232899926815441,
+      0.9956021689271943,
+      0.6989268893274493,
+      -0.00040157870203974566,
+      -1.2742633631714404,
+      -1.2999264976761546
+    ],
+    "solver": "Isaac Sim LulaKinematicsSolver",
+    "transfer_rad": [
+      -0.11229564468103408,
+      1.0623148274185241,
+      1.0386978676161422,
+      0.0002073836085239535,
+      -1.5472804890330796,
+      -1.3010640131160058
+    ]
+  },
+  "joint_limit_violations": 0,
+  "max_command_acceleration": {
+    "J1": 0.32873044669328166,
+    "J2": 0.22860480772379788,
+    "J3": 1.1642959659042162,
+    "J4": 0.0021177708394500006,
+    "J5": 0.935549998597196,
+    "J6": 0.33026457234939244,
+    "finger_left": 0.41538377974470464,
+    "finger_right": 0.41538377974470464
+  },
+  "max_command_velocity": {
+    "J1": 0.15696220716536424,
+    "J2": 0.08732493391722329,
+    "J3": 0.4447503501889205,
+    "J4": 0.0010111931784036058,
+    "J5": 0.3573714946052853,
+    "J6": 0.15769472144894436,
+    "finger_left": 0.10578841200421407,
+    "finger_right": 0.10578841200421407
+  },
+  "moving_conveyor_interception": false,
+  "moving_conveyor_note": "This gate proves real pickup continuity. Moving interception remains the next integration gate.",
+  "passed": true,
+  "physics_dt_seconds": 0.004166666666666667,
+  "physics_steps": 3312,
+  "poster_path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_real_pickup_v7\\scene2_real_pickup_poster.png",
+  "poster_sha256": "65256ee40b42aa0f49e204bc91ac5c27c54f81b906c04a363ca9aced40bef0e7",
+  "product_path": "/World/Cell/Workpieces/PorkLoin_03",
+  "product_visible_before_approach": true,
+  "recording": {
+    "codec": "h264",
+    "duration_s": 13.416666666666666,
+    "file_bytes": 1534515,
+    "first_sim_time_ns": 2779166812,
+    "fps": 12,
+    "frame_count": 161,
+    "height": 720,
+    "last_sim_time_ns": 26754168062,
+    "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_real_pickup_v7\\scene2_real_pickup.mp4",
+    "source": "rendered_fixed_camera_rgb",
+    "width": 1280
+  },
+  "recording_sha256": "e0be4e871b21f57bcdc0ca3fa4b58e44eaad3125907ef407071ef2b7162b889a",
+  "reference_notice": "FANUC visual and kinematic reference from the official description. The cell equipment and tool are project reference models. No physical or safety validation is claimed.",
+  "robot": "FANUC M-10iD/12 official description reference",
+  "sequence": [
+    {
+      "duration_s": 1.2,
+      "label": "show visible workpiece and open-jaw pregrasp clearance"
+    },
+    {
+      "duration_s": 1.5,
+      "label": "vertical approach"
+    },
+    {
+      "duration_s": 0.4,
+      "label": "open jaws around visible workpiece"
+    },
+    {
+      "duration_s": 1.0,
+      "label": "force-limited bilateral closure"
+    },
+    {
+      "duration_s": 0.6,
+      "label": "contact-confirmed hold"
+    },
+    {
+      "duration_s": 1.8,
+      "label": "physics lift"
+    },
+    {
+      "duration_s": 0.8,
+      "label": "show retained workpiece"
+    },
+    {
+      "duration_s": 1.5,
+      "label": "bounded transport"
+    },
+    {
+      "duration_s": 1.4,
+      "label": "lower to release height"
+    },
+    {
+      "duration_s": 0.8,
+      "label": "visible jaw opening"
+    },
+    {
+      "duration_s": 1.0,
+      "label": "visible physical release"
+    },
+    {
+      "duration_s": 1.2,
+      "label": "retract"
+    },
+    {
+      "duration_s": 0.6,
+      "label": "finish"
+    }
+  ],
+  "teleport_calls_after_record_start": 0,
+  "workpiece_fixture": "Kinematic on the stationary belt until bilateral contact, then dynamic for lift and release."
+}

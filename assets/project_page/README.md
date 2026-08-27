@@ -4,10 +4,11 @@ These files are selected copies of executed Isaac Sim evidence. They are tracked
 
 ## Scene 2 presentation
 
-- `fanuc_presentation.mp4`: 16.75 second H.264 recording from the virtual presentation camera
-- `fanuc_presentation_poster.png`: contact-confirmed gravity-hold frame used by the page
-- `fanuc_presentation_contact_sheet.png`: twelve-frame sequence summary
-- `fanuc_presentation_metrics.json`: camera, controller, contact, hold, release, limit, frame, and file evidence
+- `fanuc_real_pickup.mp4`: 13.42 second continuous stationary-belt pickup recording used by the page
+- `fanuc_real_pickup_poster.png`: retained-workpiece frame used by the page
+- `fanuc_real_pickup_contact_sheet.png`: approach, contact, lift, transport, release, and retract summary
+- `fanuc_real_pickup_metrics.json`: IK, clearance, contact, continuity, lift, drift, release, limit, frame, and file evidence
+- `fanuc_presentation.*`: withdrawn fixture-test media retained only as historical screening evidence
 
 The presentation camera is inside the guard envelope. It exists to explain the task and is not a proposed production sensor location. This recording proves Scene 2 articulation, bilateral jaw contact, gravity hold, and physical release. The workpiece is placed at the grasp test pose. The recording does not prove conveyor pickup or the unfinished YOLO-to-FANUC delivery path.
 

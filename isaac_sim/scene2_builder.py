@@ -32,17 +32,17 @@ GRIPPER_JOINT_PATHS = (
     f"{ROBOT_PRIM}/Physics/finger_left",
     f"{ROBOT_PRIM}/Physics/finger_right",
 )
-GRIPPER_OPEN_INNER_GAP_M = 0.270
+GRIPPER_OPEN_INNER_GAP_M = 0.220
 GRIPPER_COMPLIANCE_M_PER_N = 0.00016
 GRIPPER_DRIVE_STIFFNESS_N_PER_M = 1.0 / GRIPPER_COMPLIANCE_M_PER_N
 GRIPPER_NORMAL_FORCE_SETPOINT_N = 50.0
 GRIPPER_NORMAL_FORCE_LIMIT_N = 70.0
-GRIPPER_FINGER_OPEN_Y_M = 0.180
+GRIPPER_FINGER_OPEN_Y_M = 0.155
 GRIPPER_PAD_INWARD_OFFSET_M = 0.025
 GRIPPER_PAD_THICKNESS_M = 0.040
-GRIPPER_PAD_LENGTH_M = 0.360
-GRIPPER_PAD_HEIGHT_M = 0.160
-GRIPPER_GRASP_CENTER_FLANGE_M = (0.500, 0.0, 0.0)
+GRIPPER_PAD_LENGTH_M = 0.140
+GRIPPER_PAD_HEIGHT_M = 0.100
+GRIPPER_GRASP_CENTER_FLANGE_M = (0.350, 0.0, 0.0)
 
 
 def gripper_open_inner_gap_m() -> float:
@@ -306,8 +306,8 @@ class Scene2Builder:
         self._cube(
             stage,
             f"{GRIPPER_ROOT}/DriveHousing",
-            (0.25, 0.42, 0.15),
-            (0.20, 0.0, 0.0),
+            (0.18, 0.32, 0.12),
+            (0.13, 0.0, 0.0),
             self.materials["ToolBlue"],
             collision=False,
             role="enclosed_gripper_linear_drive",
@@ -315,8 +315,8 @@ class Scene2Builder:
         self._cube(
             stage,
             f"{GRIPPER_ROOT}/HousingCover",
-            (0.13, 0.33, 0.035),
-            (0.33, 0.0, 0.083),
+            (0.10, 0.25, 0.025),
+            (0.22, 0.0, 0.067),
             self.materials["Steel"],
             collision=False,
             role="washdown_cover_reference",
@@ -326,8 +326,8 @@ class Scene2Builder:
                 stage,
                 f"{GRIPPER_ROOT}/GuideRail{name}",
                 0.014,
-                0.34,
-                (0.23, 0.0, z),
+                0.25,
+                (0.15, 0.0, z),
                 self.materials["Steel"],
                 axis="Y",
                 collision=False,
@@ -347,14 +347,14 @@ class Scene2Builder:
             finger = UsdGeom.Xform.Define(stage, finger_path)
             finger.AddTranslateOp().Set(Gf.Vec3d(GRIPPER_GRASP_CENTER_FLANGE_M[0], y, 0.0))
             UsdPhysics.RigidBodyAPI.Apply(finger.GetPrim())
-            UsdPhysics.MassAPI.Apply(finger.GetPrim()).CreateMassAttr(0.90)
+            UsdPhysics.MassAPI.Apply(finger.GetPrim()).CreateMassAttr(0.55)
             PhysxSchema.PhysxContactReportAPI.Apply(finger.GetPrim()).CreateThresholdAttr(0.0)
             self._label(finger.GetPrim(), "guided_compliant_gripper_jaw", "actuated_reference")
             self._cube(
                 stage,
                 f"{finger_path}/Carrier",
-                (0.15, 0.10, 0.11),
-                (-0.23, 0.0, 0.0),
+                (0.10, 0.075, 0.085),
+                (-0.14, 0.0, 0.0),
                 self.materials["Steel"],
                 collision=False,
                 role="guided_jaw_carriage",
@@ -362,8 +362,8 @@ class Scene2Builder:
             self._cube(
                 stage,
                 f"{finger_path}/FingerArm",
-                (0.31, 0.060, 0.070),
-                (-0.10, 0.0, 0.0),
+                (0.18, 0.045, 0.055),
+                (-0.055, 0.0, 0.0),
                 self.materials["ToolBlue"],
                 collision=False,
                 role="gripper_finger_arm",
@@ -371,7 +371,7 @@ class Scene2Builder:
             self._cube(
                 stage,
                 f"{finger_path}/PadBacking",
-                (GRIPPER_PAD_LENGTH_M, 0.055, GRIPPER_PAD_HEIGHT_M + 0.02),
+                (GRIPPER_PAD_LENGTH_M, 0.050, GRIPPER_PAD_HEIGHT_M + 0.015),
                 (0.0, 0.0, 0.0),
                 self.materials["DarkSteel"],
                 collision=False,

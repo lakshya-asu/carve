@@ -1,6 +1,44 @@
 # Overnight build report
 
+## Continuous pickup hardening, 2026-08-27
+
+The published presentation recording was withdrawn after review. It was a contact fixture test, not a pickup. The workpiece was moved to the grasp pose after a camera cut, and the tool entered the conveyor envelope. The project page no longer links that recording.
+
+The gripper was resized from a 270 mm opening, 360 mm pad depth, 160 mm pad height, and 500 mm flange reach to a 220 mm opening, 140 mm pad depth, 100 mm pad coverage, and 350 mm flange reach. This is a compact reference tool for the current 200 mm maximum recipe width. Future cuts outside that envelope need a different removable pad set or tool.
+
+Commands run:
+
+```powershell
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\run_scene2.py --headless --output-root results/scene2_compact_gripper
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\probe_scene2_ik.py
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\record_scene2_real_pickup_demo.py --output-root results/scene2_real_pickup_v1 --fps 12
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\record_scene2_real_pickup_demo.py --output-root results/scene2_real_pickup_v2 --fps 12
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\record_scene2_real_pickup_demo.py --output-root results/scene2_real_pickup_v3 --fps 12
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\record_scene2_real_pickup_demo.py --output-root results/scene2_real_pickup_v4 --fps 12
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\record_scene2_real_pickup_demo.py --output-root results/scene2_real_pickup_v5 --fps 12
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\record_scene2_real_pickup_demo.py --output-root results/scene2_real_pickup_v6 --fps 12
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\record_scene2_real_pickup_demo.py --output-root results/scene2_real_pickup_v7 --fps 12
+```
+
+The compact mechanism gate passed. The IK probe found reachable top-down pickup poses using the project FANUC URDF and a Lula robot descriptor. Early real-pick runs failed truthfully. V1 rejected a drifted workpiece pose. V2 and V3 rejected conveyor penetration and unexpected contacts. V4 rejected an unreachable lift pose. V5 still detected belt contact during the long overview-to-pregrasp joint interpolation. V6 starts the recording at a verified pregrasp pose and contains only the collision-free vertical pickup sequence.
+
+V7 is the accepted final recording. It passed with 66.2 mm minimum approach clearance, bilateral contact peaks of 56.42 N and 55.99 N, 159.65 mm lift, 0.387 mm maximum relative drift, 23.69 mm release displacement, 5.90 mm maximum one-step product motion, zero unexpected contact pairs, zero product teleports after recording began, and zero joint-limit violations. The video has 161 frames at 1280 by 720 and 12 FPS. The fixed camera keeps the workpiece, gripper, and belt visible through approach, closure, lift, transport, release, and retract. V7 also removes the kinematic reset warning. The PowerShell wrapper returns a failing process exit code when the machine-readable gate fails.
+
+The one-command wrapper was tested in both directions. A valid 12 FPS run passed and printed its evidence path. An intentional 11 FPS run produced `passed: false`, named the invalid frame rate, and returned process exit code 1 from `record_real_pickup.ps1`.
+
+The documented complete entry point passed after the pickup correction:
+
+```powershell
+.\run_tests.ps1
+```
+
+Fresh complete-suite evidence is `results/full_suite/20260827_020951506`. Ordinary Python reported 137 passed and 1 skipped. The skip is the NumPy-dependent perception test in the plain interpreter. Isaac Python provides NumPy for simulator tests. Solution A and Solution B ran eight total cycles with four nominal successes, four expected recovery outcomes, eight deterministic replay passes, zero unexpected collisions, and zero joint-limit violations. The Scene 2 ROS probe and compact gripper mechanism gate passed in the same command.
+
+The workpiece is held kinematic on the stationary belt until bilateral contact, then becomes dynamic. This is a transparent conveyor fixture approximation. It is not moving interception and is not evidence of real meat handling performance. The exact next ticket remains T016: connect camera perception and prediction to a moving workpiece and execute the same contact pickup on the FANUC articulation.
+
 ## Guided gripper correction, 2026-08-27
+
+Historical rejected iteration. The accepted compact-tool pickup evidence is documented above.
 
 The first Scene 2 gripper passed a narrow contact fixture test but looked detached and did not show a workpiece in the presentation recording. The housing and finger transforms were rebuilt as one readable wide parallel-jaw tool. The new reference includes an enclosed drive housing, guide rails, articulated carriages, finger arms, rigid backings, broad rounded soft pads, and a named `grasp_tcp` frame.
 

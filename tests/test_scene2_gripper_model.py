@@ -3,6 +3,7 @@ import pytest
 from isaac_sim.scene2_builder import (
     GRIPPER_COMPLIANCE_M_PER_N,
     GRIPPER_FINGER_OPEN_Y_M,
+    GRIPPER_GRASP_CENTER_FLANGE_M,
     GRIPPER_NORMAL_FORCE_SETPOINT_N,
     GRIPPER_OPEN_INNER_GAP_M,
     GRIPPER_PAD_HEIGHT_M,
@@ -31,9 +32,14 @@ def test_pad_geometry_produces_the_declared_opening() -> None:
     assert gripper_open_inner_gap_m() == pytest.approx(GRIPPER_OPEN_INNER_GAP_M)
 
 
-def test_contact_pads_are_broad_enough_for_the_reference_cut() -> None:
-    assert GRIPPER_PAD_LENGTH_M >= 0.30
-    assert GRIPPER_PAD_HEIGHT_M >= 0.14
+def test_contact_pads_are_compact_and_cover_the_nominal_pork_cross_section() -> None:
+    assert 0.13 <= GRIPPER_PAD_LENGTH_M <= 0.15
+    assert 0.09 <= GRIPPER_PAD_HEIGHT_M <= 0.11
+
+
+def test_gripper_is_sized_for_nominal_recipes_without_excessive_overhang() -> None:
+    assert 0.20 < GRIPPER_OPEN_INNER_GAP_M <= 0.23
+    assert GRIPPER_GRASP_CENTER_FLANGE_M[0] <= 0.36
 
 
 @pytest.mark.parametrize("width_m", [0.0, -0.1, GRIPPER_OPEN_INNER_GAP_M, 0.4])

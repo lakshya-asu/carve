@@ -1,16 +1,34 @@
 # Build status
 
+## Continuous pickup correction, 2026-08-27
+
+The previous page video is rejected as pickup evidence. It moved a test workpiece to the grasp pose after a camera cut and allowed the oversized pads to intersect the conveyor. The file remains only as historical screening evidence. It is no longer linked or presented on the project page.
+
+The Scene 2 reference tool is now compact. Its clear opening is 220 mm, pad depth is 140 mm, pad coverage is 100 mm, and the grasp center is 350 mm from the flange. The 220 mm opening covers the current 200 mm maximum recipe width with 20 mm total clearance. Larger future cuts require another removable pad set or another tool. The project no longer uses one oversized jaw geometry for every possible product.
+
+`record_real_pickup.ps1` now runs a continuous stationary-belt pickup proof. Lula inverse kinematics generates pregrasp, grasp, lift, transport, release, and retract poses for the FANUC articulation. The workpiece is visible before the approach. It stays kinematic on the stationary belt until both pad contacts are confirmed, then becomes dynamic for the lift, transport, and release. No product pose is set after recording starts.
+
+The passing run is `results/scene2_real_pickup_v7`. It recorded 161 rendered frames over 13.42 seconds and sent 3,312 articulation commands at a 240 Hz fixed physics step. Minimum pad clearance above the belt was 66.2 mm. Bilateral contact peaks were 56.42 N and 55.99 N. The same rigid body lifted 159.65 mm with 0.387 mm maximum tool-relative drift. Release displacement was 23.69 mm. Maximum one-step product motion was 5.90 mm. There were zero unexpected contact pairs, zero workpiece teleports, and zero joint-limit violations. The `record_real_pickup.ps1` wrapper passed on a valid run and returned exit code 1 for an intentional invalid-frame-rate probe.
+
+The complete `run_tests.ps1` regression passed after this correction. Fresh evidence is `results/full_suite/20260827_020951506`. Ordinary Python reported 137 passed and 1 skipped. Solution A and Solution B completed eight cycles with four nominal successes, four expected recovery outcomes, eight deterministic replay passes, zero unexpected collisions, and zero joint-limit violations. The Scene 2 ROS probe and compact gripper gate also passed.
+
+This proves a stationary-belt physics pickup. It does not prove moving conveyor interception, YOLO-driven FANUC control, cutter delivery, or physical gripping performance. Those items remain in T016.
+
 ## Guided gripper redesign, 2026-08-27
+
+Historical rejected iteration. The current correction and accepted evidence are documented above.
 
 The previous Scene 2 tool looked like a detached blue cross and its presentation video only moved empty jaws. The static housing used a rotated transform while the moving fingers were separate flange children. The mechanism test also inserted a workpiece at the tool center without showing it in the recording.
 
-The Scene 2 tool is now a coherent wide parallel-jaw reference. It has a wrist adapter, enclosed linear-drive housing, two guide rails, two articulated carriages, slim finger arms, rigid pad backings, and broad rounded soft-pad collision surfaces. The declared open inner gap remains 270 mm. The saved stage includes a named `grasp_tcp` frame. This is still a project reference, not a selected or validated food-grade gripper.
+At this point the Scene 2 tool was a coherent wide parallel-jaw reference. It had a wrist adapter, enclosed linear-drive housing, two guide rails, two articulated carriages, slim finger arms, rigid pad backings, and broad rounded soft-pad collision surfaces. Its open inner gap was 270 mm. This geometry was later rejected as oversized. The saved stage included a named `grasp_tcp` frame. It was still a project reference, not a selected or validated food-grade gripper.
 
 The fresh Isaac Sim mechanism run under `results/scene2_gripper_redesign` passed. Both jaw contact sensors detected the 2.75 kg pork reference. Hold slip was 0.094 mm. Release displacement was 1.317 m. The run reported no unexpected contact pair and no joint-limit violation.
 
 The replacement recording under `results/scene2_gripper_demo_final` also passed. It contains 201 rendered frames over 16.75 seconds and 4,020 articulation-controller commands. Both sensors detected the offset workpiece. The force proxies were 63.91 N and 63.42 N. Gravity-hold slip was 0.17 mm. Opening the jaws produced 1.249 m of workpiece displacement. The page media now uses this run. The workpiece is placed at the grasp test pose, so this evidence does not complete T016 or claim conveyor pickup.
 
 ## Visual project page, 2026-08-27
+
+Historical page iteration. The presentation video described in this section has been withdrawn from the current page.
 
 `PROJECT_PAGE.html` is now the main visual entry point for the repository. It shows the saved YOLO26 segmentation output, rendered overhead RGB and depth, Scene 2 FANUC articulation and compliant gripper, a clear 13.75 second standard-arm presentation, a link to the older 31.42 second complete-pipeline recording, the communication path, inputs and outputs, control states, A and B behavior, validation metrics, commands, and limitations.
 

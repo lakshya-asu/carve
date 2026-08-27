@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = ROOT / "PROJECT_PAGE.html"
-PRESENTATION_METRICS = ROOT / "assets" / "project_page" / "fanuc_presentation_metrics.json"
+REAL_PICKUP_METRICS = ROOT / "assets" / "project_page" / "fanuc_real_pickup_metrics.json"
 
 
 class PageParser(HTMLParser):
@@ -44,8 +44,8 @@ def test_project_page_has_required_views_and_sections() -> None:
         "Rendered RGB stream",
         "Depth stream",
         "Robot control",
-        "The arm, jaws, workpiece, and release are visible.",
-        "It does not yet prove conveyor pickup or the complete YOLO delivery cycle.",
+        "A real pickup, shown without a hidden cut.",
+        "Zero workpiece teleports",
         "Solution A",
         "Solution B",
         "Active integration gap",
@@ -63,27 +63,26 @@ def test_project_page_local_references_exist() -> None:
     assert missing == []
 
 
-def test_project_page_embeds_nonempty_recorded_video() -> None:
-    _, parser = parse_page()
-    assert len(parser.video_sources) == 1
-    video = ROOT / parser.video_sources[0]
-    assert parser.video_sources[0] == "assets/project_page/fanuc_presentation.mp4"
-    assert video.suffix.lower() == ".mp4"
-    assert video.stat().st_size > 100_000
+def test_project_page_publishes_only_the_continuous_pickup_recording() -> None:
+    text, parser = parse_page()
+    assert parser.video_sources == ["assets/project_page/fanuc_real_pickup.mp4"]
+    assert "fanuc_presentation.mp4" not in text
 
 
-def test_published_gripper_demo_has_contact_hold_and_release_evidence() -> None:
-    payload = json.loads(PRESENTATION_METRICS.read_text(encoding="utf-8"))
-    grasp = payload["grasp_validation"]
+def test_published_pickup_passes_contact_clearance_and_continuity_gates() -> None:
+    payload = json.loads(REAL_PICKUP_METRICS.read_text(encoding="utf-8"))
     assert payload["passed"] is True
+    assert payload["moving_conveyor_interception"] is False
+    assert payload["product_visible_before_approach"] is True
+    assert payload["teleport_calls_after_record_start"] == 0
     assert payload["joint_limit_violations"] == 0
-    assert grasp["passed"] is True
-    assert grasp["bilateral_contact"] is True
-    assert all(force > 0.1 for force in grasp["peak_contact_force_n"])
-    assert grasp["gravity_hold_slip_m"] <= 0.005
-    assert grasp["release_displacement_m"] >= 0.020
-    assert payload["recording"]["source"] == "rendered_presentation_rgb"
-    assert payload["recording"]["frame_count"] > 0
+    assert payload["grasp_validation"]["bilateral_contact"] is True
+    assert payload["grasp_validation"]["unexpected_contact_pairs"] == []
+    assert payload["grasp_validation"]["lift_distance_m"] >= 0.10
+    assert payload["grasp_validation"]["maximum_relative_drift_m"] <= 0.020
+    assert payload["grasp_validation"]["release_displacement_m"] >= 0.020
+    assert payload["clearance_validation"]["minimum_approach_pad_clearance_m"] >= 0.005
+    assert payload["continuity_validation"]["maximum_product_step_m"] <= 0.020
 
 
 def test_project_page_uses_no_forbidden_dash_characters() -> None:
