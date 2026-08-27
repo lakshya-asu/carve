@@ -1,5 +1,11 @@
 # Build status
 
+## Technical report redesign, 2026-08-27
+
+`TECHNICAL_REPORT.html` now uses a single graphite and muted-amber theme with square geometry. The prior rounded cards, colored side-border warnings, top-border metric cards, blue palette, gradients, and glows were removed. The communication section is now a closed-loop physical and data-flow SVG. The workpiece cycle, perception transformation, speed envelope, motion feedback, cutter boundary, and PLC handshake each use a purpose-built visualization. The report embeds 13 simulator recordings.
+
+`REPORT_DESIGN_STANDARD.md` records the durable report rules and research basis. `tests/test_technical_report.py` prevents the rejected visual patterns from returning and checks diagram IDs, headings, local media, evidence sections, research links, and the design-standard link. The dependency-enabled Python run passed 165 tests. The language audit reports a seven-word median sentence and no sentence over 25 words. In-app visual automation could not open the local `file:` URL because of browser security policy, so the remaining visual confirmation is a manual refresh of the existing local report tab.
+
 ## Variable-speed and orientation pass, 2026-08-27
 
 The current Scene 2 implementation has now passed a five-case Solution A matrix from 0.06 to 0.22 m/s with lateral starts from -60 to 50 mm and yaw from -72 to 68 degrees. The classifier produced longitudinal, diagonal-left, diagonal-right, and transverse grasp classes. All five cases used rendered RGBD, YOLO26 proposals, calibrated conveyor-volume filtering, a mask-interior grasp, timed articulation control, bilateral PhysX contact, dynamic lift, cutter-frame alignment, tray release, and verification. Placement error was 10.4 to 19.8 mm and intercept timing error was 4.4 to 18.3 ms. Every case recorded zero joint, velocity, and acceleration violations.

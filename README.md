@@ -149,10 +149,11 @@ Record the complete four-cycle Solution B example from the actual rendered overh
 
 The recording, contact sheet, metrics, media, and traces are written under `results/yolo/recorded_demo`. Open `TECHNICAL_REPORT.html` for the full implementation report, architecture visuals, inputs and outputs, state machines, metrics, assumptions, and embedded video.
 
-The project writing standard is in `WRITING_STYLE_RESEARCH.md`. Check both HTML reports with:
+The project writing standard is in `WRITING_STYLE_RESEARCH.md`. The technical-report visual standard is in `REPORT_DESIGN_STANDARD.md`. Check both HTML reports with:
 
 ```powershell
 python tools\audit_report_language.py --fail-on-style
+python -m pytest tests\test_technical_report.py -q
 ```
 
 This command is a style lint. It does not claim to detect whether AI wrote a passage.
