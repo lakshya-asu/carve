@@ -58,11 +58,16 @@ BELT_SPEED_MPS = 2.24
 PRODUCT_ID = "product-000"
 HOME_TCP = Transform.planar(1.20, 0.0, 0.55, 0.0)
 CUT_TARGET = Transform.planar(2.35, 0.0, 0.10, 0.0)
-BUFFER_TARGET = Transform.planar(1.80, -0.60, 0.19, 0.0)
+BUFFER_TARGET = Transform.planar(1.80, -0.55, 0.19, 0.0)
 REJECT_TARGET = Transform.planar(1.60, 0.62, 0.38, 0.0)
 JOINT_VELOCITY_LIMITS = (4.0, 4.0, 4.0, 6.0, 1.0, 1.0)
 JOINT_ACCELERATION_LIMITS = (12.0, 8.0, 8.0, 10.0, 8.0, 8.0)
 DELIVERY_TOLERANCE = DeliveryTolerance(0.055, math.radians(7.0), 0.012, 0.35)
+TCP_ENVELOPE = (0.35, 2.48, 0.72, 0.055, 0.62)
+MAX_ALIGNMENT_PROJECTION_M = DELIVERY_TOLERANCE.position_m / 2.0
+ENVELOPE_NUMERICAL_EPSILON_M = 1e-9
+GRASP_CONTACT_SETTLE_S = 0.125
+TRANSFER_BRAKE_S = 0.350
 BASELINE_SCENARIOS = ("nominal", "nominal", "failed_grasp", "downstream_unavailable")
 HARDENING_SCENARIOS = (*BASELINE_SCENARIOS, "emergency_stop", "stale_observation")
 
@@ -160,6 +165,28 @@ def _tcp_target_for_product(
     return _planar(compose(product_target, inverse(tcp_from_product)))
 
 
+def _project_alignment_target_to_envelope(target: Transform) -> Transform:
+    """Project a near-boundary alignment target without accepting infeasible motion."""
+    x_min, x_max, y_abs_max, z_min, z_max = TCP_ENVELOPE
+    projected = Transform.planar(
+        min(max(target.translation.x_m, x_min), x_max),
+        min(max(target.translation.y_m, -y_abs_max), y_abs_max),
+        min(max(target.translation.z_m, z_min), z_max),
+        target.yaw_rad,
+    )
+    projection_m = math.sqrt(
+        (projected.translation.x_m - target.translation.x_m) ** 2
+        + (projected.translation.y_m - target.translation.y_m) ** 2
+        + (projected.translation.z_m - target.translation.z_m) ** 2
+    )
+    if projection_m > MAX_ALIGNMENT_PROJECTION_M:
+        raise ValueError(
+            "Product alignment requires an infeasible TCP target: "
+            f"requested={target.translation}, projection_m={projection_m:.6f}"
+        )
+    return projected
+
+
 def _buffer_regrasp_target(observed_product_pose: Transform) -> Transform:
     """Place the open gripper over the product pose measured after settling."""
     return Transform.planar(
@@ -200,6 +227,11 @@ def _closed_finger_targets(adapter: IsaacSimulatorAdapter) -> tuple[float, float
     product_half_width_m = adapter.product_profile.geometry.width_m.nominal / 2.0
     travel_m = max(0.0, 0.0875 - product_half_width_m + 0.008)
     return (-travel_m, travel_m)
+
+
+def _preshape_finger_targets(adapter: IsaacSimulatorAdapter) -> tuple[float, float]:
+    """Partially close during approach while retaining capture clearance."""
+    return tuple(value * 0.25 for value in _closed_finger_targets(adapter))
 
 
 def _buffer_closed_finger_targets(adapter: IsaacSimulatorAdapter) -> tuple[float, float]:
@@ -244,10 +276,16 @@ def _collision_aware_tcp_check(targets: tuple[float, ...], names: tuple[str, ...
     x_m = 0.35 + values["x_axis"]
     y_m = values["y_axis"]
     z_m = 0.35 + values["z_axis"]
-    if not 0.35 <= x_m <= 2.48 or abs(y_m) > 0.72 or not 0.055 <= z_m <= 0.62:
+    x_min, x_max, y_abs_max, z_min, z_max = TCP_ENVELOPE
+    epsilon = ENVELOPE_NUMERICAL_EPSILON_M
+    if (
+        x_m < x_min - epsilon
+        or x_m > x_max + epsilon
+        or abs(y_m) > y_abs_max + epsilon
+        or z_m < z_min - epsilon
+        or z_m > z_max + epsilon
+    ):
         raise ValueError(f"TCP target leaves validated cell envelope: {(x_m, y_m, z_m)}")
-    if x_m > 2.48 and z_m < 0.60:
-        raise ValueError("TCP target enters cutter reference collision volume")
 
 
 def execute_joint_trajectory(
@@ -332,11 +370,14 @@ def move_tcp(
     fingers: tuple[float, float] | None = None,
     start_tcp_x_velocity_mps: float = 0.0,
     end_tcp_x_velocity_mps: float = 0.0,
+    start_joint_velocities: tuple[float, ...] | None = None,
 ) -> MotionEvidence:
     end = _tcp_to_joint_targets(adapter, target, fingers)
     velocities = [0.0] * len(end)
     velocities[adapter.joint_names.index("x_axis")] = end_tcp_x_velocity_mps
-    start_velocities = [0.0] * len(end)
+    start_velocities = list(start_joint_velocities or (0.0,) * len(end))
+    if len(start_velocities) != len(end):
+        raise ValueError("Start joint velocity count does not match articulation")
     start_velocities[adapter.joint_names.index("x_axis")] = start_tcp_x_velocity_mps
     return execute_joint_trajectory(
         adapter,
@@ -433,7 +474,7 @@ def _physical_recovery(
             move_tcp(
                 adapter,
                 brake_target,
-                0.35,
+                TRANSFER_BRAKE_S,
                 fingers=_closed_finger_targets(adapter),
                 start_tcp_x_velocity_mps=BELT_SPEED_MPS,
             )
@@ -690,8 +731,8 @@ def run_cycle(
         )
         planner = InterceptionPlanner(
             InterceptionConfig(
-                pick_x_min_m=1.63,
-                pick_x_max_m=1.75,
+                pick_x_min_m=1.37,
+                pick_x_max_m=1.49,
                 candidate_step_m=0.01,
                 workspace_y_abs_m=0.70,
                 workspace_z_min_m=0.05,
@@ -744,7 +785,7 @@ def run_cycle(
                     adapter,
                     intercept_target,
                     intercept_duration,
-                    fingers=(0.0, 0.0),
+                    fingers=_preshape_finger_targets(adapter),
                     end_tcp_x_velocity_mps=BELT_SPEED_MPS,
                 )
             )
@@ -767,6 +808,25 @@ def run_cycle(
                     fingers=_closed_finger_targets(adapter),
                     start_tcp_x_velocity_mps=BELT_SPEED_MPS,
                     end_tcp_x_velocity_mps=BELT_SPEED_MPS,
+                )
+            )
+            settle_state = adapter.read_robot_state()
+            settle_start = settle_state.tcp_pose_world
+            settle_target = Transform.planar(
+                settle_start.translation.x_m + BELT_SPEED_MPS * GRASP_CONTACT_SETTLE_S,
+                settle_start.translation.y_m,
+                settle_start.translation.z_m,
+                settle_start.yaw_rad,
+            )
+            evidence.add(
+                move_tcp(
+                    adapter,
+                    settle_target,
+                    GRASP_CONTACT_SETTLE_S,
+                    fingers=_closed_finger_targets(adapter),
+                    start_tcp_x_velocity_mps=BELT_SPEED_MPS,
+                    end_tcp_x_velocity_mps=BELT_SPEED_MPS,
+                    start_joint_velocities=settle_state.velocities,
                 )
             )
             contacts = adapter.read_contacts()
@@ -863,7 +923,7 @@ def run_cycle(
                             move_tcp(
                                 adapter,
                                 brake_target,
-                                0.35,
+                                TRANSFER_BRAKE_S,
                                 fingers=_closed_finger_targets(adapter),
                                 start_tcp_x_velocity_mps=BELT_SPEED_MPS,
                             )
@@ -886,13 +946,17 @@ def run_cycle(
                         evidence.add(
                             move_tcp(
                                 adapter,
-                                _tcp_target_for_product(adapter, CUT_TARGET),
+                                _project_alignment_target_to_envelope(
+                                    _tcp_target_for_product(adapter, CUT_TARGET)
+                                ),
                                 0.75,
                                 fingers=_closed_finger_targets(adapter),
                             )
                         )
                         for correction_index in range(3):
-                            alignment_target = _tcp_target_for_product(adapter, CUT_TARGET)
+                            alignment_target = _project_alignment_target_to_envelope(
+                                _tcp_target_for_product(adapter, CUT_TARGET)
+                            )
                             writer.append("alignment_target", adapter.simulation_time, alignment_target)
                             evidence.add(
                                 move_tcp(
@@ -961,7 +1025,7 @@ def run_cycle(
                         move_tcp(
                             adapter,
                             brake_target,
-                            0.35,
+                            TRANSFER_BRAKE_S,
                             fingers=_closed_finger_targets(adapter),
                             start_tcp_x_velocity_mps=BELT_SPEED_MPS,
                         )
@@ -981,7 +1045,19 @@ def run_cycle(
                     adapter.set_gripper_closed(False)
                     controller.begin_settle(adapter.simulation_time)
                     event_cursor = _append_new_events(writer, supervisor, event_cursor)
-                    evidence.add(move_tcp(adapter, Transform.planar(1.80, -0.60, 0.48, 0.0), 0.55, fingers=(0.0, 0.0)))
+                    evidence.add(
+                        move_tcp(
+                            adapter,
+                            Transform.planar(
+                                BUFFER_TARGET.translation.x_m,
+                                BUFFER_TARGET.translation.y_m,
+                                0.48,
+                                0.0,
+                            ),
+                            0.55,
+                            fingers=(0.0, 0.0),
+                        )
+                    )
                     wait_steps = 740 if failure_mode == "buffer_timeout" else 36
                     for _ in range(wait_steps):
                         adapter.step_once()
@@ -999,7 +1075,12 @@ def run_cycle(
                         event_cursor = _append_new_events(writer, supervisor, event_cursor)
                         terminal_reason = "buffer_timeout"
                     else:
-                        commanded_buffer_pose = Transform.planar(1.80, -0.60, 0.13, 0.0)
+                        commanded_buffer_pose = Transform.planar(
+                            BUFFER_TARGET.translation.x_m,
+                            BUFFER_TARGET.translation.y_m,
+                            0.13,
+                            0.0,
+                        )
                         if cycle_index % 4 == 1:
                             actual_pose = adapter.get_product_pose(PRODUCT_ID)
                             adapter.set_product_pose(
@@ -1022,13 +1103,18 @@ def run_cycle(
                             if 1.55 < item.pose_belt.translation.x_m < 2.10
                             and item.pose_belt.translation.y_m < -0.38
                             and item.pose_belt.translation.z_m < 0.22
+                            and item.confidence >= 0.10
+                            and item.visible_fraction >= 0.10
                         ]
                         if not buffer_candidates:
                             adapter.capture_rgbd("overhead", str(output_directory / "media"))
                             raise RuntimeError("Rendered buffer reobservation produced no workpiece")
                         buffer_observation = min(
                             buffer_candidates,
-                            key=lambda item: abs(item.pose_belt.translation.x_m - 1.80),
+                            key=lambda item: (
+                                abs(item.pose_belt.translation.x_m - BUFFER_TARGET.translation.x_m)
+                                + abs(item.pose_belt.translation.y_m - BUFFER_TARGET.translation.y_m)
+                            ),
                         )
                         while adapter.simulation_time < buffer_observation.delivery_time:
                             adapter.step_once()
@@ -1062,6 +1148,16 @@ def run_cycle(
                                 fingers=_buffer_closed_finger_targets(adapter),
                             )
                         )
+                        buffer_settle_state = adapter.read_robot_state()
+                        evidence.add(
+                            move_tcp(
+                                adapter,
+                                buffer_settle_state.tcp_pose_world,
+                                0.15,
+                                fingers=_buffer_closed_finger_targets(adapter),
+                                start_joint_velocities=buffer_settle_state.velocities,
+                            )
+                        )
                         writer.append("buffer_regrasp_robot_state", adapter.simulation_time, adapter.read_robot_state())
                         writer.append("buffer_regrasp_product_pose", adapter.simulation_time, adapter.get_product_pose(PRODUCT_ID))
                         for finger_pose in adapter.get_finger_world_poses():
@@ -1074,7 +1170,7 @@ def run_cycle(
                             _physical_recovery(adapter, supervisor, evidence, attached=False, reject=False)
                             terminal_reason = "buffer_regrasp_contact_failure"
                         else:
-                            evidence.add(move_tcp(adapter, Transform.planar(1.82, -0.55, 0.36, 0.0), 0.55, fingers=_closed_finger_targets(adapter)))
+                            evidence.add(move_tcp(adapter, Transform.planar(1.82, -0.55, 0.36, 0.0), 0.60, fingers=_closed_finger_targets(adapter)))
                             if not controller.wait_and_feed(adapter.simulation_time, _plc(adapter)):
                                 raise RuntimeError("Ready PLC did not permit Solution B feed")
                             event_cursor = _append_new_events(writer, supervisor, event_cursor)
@@ -1082,13 +1178,17 @@ def run_cycle(
                             evidence.add(
                                 move_tcp(
                                     adapter,
-                                    _tcp_target_for_product(adapter, CUT_TARGET),
+                                    _project_alignment_target_to_envelope(
+                                        _tcp_target_for_product(adapter, CUT_TARGET)
+                                    ),
                                     0.90,
                                     fingers=_closed_finger_targets(adapter),
                                 )
                             )
                             for correction_index in range(3):
-                                alignment_target = _tcp_target_for_product(adapter, CUT_TARGET)
+                                alignment_target = _project_alignment_target_to_envelope(
+                                    _tcp_target_for_product(adapter, CUT_TARGET)
+                                )
                                 writer.append("alignment_target", adapter.simulation_time, alignment_target)
                                 evidence.add(
                                     move_tcp(

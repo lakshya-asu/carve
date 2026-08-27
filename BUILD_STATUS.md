@@ -6,13 +6,15 @@ The proposed robot and cell are now present in a new Isaac Sim stage. The implem
 
 The new stage contains the FANUC arm, pedestal, specialized compliant gripper reference, guarded conveyor, three pork-loin reference workpieces, camera gantry, overhead RGBD sensor, photoeye, stationary cutter-entry tray, cutter housing, reject bin, PLC attributes, lighting, floor drains, and named coordinate frames. Cell equipment and the gripper remain clearly labeled project reference models.
 
-`validate_scene2.ps1` passed in Isaac Sim 6.0.1. Isaac initialized the six-axis articulation and executed three bounded controller motion segments at 240 Hz. The run reported zero joint-limit violations, nonempty 1280 by 720 RGB and depth, 194 authored cell prims, two cameras, six revolute joints, and a matching save and reload manifest. Evidence is in `results/scene2/scene2_validation.json`.
+`validate_scene2.ps1` passed in Isaac Sim 6.0.1. Isaac initialized the FANUC arm and its two-joint compliant gripper, then executed three bounded robot motion segments at 240 Hz. The run reported zero robot joint-limit violations, nonempty 1280 by 720 RGB and depth, 200 authored cell prims, two cameras, six revolute robot joints, two prismatic jaw joints, and a matching save and reload manifest.
 
-`validate_scene2_ros.ps1` also passed twice. It used the ROS 2 Humble libraries bundled with Isaac Sim and real in-process DDS endpoints. Each run published 720 fixed-time clock messages, 180 measured joint states, and 45 sets of RGB, depth, and camera calibration messages. The probe received every stream type. Isaac rejected one partial command and accepted one complete six-joint command. The accepted command moved the FANUC articulation through its controller with a maximum final error of 0.000836 rad. The replay had the same stage hash and identical ROS metrics.
+The Scene 2.0 compliant gripper gate also passed twice with identical stage hashes and measurements. Both articulated jaws contacted the 2.75 kg pork reference. Measured elastic deflection was 10.03 mm and 9.99 mm. The force proxy was 62.71 N and 62.41 N, below the 70 N drive limit. Raw PhysX contact estimates were 48.04 N and 56.84 N. One-second hold slip was zero in the repeated run. Deliberate opening produced 1.383 m of workpiece displacement and both jaws recovered within 4 micrometers of open. No fixed grasp constraint was used during the load check. Evidence is in `results/scene2_compliance_v10/scene2_validation.json` and `results/scene2_compliance_v11/scene2_validation.json`.
 
-The visible launcher is `run_scene2.ps1`. It opens the same tested stage and holds the Isaac Sim window for inspection. The full YOLO, interception, contact grasp, and delivery pipeline still uses the existing generic Scene 1 articulation. The external MoveIt process is not installed or tested. Connecting those functions to the FANUC Scene 2.0 articulation is T016 and remains in progress.
+`validate_scene2_ros.ps1` passed again after the gripper joints were added. It used the ROS 2 Humble libraries bundled with Isaac Sim and real in-process DDS endpoints. The bridge publishes only J1 through J6 on the robot joint contract and keeps jaw state inside the separate gripper contract. The probe received clock, robot joint state, RGB, depth, and camera calibration. Isaac rejected one partial command and accepted one complete six-joint command. The accepted command moved the FANUC articulation through its controller with a maximum final error of 0.000679 rad. Evidence is in `results/scene2_compliance_ros/scene2_validation.json`.
 
-The current complete `run_tests.ps1` entry point is green. Its fresh Solution A and Solution B batches both passed. Ordinary Python reported 118 passed and 1 skipped. The skip is the NumPy-dependent perception test in the plain interpreter. The complete run produced 8 cycles, 4 nominal deliveries, 4 expected recovery cycles, 8 deterministic replay passes, zero unexpected collisions, and zero joint-limit violations.
+The visible launcher is `run_scene2.ps1`. It opens the same tested stage and holds the Isaac Sim window for inspection. `validate_compliant_gripper.ps1` is the focused one-command physical mechanism gate. The full YOLO, interception, and delivery pipeline still uses the existing generic Scene 1 articulation. The external MoveIt process is not installed or tested. Connecting those functions to the FANUC Scene 2.0 articulation is T016 and remains in progress.
+
+The current complete `run_tests.ps1` entry point is green. The fresh evidence root is `results/full_suite/20260826_205915468`. Ordinary Python reported 127 passed and 1 skipped. The skip is the NumPy-dependent perception test in the plain interpreter. The complete run produced 8 cycles, 4 nominal deliveries, 4 expected recovery cycles, 8 deterministic replay passes, zero unexpected collisions, and zero joint-limit violations. The same command also passed the Scene 2.0 ROS and compliant-gripper gate.
 
 The Solution B buffer regrasp regression is fixed. The controller now preserves the product pose measured from the rendered buffer RGBD observation. The stationary regrasp closure uses the actual central width of the recipe mesh instead of its maximum width envelope. The moving interception closure remains unchanged because it needs extra capture tolerance. The regrasp trace now records the measured product pose, target pose, robot state, finger poses, and PhysX contacts. The 8 mm per-pad compliance value remains an uncalibrated proxy.
 
@@ -44,7 +46,7 @@ The integrated runner can now record the actual rendered overhead RGB stream int
 
 ## Current stage
 
-Integrated Isaac Sim reference milestone complete under documented simulation assumptions.
+The Scene 1 integrated Isaac Sim reference milestone is complete under documented simulation assumptions. The Scene 2.0 FANUC stage, ROS boundary, controller, sensors, and compliant-gripper gate are complete. Full perception, interception, transport, and delivery with the FANUC articulation remain T016 work.
 
 ## 2026-08-26 recipe integration status
 
@@ -113,4 +115,14 @@ This is a reproducible vertical slice, not a physical validation. The robot, gri
 
 ## Next action
 
-T014 is complete. The exact next ticket is T015, physical calibration and OEM asset replacement. It is blocked on selected assets and real camera, conveyor, cutter, gripper, and meat trial data. Accuracy optimization against real data is intentionally deferred.
+T014 is complete. T016 is the exact next software ticket and remains in progress. Its next gate is the external MoveIt `FollowJointTrajectory` path and collision-aware FANUC interception. T015 remains blocked on selected assets and real camera, conveyor, cutter, gripper, and meat trial data. Accuracy optimization against real data is intentionally deferred.
+
+## Final full-suite hardening, 2026-08-26
+
+The complete timestamped suite passed at `results/full_suite/20260826_205915468`. Solution A and Solution B each completed two nominal deliveries plus their expected failed-grasp and downstream-unavailable paths. All eight cycle replays matched. The independent artifact audit found eight complete traces, two nonempty saved stages, two RGB captures, two depth arrays, zero unexpected collisions, and zero joint-limit violations.
+
+The moving grasp now uses 25 percent jaw pre-shaping, a 125 ms belt-speed-matched contact settle, measured starting joint velocities, and an upstream 1.37 to 1.49 m intercept window. These values keep the jaw and conveyor-axis trajectories inside the stated acceleration limits. Cutter alignment may project a TCP request onto the validated envelope only when the projection is no more than half the 55 mm product-placement tolerance. Larger requests still fail.
+
+The Solution B stationary tray and target moved 50 mm toward the overhead camera centre. Buffer detections require at least 0.10 confidence and 0.10 visible fraction, remain bounded to the calibrated buffer zone, and are associated by distance to `buffer_frame`. The buffer regrasp includes a 150 ms compliant-drive settle and still requires recent bilateral PhysX contact before the fixed transport constraint is created.
+
+Fresh Solution A position error p95 was 47.34 mm. Fresh Solution B position error p95 was 49.90 mm. Both used a 55 mm simulation gate. These margins are simulation results, not physical accuracy claims.

@@ -61,6 +61,12 @@ Validate the Scene 2.0 FANUC articulation and its live ROS 2 core-message bridge
 .\validate_scene2_ros.ps1
 ```
 
+Run the focused Scene 2.0 compliant-gripper load, hold, release, and recovery gate:
+
+```powershell
+.\validate_compliant_gripper.ps1
+```
+
 This gate uses the ROS 2 Humble libraries bundled with Isaac Sim. It publishes fixed simulation time, measured FANUC joint states, rendered RGB, rendered depth, and camera calibration over DDS. It also proves command rejection and real articulation-controller execution. The external MoveIt process is the next gate and is not yet installed or tested on this workstation.
 
 Run the bounded five-seed hardening matrix for both solutions:
@@ -139,6 +145,7 @@ The scripts use the existing Isaac Sim Python at `C:\Users\jainl\is6\Scripts\pyt
 - `results/yolo/headless_a_v2/isaac_a/metrics.json` and `results/yolo/headless_b_v2/isaac_b/metrics.json` record passing learned-vision integration runs.
 - `results/yolo/recorded_demo/isaac_b/demo.mp4` is the actual rendered overhead-camera recording from the four-cycle YOLO26 Solution B demonstration.
 - `TECHNICAL_REPORT.html` is the complete visual and technical implementation report.
+- `results/full_suite/20260826_205915468` is the latest clean full-suite evidence root.
 
 Each four-cycle integrated suite runs two nominal cycles, one intentionally failed contact grasp, and one downstream fault cycle. A pass therefore means both nominal cycles delivered successfully and both injected failures recovered as designed. It does not mean 50 percent expected production yield.
 

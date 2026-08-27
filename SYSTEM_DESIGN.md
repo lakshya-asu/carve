@@ -365,6 +365,10 @@ All accepted robot motion is sent through the Isaac articulation controller at a
 
 The interception trajectory arrives at a predicted product pose and matches the 2.24 m/s belt velocity. Grasp closure continues at belt speed. A bounded braking move stops the conveyor-relative motion before the arm lifts. Recovery uses the same bounded braking behavior before moving above guards or reject geometry.
 
+The hardened moving grasp uses 25 percent jaw pre-shaping during approach. Final closure is followed by a 125 ms belt-speed-matched contact settle that starts from measured Isaac joint velocities. The intercept window is 1.37 to 1.49 m. This leaves enough distance for a monotonic 300 mm braking segment before the cutter envelope. The preflight still checks every trajectory sample against the articulation velocity, acceleration, joint, and TCP-envelope limits.
+
+Product alignment at the cutter uses the measured product-to-TCP transform. A target that falls just beyond the validated TCP envelope may be projected onto the boundary only when the three-dimensional projection is no more than half of the 55 mm product-placement tolerance. A larger request is infeasible and fails before execution. The final product measurement, not the requested TCP pose, determines delivery acceptance.
+
 This is collision-aware envelope checking, not a general motion planner. An OEM deployment must replace it with validated robot geometry and collision models.
 
 ### Rendered perception
@@ -376,6 +380,8 @@ Ground truth is available only as a baseline and test oracle. It is not presente
 ### Contact, compliance, and slip
 
 Both finger links use PhysX contact reporting and finite-effort prismatic drives. A grasp is accepted only after both fingers report recent product contact. The active fixed joint then approximates a stable compliant hold. Finger drive effort is the force proxy. Solution B releases onto the physical buffer, renders a new observation, estimates a planar slip transform, corrects the pose, and requires new two-finger contact before transport.
+
+The Solution B tray centre and `buffer_frame` are at `(1.80, -0.55, 0.14)` m. Buffer detections are limited to the calibrated tray region, require confidence and visible fraction of at least 0.10, and are associated by distance to the tray target. A 150 ms stationary compliant-drive settle follows buffer jaw closure. The transport constraint is created only after recent contact is present on both jaws.
 
 The workpiece is a rigid body. Deformation, tissue damage, wet adhesion, and true pressure distribution are not modeled. Contact impulses and the 50 N nominal force attribute are uncalibrated. The fixed joint is an approximation and does not prove that a physical gripper will hold the product.
 
@@ -411,10 +417,14 @@ The simulator may demonstrate software behavior under its assumptions. It cannot
 
 Scene 2.0 is built by `isaac_sim/scene2_builder.py` and exercised by `isaac_sim/run_scene2.py`. It references the project-local USD conversion of the official FANUC `m10_12_14d` description. The articulation has joints J1 through J6 under one Isaac articulation root. The cell builder adds the conveyor, recipe-shaped workpieces, gripper reference, fixed RGBD camera, photoeye, cutter-entry tray, reject bin, guards, PLC attributes, lighting, and named frames.
 
+The Scene 2.0 gripper is now an actuated part of the FANUC articulation. It adds two prismatic jaw joints named `finger_left` and `finger_right`. Each jaw has collision geometry, a contact sensor, a 0.25 m/s velocity limit, a 1.5 m/s2 acceleration metadata limit, a 70 N finite drive limit, and a 6,250 N/m series-compliance reference. The clear inner opening is 270 mm. The normal-force setpoint is 50 N per jaw. The 0.16 mm/N compliance and friction values are uncalibrated simulation assumptions.
+
+The compliance gate moves the robot to a clear test pose, places a 2.75 kg pork-loin reference between the jaws, commands both jaws through the Isaac articulation controller, and requires bilateral product contact. It measures jaw target error as elastic deflection and force proxy. It then releases the temporary positioning fixture, checks slip under gravity, opens the jaws to create a grasp-loss event, confirms product displacement, restores the workpiece, and verifies open recovery. No fixed grasp constraint is used during this gate.
+
 The current Scene 2.0 gate proves stage construction, six-axis controller execution, imported limits, bounded velocity and acceleration commands, rendered RGB and depth, stage save, and independent reload. A second gate, `validate_scene2_ros.ps1`, runs the same articulation and overhead RGBD sensor through ROS 2 Humble DDS. Isaac publishes `/clock`, measured J1 through J6 state, RGB, depth, and camera calibration. It subscribes to a strict six-joint command topic and applies accepted positions through the actual articulation controller.
 
 The ROS 2 command and sensor contract is in `configs/ros2_interface.yaml`. The tested bridge is in `isaac_sim/scene2_ros_bridge.py`. MoveIt will run outside Isaac. It will use the FANUC description, KDL inverse kinematics, OMPL RRTConnect, and a standard `FollowJointTrajectory` action. A thin trajectory action bridge will validate and sample the trajectory against simulation time, then publish checked six-joint commands to Isaac. This keeps physics, contacts, rendering, and actuator execution inside Isaac while leaving planning replaceable.
 
 The ROS 2 self-test passed twice with identical ROS metrics and saved-stage hashes. Each run published 720 clock messages, 180 joint states, 45 RGB frames, 45 depth frames, and 45 camera calibration messages. The live probe received every stream type. A partial command was rejected. A valid command moved the FANUC articulation with a maximum final joint error of 0.000836 rad.
 
-This does not yet prove MoveIt planning or the complete task sequence on this arm. ROS 2 and MoveIt are not installed in WSL 2 on this workstation. The existing integrated YOLO and state-machine evidence still belongs to Scene 1. T016 connects camera perception, tracking, prediction, collision-aware inverse kinematics, interception, contact grasp, reorientation, tray delivery, and recovery to the FANUC articulation.
+This does not yet prove MoveIt planning or the complete task sequence on this arm. ROS 2 and MoveIt are not installed in WSL 2 on this workstation. The existing integrated YOLO and state-machine evidence still belongs to Scene 1. T016 connects camera perception, tracking, prediction, collision-aware inverse kinematics, interception, transport, reorientation, tray delivery, and recovery to the FANUC articulation. The Scene 2.0 compliant contact mechanism is complete as a focused simulation gate, but it is not physically calibrated.

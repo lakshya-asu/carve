@@ -118,6 +118,42 @@ Complete-suite evidence:
 
 The compliance value, force proxy, friction, and rigid product model are still simulation assumptions. The next gate is a visible and actuated compliant gripper mechanism on Scene 2.0, followed by the Scene 2.0 perception and task pipeline.
 
+## Scene 2.0 compliant gripper mechanism, 2026-08-26
+
+The FANUC scene now contains a working gripper mechanism, not static display geometry. Two prismatic jaw joints are part of the Isaac articulation. Each jaw has collision pads, contact sensing, finite drive effort, joint travel, velocity limits, and explicit compliance metadata. The clear inner opening is 270 mm, which covers the current 200 mm recipe envelope with margin.
+
+The first load runs exposed two real implementation errors. The product moved before both jaws made contact, and the jaw joint anchors were authored at the flange origin instead of the visible jaw zero poses. After the joint anchors were corrected, the contact trace showed the right pad touching FANUC link J4. The tool had been mounted backwards along the flange axis. The mount orientation and offset were corrected so the jaws extend forward from the wrist.
+
+Final command:
+
+```powershell
+.\validate_compliant_gripper.ps1
+```
+
+Repeated Isaac evidence:
+
+- Eight articulation joints: FANUC J1 through J6 plus `finger_left` and `finger_right`.
+- Bilateral product contact: passed.
+- Product mass: 2.75 kg rigid pork-loin reference.
+- Jaw targets: -78.88 mm and 78.88 mm.
+- Measured jaw positions: -68.85 mm and 68.89 mm.
+- Elastic drive deflection: 10.03 mm and 9.99 mm.
+- Force proxy: 62.71 N and 62.41 N.
+- Configured finite drive limit: 70 N per jaw.
+- Raw PhysX contact estimate: 48.04 N and 56.84 N.
+- One-second hold slip: zero in the repeated run.
+- Deliberate grasp-loss displacement: 1.383 m.
+- Open recovery error: below 4 micrometers.
+- Unexpected contact pairs in the final gate: zero.
+- Stage save and reload manifest: matched.
+- Repeat stage hash: identical.
+- Repeat compliance measurements: identical.
+- Isaac Sim or Kit processes left after the batches: zero.
+
+The ROS bridge was retested after the articulation grew from six to eight joints. The ROS robot contract still exposes only J1 through J6. The gripper remains a separate control and status interface. Live DDS clock, joint state, RGB, depth, and camera calibration passed. One incomplete command was rejected, one complete command was accepted, and maximum final robot joint error was 0.000679 rad.
+
+This is not a final gripper design. The product is rigid. Friction, compliance, raw contact force, pad shape, drainage, cleanability, material suitability, and damage thresholds are not calibrated. The focused result proves that the simulated mechanism actuates, contacts, deflects, holds, loses grasp, and recovers inside Isaac Sim under the stated assumptions.
+
 ## Recorded demonstration and implementation report, 2026-08-26
 
 The actual rendered overhead RGB stream is now recorded during the integrated Isaac run. This is not a simulator-independent proxy video. The recorder samples the overhead camera on the 240 Hz fixed simulation clock and streams RGB24 frames to a local H.264 encoder.
@@ -715,3 +751,84 @@ The ROS 2 headless Isaac gate passed twice. Each run published 720 `/clock` mess
 The full entry point did not pass. Solution A passed. Solution B failed both nominal cycles at `buffer_regrasp_contact_failure`. This matches the known Scene 1 recipe-geometry regression and was not caused by the new Scene 2.0 ROS bridge. No Isaac Sim or Kit process remained after the runs.
 
 The external MoveIt gate remains untested. WSL 2 Ubuntu is present, but ROS 2 and MoveIt are not installed there. No system software was installed. The exact next T016 step is the `FollowJointTrajectory` action bridge and FANUC MoveIt configuration in an authorized existing ROS 2 environment. After that, the planner must drive a timed conveyor interception in Scene 2.0 before perception and full task-state migration can be claimed.
+
+## Final validation and contact hardening, 2026-08-26
+
+### Outcome
+
+The documented complete entry point passed from a clean process state. Fresh evidence is in `results/full_suite/20260826_205915468`. Ordinary Python reported 127 passed and 1 skipped. The skip is the NumPy-dependent perception test in the plain interpreter. Isaac Python supplied NumPy for the simulator gates.
+
+Solution A and Solution B each ran four seeded cycles. Each solution delivered both nominal workpieces and completed its two expected fault paths. All eight replay decisions matched. The independent artifact audit passed. It found zero unexpected collisions, zero joint-limit violations, eight complete traces, two nonempty saved stages, two valid RGB captures, and two valid depth arrays.
+
+The same complete command ran the Scene 2.0 FANUC ROS and compliant-gripper gate. The saved stage contained 200 prims, six revolute robot joints, two prismatic jaw joints, two cameras, and one articulation root. Its save and reload manifests matched. The ROS probe received clock, joint state, RGB, depth, and camera calibration. One partial command was rejected. One complete command moved J1 through J6 with 0.000679 rad maximum final error.
+
+The Scene 2.0 gripper established bilateral Isaac contact on the 2.75 kg pork reference. Elastic jaw deflection was 10.03 mm and 9.99 mm. Force proxies were 62.71 N and 62.41 N against a 70 N limit. Peak contact estimates were 48.04 N and 56.84 N. One-second hold slip was zero. Deliberate release produced 1.383 m displacement. Both jaws recovered to within 2 micrometres of open. This remains an uncalibrated rigid-product and linear-compliance reference.
+
+### Exact commands
+
+```powershell
+python -m pytest tests\test_buffer_regrasp_geometry.py -q
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\run_cell.py --solution a --cycles 4 --seed 7 --headless --output-root results/repro_a_settle125_2
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\run_cell.py --solution a --cycles 4 --seed 7 --headless --output-root results/repro_a_settle125_3
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\run_cell.py --solution a --cycles 4 --seed 7 --headless --output-root results/repro_a_settle125_4
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\run_cell.py --solution b --cycles 4 --seed 7 --headless --output-root results/repro_b_final_1
+.\run_tests.ps1
+python -m compileall -q isaac_sim meatcell tests tools
+python tools\audit_report_language.py --fail-on-style
+```
+
+### Fresh metrics
+
+| Metric | Solution A | Solution B |
+|---|---:|---:|
+| Batch passed | yes | yes |
+| Cycles | 4 | 4 |
+| Nominal deliveries | 2 of 2 | 2 of 2 |
+| Expected fault paths | 2 of 2 | 2 of 2 |
+| Replay passes | 4 of 4 | 4 of 4 |
+| Position error p50, m | 0.046997 | 0.048800 |
+| Position error p95, m | 0.047340 | 0.049898 |
+| Angle error p95, rad | 0.024225 | 0.053129 |
+| Timing error p95, s | 0 | 0 |
+| Perception latency p95, s | 0.032333 | 0.032333 |
+| Maximum commanded acceleration | 11.885655 | 11.885655 |
+| Unexpected collisions | 0 | 0 |
+| Joint-limit violations | 0 | 0 |
+
+The combined artifact audit measured intercept timing error p95 of 4.14 ms, placement position error p95 of 49.65 mm, and placement angle error p95 of 0.05087 rad. These are simulation measurements under the current 55 mm and 7 degree gates. They are not physical accuracy claims.
+
+### Failures found and fixed
+
+1. The clean suite found a 0.48 mm TCP request beyond the validated cutter-side workspace. Cutter alignment now uses a bounded workspace projection tied to half of the product-placement tolerance. Larger projections still fail.
+2. Repeated contact runs exposed early jaw contact during approach. Moving pre-shape was reduced from 45 percent to 25 percent.
+3. The jaw drives sometimes had not finished closing when contact was checked. A 125 ms belt-speed-matched settle now uses measured starting joint velocities and retains the 8 m/s2 jaw acceleration gate.
+4. The added settle initially left too little stopping distance. The intercept window moved upstream to 1.37 to 1.49 m. The existing 300 mm brake then remained inside the 12 m/s2 X-axis limit and TCP envelope.
+5. The Solution B tray sat near the overhead image edge. The tray and named target moved 50 mm toward camera centre. Low-quality buffer fragments are rejected before motion.
+6. Buffer jaws sometimes reached only one side before regrasp confirmation. A 150 ms stationary compliant-drive settle was added. Recent bilateral PhysX contact remains mandatory.
+7. The prior full-suite launcher could audit stale shared results. It now creates a timestamped result root and checks fresh failure and metrics files for A, B, and Scene 2. Historical results remain untouched.
+
+Failed exploratory outputs remain under the `results/repro_a_alignment_*`, `results/repro_a_settle_*`, `results/repro_b_settle_*`, and `results/repro_b_buffer_*` folders. They were not deleted or presented as passes.
+
+### Warnings and process state
+
+Isaac reported its known low-resolution DLSS input warning, a render-variable host-copy performance warning, and an RTX transform-history warning during the Scene 2.0 run. These did not make the RGB or depth outputs empty and were not hidden. The transform-history warning may affect long-exposure motion rendering and remains an open sensor-fidelity item.
+
+No Isaac Sim or Kit process remained after the final command. Batches ran sequentially and headless.
+
+### Changed implementation
+
+- `isaac_sim/cell_runner.py`: hardened moving contact acquisition, bounded cutter alignment, tray perception, buffer contact settle, and measured-velocity continuation
+- `isaac_sim/stage_builder.py`: recentered stationary Solution B tray and named frame
+- `isaac_sim/scene2_builder.py`: articulated two-jaw compliant-gripper reference with collision, friction, limits, and sensors
+- `isaac_sim/run_scene2.py`: compliant load, hold, release, and recovery gate
+- `isaac_sim/scene2_ros_bridge.py`: six-axis robot contract separated from jaw joints
+- `run_tests.ps1`: timestamped fresh artifact roots and integrated Scene 2.0 gate
+- `validate_compliant_gripper.ps1`: focused one-command gripper validation
+- `tests/test_buffer_regrasp_geometry.py` and `tests/test_scene2_gripper_model.py`: focused geometry, envelope, and gripper tests
+- `README.md`, `SYSTEM_DESIGN.md`, `BUILD_STATUS.md`, `tickets/T016.md`, and this report: durable commands, evidence, assumptions, and blockers
+
+### Remaining blocker and exact next ticket
+
+T016 remains the exact next software ticket. Scene 2.0 still needs collision-aware FANUC inverse kinematics, time-parameterized MoveIt trajectories, camera-to-conveyor calibration, YOLO and tracker connection, moving interception, transport, reorientation, stationary tray delivery, fault recovery, and a recorded full delivery. The external MoveIt runtime is not installed in the available WSL environment, and system installation was outside this run's authorization.
+
+T015 remains blocked on representative products, selected production gripper and cutter hardware, real camera calibration, conveyor measurements, tissue and grip trials, cutter I/O captures, and safety engineering. The project does not claim OEM fidelity, food-safety validation, real-cell safety validation, physical accuracy, or production readiness.

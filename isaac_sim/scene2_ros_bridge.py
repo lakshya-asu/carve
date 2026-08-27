@@ -65,6 +65,7 @@ class Scene2RosBridge:
         *,
         lower_limits: tuple[float, ...],
         upper_limits: tuple[float, ...],
+        joint_indices: tuple[int, ...] = tuple(range(6)),
         topics: Ros2TopicNames | None = None,
     ) -> None:
         import rclpy
@@ -82,6 +83,9 @@ class Scene2RosBridge:
         self.camera = camera
         self.lower_limits = lower_limits
         self.upper_limits = upper_limits
+        if len(joint_indices) != len(JOINT_NAMES):
+            raise ValueError("The ROS bridge requires six FANUC articulation indices")
+        self.joint_indices = joint_indices
         self.topics = topics or Ros2TopicNames()
         self.node = rclpy.create_node("carve_isaac_scene2")
         self.clock_pub = self.node.create_publisher(Clock, self.topics.clock, 10)
@@ -147,8 +151,10 @@ class Scene2RosBridge:
         message.header.stamp = self._stamp(sim_seconds)
         message.header.frame_id = "base_link"
         message.name = list(JOINT_NAMES)
-        message.position = [float(value) for value in self.articulation.get_joint_positions()]
-        message.velocity = [float(value) for value in self.articulation.get_joint_velocities()]
+        positions = self.articulation.get_joint_positions()
+        velocities = self.articulation.get_joint_velocities()
+        message.position = [float(positions[index]) for index in self.joint_indices]
+        message.velocity = [float(velocities[index]) for index in self.joint_indices]
         self.joint_pub.publish(message)
         self.published_joint_states += 1
 

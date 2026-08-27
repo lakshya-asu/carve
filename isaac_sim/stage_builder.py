@@ -465,7 +465,7 @@ class IsaacStageBuilder:
         self._label_reference(reject.GetPrim(), "reject_location_reference")
         self._frame(stage, f"{p.reject_bin}/reject_frame", "reject_frame", (0.0, 0.0, 0.20))
         if solution == "b":
-            buffer = self._cube(stage, p.buffer, (0.48, 0.40, 0.08), (1.80, -0.60, 0.06), (0.06, 0.52, 0.66))
+            buffer = self._cube(stage, p.buffer, (0.48, 0.40, 0.08), (1.80, -0.55, 0.06), (0.06, 0.52, 0.66))
             self._label_reference(buffer.GetPrim(), "centering_buffer_reference")
             self._frame(stage, f"{p.buffer}/buffer_frame", "buffer_frame", (0.0, 0.0, 0.08))
 
