@@ -1,5 +1,23 @@
 # Overnight build report
 
+## Scheduled release validation, 2026-08-27 06:15 EDT
+
+The complete documented release gate passed headlessly in Isaac Sim 6.0.1 from a clean Isaac and Kit process state with `.\run_tests.ps1`. Fresh evidence is in `results/full_suite/20260827_060502246`. Ordinary Python reported 147 passed in 0.90 seconds. Setup, Scene 2, the ROS command probe, the compliant gripper mechanism gate, Solution A nominal seed 2601, Solution B nominal seed 2601, both fail-closed audits, USD reload checks, and deterministic media checks all passed. The full gate had zero failures.
+
+Solution A finished delivery with 10.339 mm position error, 0.002218 rad angle error, 25.000 ms timing error, 1,999 articulation commands, 177.926 mm physical lift, bilateral contact, PLC acknowledgement, zero unexpected contacts, zero joint, velocity, or acceleration limit violations, and zero product pose writes after grasp. Its H.264 evidence has 201 frames at 1280 by 720 and 12 FPS. Solution B finished delivery with 21.749 mm position error, 0.004626 rad angle error, 16.667 ms timing error, 6.587 mm buffer sensor-to-oracle position error, the expected slip correction, 3,521 articulation commands, 177.918 mm physical lift, bilateral contact, PLC acknowledgement, and the same zero violation counts. Its H.264 evidence has 353 frames at 1280 by 720 and 12 FPS.
+
+The alternating bounded check used Solution A, seed 2701, and the `emergency_stop` scenario:
+
+```powershell
+.\run_solution_a.ps1 -Seed 2701 -Scenario emergency_stop -OutputRoot 'results/overnight/20260827_061000_solution_a_emergency_stop_seed2701'
+```
+
+It passed with the expected `recovered` terminal result and `plc_emergency_stop` reason. The trace entered `safe_stop`, held zero motion, performed the controlled jaw opening after reset, and returned to `idle`. Evidence includes bilateral contact, 177.737 mm physical lift, 1,262 articulation commands, 13 monotonic event records, one PLC emergency-stop record, one safe-stop state record, zero unexpected contacts, zero motion-limit violations, zero product pose writes after grasp, a reloaded matching USD, and a 127-frame H.264 recording. Inspection frames at 7.1, 9.3, 10.1, and 10.5 seconds show the retained grasp, stopped hold, and controlled release onto the stopped conveyor.
+
+The generated RGB, depth, segmentation, metrics, audits, traces, PLC transitions, contact evidence, robot commands, USD files, and videos were nonempty and internally consistent. Every inspected depth array contained 307,200 finite positive values. The YOLO26 masks visually aligned with the product. Recorded file hashes matched the metrics, and `ffprobe` confirmed the saved codecs, resolutions, frame rates, durations, and frame counts. The emergency-stop run-wide raw impulse peaks remain uncalibrated and are not physical force evidence. Its run-wide maximum product-to-TCP distance includes the intentional release after reset, while the frames and state trace confirm retention before release.
+
+No code fix was justified because every fail-closed gate passed and no regression was found. The known Isaac renderer and deprecation notices remained nonfatal. No Isaac or Kit process remained after either batch. `PRODUCT_RECIPES.md` remained untouched. T015 is still blocked on physical sensor data and hardware comparison. T016 still requires commissioning the external ROS2 and MoveIt `FollowJointTrajectory` transport path. The structured record is `results/overnight/20260827_061000_solution_a_emergency_stop_seed2701/automation_summary.json`.
+
 ## Continuous pickup hardening, 2026-08-27
 
 The published presentation recording was withdrawn after review. It was a contact fixture test, not a pickup. The workpiece was moved to the grasp pose after a camera cut, and the tool entered the conveyor envelope. The project page no longer links that recording.
