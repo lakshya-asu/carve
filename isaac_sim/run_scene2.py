@@ -160,7 +160,9 @@ def _run_gripper_gate(
     from isaacsim.core.utils.types import ArticulationAction
 
     from isaac_sim.scene2_builder import (
+        FLANGE_PATH,
         GRIPPER_DRIVE_STIFFNESS_N_PER_M,
+        GRIPPER_GRASP_CENTER_FLANGE_M,
         GRIPPER_NORMAL_FORCE_LIMIT_N,
         gripper_target_travel_m,
     )
@@ -180,14 +182,11 @@ def _run_gripper_gate(
     for _ in range(120):
         world.step(render=False)
 
-    gripper_prim = world.stage.GetPrimAtPath(
-        "/World/Cell/FANUC_M10iD12/Geometry/world/base_link/J1_link/J2_link/J3_link/"
-        "J4_link/J5_link/J6_link/flange/ee_link/CompliantGripperReference"
-    )
-    gripper_matrix = UsdGeom.XformCache().GetLocalToWorldTransform(gripper_prim)
-    midpoint_gf = gripper_matrix.Transform(Gf.Vec3d(0.0, 0.0, -0.27))
+    flange_prim = world.stage.GetPrimAtPath(FLANGE_PATH)
+    flange_matrix = UsdGeom.XformCache().GetLocalToWorldTransform(flange_prim)
+    midpoint_gf = flange_matrix.Transform(Gf.Vec3d(*GRIPPER_GRASP_CENTER_FLANGE_M))
     midpoint = np.asarray(tuple(midpoint_gf), dtype=float)
-    gripper_quat = Gf.Transform(gripper_matrix).GetRotation().GetQuat()
+    gripper_quat = Gf.Transform(flange_matrix).GetRotation().GetQuat()
     gripper_orientation = np.asarray(
         (gripper_quat.GetReal(), *tuple(gripper_quat.GetImaginary())),
         dtype=np.float32,
@@ -284,7 +283,7 @@ def _run_gripper_gate(
     )
     return {
         "passed": passed,
-        "mechanism": "force-limited parallel jaw with elastic drive compliance",
+        "mechanism": "guided wide parallel jaw with force-limited elastic drive compliance",
         "contact_source": "Isaac contact sensors on both articulated finger links",
         "bilateral_contact": bilateral_contact,
         "peak_contact_force_n": peak_forces.tolist(),
@@ -299,6 +298,7 @@ def _run_gripper_gate(
         "release_displacement_m": release_displacement_m,
         "recovered_open_position_m": recovered.tolist(),
         "product_path": product_path,
+        "grasp_center_flange_m": list(GRIPPER_GRASP_CENTER_FLANGE_M),
         "assumption": "Rigid product and linear series-compliance reference. No tissue deformation or pressure validation.",
     }
 

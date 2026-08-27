@@ -33,8 +33,8 @@
         </div>
       </div>
       <figure class="hero-visual reveal">
-        <img src="assets/project_page/fanuc_presentation_poster.png" width="1280" height="720" alt="Clear three-quarter view of the Scene 2 FANUC arm reference, conveyor, compliant gripper, workpieces, and cutter entrance">
-        <figcaption>Virtual presentation camera inside the guard envelope. The calibrated overhead camera remains the computer-vision sensor.</figcaption>
+        <img src="assets/project_page/fanuc_presentation_poster.png" width="1280" height="720" alt="FANUC arm reference holding a red meat workpiece between two compliant parallel jaws in Isaac Sim">
+        <figcaption>Contact-confirmed gravity hold from a virtual presentation camera. The calibrated overhead camera remains the computer-vision sensor.</figcaption>
       </figure>
     </section>
 
@@ -102,15 +102,15 @@
 
     <section class="section demo-section" id="demo" aria-labelledby="demo-title">
       <div class="demo-copy">
-        <h2 id="demo-title">The final cell, from a readable angle.</h2>
-        <p>This 13.75 second recording shows the Scene 2 FANUC arm and compliant jaws moving through the cell from a clear virtual presentation camera.</p>
+        <h2 id="demo-title">The arm, jaws, workpiece, and release are visible.</h2>
+        <p>This 16.75 second recording shows the Scene 2 FANUC arm, the rebuilt guided jaws, bilateral contact, a gravity hold, and physical release.</p>
         <dl class="recording-facts">
           <div><dt>Source</dt><dd>Rendered presentation RGB</dd></div>
           <div><dt>Resolution</dt><dd>1280 by 720</dd></div>
           <div><dt>Codec</dt><dd>H.264</dd></div>
-          <div><dt>Controller</dt><dd>3,300 articulation commands</dd></div>
+          <div><dt>Controller</dt><dd>4,020 articulation commands</dd></div>
         </dl>
-        <p class="demo-boundary"><strong>Important:</strong> this video proves the standard arm, controlled motion, framing, and jaw actuation. It is not yet the complete YOLO pick-and-deliver cycle. That final Scene 2 connection remains T016.</p>
+        <p class="demo-boundary"><strong>Important:</strong> this video proves controlled arm motion plus a contact-confirmed gripper hold and release. The test workpiece is placed at the grasp pose. It does not yet prove conveyor pickup or the complete YOLO delivery cycle. That Scene 2 connection remains T016.</p>
       </div>
       <div class="video-shell reveal">
         <video controls preload="metadata" poster="assets/project_page/fanuc_presentation_poster.png">
@@ -251,11 +251,11 @@
       </figure>
       <div>
         <h2 id="compliance-title">Compliance is modeled as a bounded mechanism.</h2>
-        <p>The Scene 2 gripper uses two prismatic fingers, force-limited drives, elastic deflection, and contact sensors on both links. It is a useful control proxy for jaw compliance. It is not a deformable meat model or a pressure validation.</p>
+        <p>The rebuilt Scene 2 tool has an enclosed drive housing, two guided carriages, broad rounded pads, force-limited drives, elastic deflection, and contact sensors on both jaws. It is a useful control proxy for jaw compliance. It is not a deformable meat model or a pressure validation.</p>
         <dl class="compliance-metrics">
-          <div><dt>Elastic deflection</dt><dd>10.03 mm / 9.99 mm</dd></div>
-          <div><dt>Force proxy</dt><dd>62.71 N / 62.41 N</dd></div>
-          <div><dt>Peak contact</dt><dd>48.04 N / 56.84 N</dd></div>
+          <div><dt>Elastic deflection</dt><dd>10.23 mm / 10.15 mm</dd></div>
+          <div><dt>Force proxy</dt><dd>63.91 N / 63.42 N</dd></div>
+          <div><dt>Peak contact</dt><dd>63.51 N / 64.57 N</dd></div>
           <div><dt>Measured hold slip</dt><dd>0.0 m</dd></div>
         </dl>
       </div>

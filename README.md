@@ -8,7 +8,7 @@ Open `PROJECT_PAGE.html` for the visual project overview, rendered Isaac Sim vid
 .\open_project_page.ps1
 ```
 
-The main page video now uses the Scene 2 FANUC cell and a clear virtual presentation camera. It demonstrates the standard-arm articulation and compliant jaw motion. The older overhead recording remains available as the complete Scene 1 YOLO-to-delivery evidence. The final YOLO-to-FANUC connection remains T016.
+The main page video now uses the Scene 2 FANUC cell and a clear virtual presentation camera. It demonstrates standard-arm articulation, the rebuilt guided parallel jaws, bilateral contact, a gravity hold, and physical release. The workpiece is placed at the grasp test pose, so this is not a conveyor pickup claim. The older overhead recording remains available as the complete Scene 1 YOLO-to-delivery evidence. The final YOLO-to-FANUC connection remains T016.
 
 Re-render the presentation angle or record the standard-arm demonstration with:
 

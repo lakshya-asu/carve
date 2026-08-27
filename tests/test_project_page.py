@@ -1,9 +1,11 @@
 from html.parser import HTMLParser
+import json
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = ROOT / "PROJECT_PAGE.html"
+PRESENTATION_METRICS = ROOT / "assets" / "project_page" / "fanuc_presentation_metrics.json"
 
 
 class PageParser(HTMLParser):
@@ -42,8 +44,8 @@ def test_project_page_has_required_views_and_sections() -> None:
         "Rendered RGB stream",
         "Depth stream",
         "Robot control",
-        "The final cell, from a readable angle.",
-        "It is not yet the complete YOLO pick-and-deliver cycle.",
+        "The arm, jaws, workpiece, and release are visible.",
+        "It does not yet prove conveyor pickup or the complete YOLO delivery cycle.",
         "Solution A",
         "Solution B",
         "Active integration gap",
@@ -68,6 +70,20 @@ def test_project_page_embeds_nonempty_recorded_video() -> None:
     assert parser.video_sources[0] == "assets/project_page/fanuc_presentation.mp4"
     assert video.suffix.lower() == ".mp4"
     assert video.stat().st_size > 100_000
+
+
+def test_published_gripper_demo_has_contact_hold_and_release_evidence() -> None:
+    payload = json.loads(PRESENTATION_METRICS.read_text(encoding="utf-8"))
+    grasp = payload["grasp_validation"]
+    assert payload["passed"] is True
+    assert payload["joint_limit_violations"] == 0
+    assert grasp["passed"] is True
+    assert grasp["bilateral_contact"] is True
+    assert all(force > 0.1 for force in grasp["peak_contact_force_n"])
+    assert grasp["gravity_hold_slip_m"] <= 0.005
+    assert grasp["release_displacement_m"] >= 0.020
+    assert payload["recording"]["source"] == "rendered_presentation_rgb"
+    assert payload["recording"]["frame_count"] > 0
 
 
 def test_project_page_uses_no_forbidden_dash_characters() -> None:

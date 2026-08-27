@@ -1,5 +1,7 @@
 {
-  "articulation_command_count": 3300,
+  "aligned_cut_image_path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_gripper_demo_final\\scene2_gripper_aligned.png",
+  "aligned_cut_image_sha256": "e37aadec4fa86ed15ef606cee5a259053282fc9bf10344bf69c2659ceced730a",
+  "articulation_command_count": 4020,
   "camera": {
     "eye": [
       3.65,
@@ -14,9 +16,59 @@
       0.86
     ]
   },
-  "demo_kind": "standard arm articulation and compliant jaw presentation",
+  "demo_kind": "standard arm articulation and contact-confirmed compliant grasp presentation",
   "end_to_end_delivery": false,
-  "end_to_end_note": "This is the Scene 2 robot and gripper presentation. Full YOLO-to-FANUC delivery remains T016.",
+  "end_to_end_note": "This proves the Scene 2 gripper contact, gravity hold, and release. Full YOLO-to-FANUC pickup and delivery remains T016.",
+  "grasp_validation": {
+    "assumption": "Rigid product and linear series-compliance reference. No tissue deformation or pressure validation.",
+    "bilateral_contact": true,
+    "close_target_m": [
+      -0.07888,
+      0.07888
+    ],
+    "contact_pairs": [
+      [
+        [
+          "/World/Cell/FANUC_M10iD12/Geometry/world/base_link/J1_link/J2_link/J3_link/J4_link/J5_link/J6_link/flange/ee_link/CompliantGripperLeftFinger",
+          "/World/Cell/Workpieces/PorkLoin_01"
+        ]
+      ],
+      [
+        [
+          "/World/Cell/FANUC_M10iD12/Geometry/world/base_link/J1_link/J2_link/J3_link/J4_link/J5_link/J6_link/flange/ee_link/CompliantGripperRightFinger",
+          "/World/Cell/Workpieces/PorkLoin_01"
+        ]
+      ]
+    ],
+    "demo_product_center_flange_m": [
+      0.62,
+      0.0,
+      0.0
+    ],
+    "elastic_deflection_m": [
+      0.010225544755458837,
+      0.010147417967319494
+    ],
+    "force_limit_n": 70.0,
+    "force_proxy_n": [
+      63.90965472161773,
+      63.42136229574683
+    ],
+    "gravity_hold_slip_m": 0.00017239963926840574,
+    "measured_closed_m": [
+      -0.06865445524454117,
+      0.06873258203268051
+    ],
+    "passed": true,
+    "peak_contact_force_n": [
+      63.50972892706031,
+      64.56796719451148
+    ],
+    "product_path": "/World/Cell/Workpieces/PorkLoin_01",
+    "product_width_m": 0.12824,
+    "release_displacement_m": 1.249460220336914,
+    "unexpected_contact_pairs": []
+  },
   "joint_limit_violations": 0,
   "max_joint_acceleration": {
     "J1": 1.7271375820214985,
@@ -25,8 +77,8 @@
     "J4": 0.34542751456640985,
     "J5": 0.5181412672516927,
     "J6": 0.5304779894778733,
-    "finger_left": 0.2960585380051839,
-    "finger_right": 0.2960585380051839
+    "finger_left": 0.3892182912983877,
+    "finger_right": 0.3892182912983877
   },
   "max_joint_velocity": {
     "J1": 1.0995495597899207,
@@ -35,28 +87,30 @@
     "J4": 0.21990991078765898,
     "J5": 0.32986486325567554,
     "J6": 0.3377188047329316,
-    "finger_left": 0.0942450881136786,
-    "finger_right": 0.0942450881136786
+    "finger_left": 0.12390087584011611,
+    "finger_right": 0.12390087584011611
   },
+  "open_jaws_image_path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_gripper_demo_final\\scene2_gripper_open.png",
+  "open_jaws_image_sha256": "2d91685d993734de9190712c3a978607ad0e3d3781de40fa1e2987f448f4b655",
   "passed": true,
   "physics_dt_seconds": 0.004166666666666667,
-  "physics_steps": 3300,
-  "poster_path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_presentation_final\\scene2_fanuc_demo_poster.png",
-  "poster_sha256": "880527d6702e1a4fa925cc3b8d6b7daef5c38ad4e738082133889a580e8e2862",
+  "physics_steps": 4020,
+  "poster_path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_gripper_demo_final\\scene2_fanuc_demo_poster.png",
+  "poster_sha256": "271495bf6b48f7b4bd5f104682eb09960a77ed30f3a552af759c24f33b57cc5f",
   "recording": {
     "codec": "h264",
-    "duration_s": 13.75,
-    "file_bytes": 1549950,
+    "duration_s": 16.75,
+    "file_bytes": 2014869,
     "first_sim_time_ns": 1466666743,
     "fps": 12,
-    "frame_count": 165,
+    "frame_count": 201,
     "height": 720,
-    "last_sim_time_ns": 25383334657,
-    "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_presentation_final\\scene2_fanuc_demo.mp4",
+    "last_sim_time_ns": 30633334931,
+    "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\scene2_gripper_demo_final\\scene2_fanuc_demo.mp4",
     "source": "rendered_presentation_rgb",
     "width": 1280
   },
-  "recording_sha256": "6de0030a2b7df173744d44035c956ce63eb0d5d5b5bec0405562c1607f55c59e",
+  "recording_sha256": "3004d48a536b68b30d515754bbdc9e299917adf60c1f274d48449f464a41f89a",
   "reference_notice": "FANUC visual and kinematic reference from the official description. The cell equipment and tool are project reference models. No physical or safety validation is claimed.",
   "robot": "FANUC M-10iD/12 official description reference",
   "sequence": [
@@ -81,16 +135,32 @@
       "label": "present compliant gripper"
     },
     {
-      "duration_s": 1.25,
-      "label": "close compliant jaws"
+      "duration_s": 0.75,
+      "label": "show open guided jaws"
+    },
+    {
+      "duration_s": 0.0,
+      "label": "place reference cut at grasp test pose"
     },
     {
       "duration_s": 0.75,
-      "label": "show closed jaws"
+      "label": "show aligned reference cut"
+    },
+    {
+      "duration_s": 1.25,
+      "label": "close force-limited compliant jaws"
+    },
+    {
+      "duration_s": 1.5,
+      "label": "gravity hold with bilateral contact"
     },
     {
       "duration_s": 1.0,
       "label": "open compliant jaws"
+    },
+    {
+      "duration_s": 0.75,
+      "label": "show physical release"
     },
     {
       "duration_s": 2.0,

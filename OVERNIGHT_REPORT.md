@@ -1,5 +1,21 @@
 # Overnight build report
 
+## Guided gripper correction, 2026-08-27
+
+The first Scene 2 gripper passed a narrow contact fixture test but looked detached and did not show a workpiece in the presentation recording. The housing and finger transforms were rebuilt as one readable wide parallel-jaw tool. The new reference includes an enclosed drive housing, guide rails, articulated carriages, finger arms, rigid backings, broad rounded soft pads, and a named `grasp_tcp` frame.
+
+Commands run:
+
+```powershell
+python -m pytest tests\test_scene2_gripper_model.py tests\test_video_recorder.py tests\test_scene2_camera_options.py -q
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\run_scene2.py --headless --output-root results/scene2_gripper_redesign
+C:\Users\jainl\is6\Scripts\python.exe isaac_sim\record_scene2_presentation_demo.py --output-root results/scene2_gripper_demo_final --fps 12
+```
+
+The focused Python tests reported 11 passes. The mechanism gate passed with bilateral contact, 0.094 mm hold slip, 1.317 m release displacement, no unexpected contact pair, and no joint-limit violation. The final recorded grasp gate passed with force proxies of 63.91 N and 63.42 N, peak contact estimates of 63.51 N and 64.57 N, 0.17 mm gravity-hold slip, and 1.249 m release displacement. The MP4 contains 201 rendered frames at 1280 by 720 and 12 FPS. Every Isaac process closed after its run.
+
+The workpiece is placed at an offset grasp test pose before closure. This proves the articulated contact, hold, and release mechanism. It does not prove conveyor pickup, YOLO-to-FANUC interception, or downstream delivery. Those functions remain T016.
+
 ## Report language research and rewrite, 2026-08-26
 
 This pass changed the writing, not the simulation. It began with research on generated-text style, detector limits, plain language, and technical writing for expert readers. The Firecrawl command was not installed, so the research used live web retrieval instead. The main sources were peer-reviewed papers, government guidance, and first-party technical style guides.

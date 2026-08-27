@@ -1,5 +1,15 @@
 # Build status
 
+## Guided gripper redesign, 2026-08-27
+
+The previous Scene 2 tool looked like a detached blue cross and its presentation video only moved empty jaws. The static housing used a rotated transform while the moving fingers were separate flange children. The mechanism test also inserted a workpiece at the tool center without showing it in the recording.
+
+The Scene 2 tool is now a coherent wide parallel-jaw reference. It has a wrist adapter, enclosed linear-drive housing, two guide rails, two articulated carriages, slim finger arms, rigid pad backings, and broad rounded soft-pad collision surfaces. The declared open inner gap remains 270 mm. The saved stage includes a named `grasp_tcp` frame. This is still a project reference, not a selected or validated food-grade gripper.
+
+The fresh Isaac Sim mechanism run under `results/scene2_gripper_redesign` passed. Both jaw contact sensors detected the 2.75 kg pork reference. Hold slip was 0.094 mm. Release displacement was 1.317 m. The run reported no unexpected contact pair and no joint-limit violation.
+
+The replacement recording under `results/scene2_gripper_demo_final` also passed. It contains 201 rendered frames over 16.75 seconds and 4,020 articulation-controller commands. Both sensors detected the offset workpiece. The force proxies were 63.91 N and 63.42 N. Gravity-hold slip was 0.17 mm. Opening the jaws produced 1.249 m of workpiece displacement. The page media now uses this run. The workpiece is placed at the grasp test pose, so this evidence does not complete T016 or claim conveyor pickup.
+
 ## Visual project page, 2026-08-27
 
 `PROJECT_PAGE.html` is now the main visual entry point for the repository. It shows the saved YOLO26 segmentation output, rendered overhead RGB and depth, Scene 2 FANUC articulation and compliant gripper, a clear 13.75 second standard-arm presentation, a link to the older 31.42 second complete-pipeline recording, the communication path, inputs and outputs, control states, A and B behavior, validation metrics, commands, and limitations.
@@ -12,7 +22,7 @@ Selected page media is now copied into `assets/project_page` so the public repos
 
 The page draws only from checked-in implementation documents and executed artifacts. It states the current integration boundary directly. Scene 1 is the complete camera-to-delivery vertical slice. Scene 2 validates the standard articulated arm, ROS 2 boundary, RGBD publication, and compliant gripper, but the complete YOLO-to-FANUC interception loop remains T016.
 
-The one-command page entry point is `open_project_page.ps1`. The focused page tests validate required views, internal anchors, every local media and documentation reference, the nonempty embedded MP4, and the prohibited dash-character rule. The complete ordinary-Python suite now reports 131 passed and 1 skipped. The existing skip is the NumPy-dependent perception test in the plain interpreter.
+The one-command page entry point is `open_project_page.ps1`. The focused page tests validate required views, internal anchors, every local media and documentation reference, the nonempty embedded MP4, the published grasp evidence, and the prohibited dash-character rule. The complete ordinary-Python suite now reports 136 passed and 1 skipped. The existing skip is the NumPy-dependent perception test in the plain interpreter.
 
 ## Scene 2.0 FANUC implementation, 2026-08-26
 

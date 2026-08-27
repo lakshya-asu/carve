@@ -37,6 +37,21 @@ GRIPPER_COMPLIANCE_M_PER_N = 0.00016
 GRIPPER_DRIVE_STIFFNESS_N_PER_M = 1.0 / GRIPPER_COMPLIANCE_M_PER_N
 GRIPPER_NORMAL_FORCE_SETPOINT_N = 50.0
 GRIPPER_NORMAL_FORCE_LIMIT_N = 70.0
+GRIPPER_FINGER_OPEN_Y_M = 0.180
+GRIPPER_PAD_INWARD_OFFSET_M = 0.025
+GRIPPER_PAD_THICKNESS_M = 0.040
+GRIPPER_PAD_LENGTH_M = 0.360
+GRIPPER_PAD_HEIGHT_M = 0.160
+GRIPPER_GRASP_CENTER_FLANGE_M = (0.500, 0.0, 0.0)
+
+
+def gripper_open_inner_gap_m() -> float:
+    """Return the free space between the two soft pad contact faces."""
+    return 2.0 * (
+        GRIPPER_FINGER_OPEN_Y_M
+        - GRIPPER_PAD_INWARD_OFFSET_M
+        - GRIPPER_PAD_THICKNESS_M / 2.0
+    )
 
 
 def gripper_target_travel_m(product_width_m: float) -> float:
@@ -193,8 +208,8 @@ class Scene2Builder:
         self._material(stage, "Belt", (0.055, 0.085, 0.105), roughness=0.72)
         self._material(stage, "SafetyYellow", (0.96, 0.69, 0.04), metallic=0.12, roughness=0.34)
         self._material(stage, "SafetyOrange", (0.92, 0.29, 0.045), roughness=0.38)
-        self._material(stage, "ToolBlue", (0.035, 0.43, 0.64), metallic=0.48, roughness=0.28)
-        self._material(stage, "SoftPad", (0.06, 0.16, 0.22), roughness=0.9)
+        self._material(stage, "ToolBlue", (0.025, 0.24, 0.31), metallic=0.55, roughness=0.26)
+        self._material(stage, "SoftPad", (0.20, 0.78, 0.71), roughness=0.88)
         self._material(stage, "Meat", (0.62, 0.10, 0.11), roughness=0.76)
         self._material(stage, "Glass", (0.42, 0.74, 0.82), roughness=0.08, opacity=0.23)
         self._material(stage, "Sensor", (0.035, 0.04, 0.05), metallic=0.55, roughness=0.22)
@@ -253,9 +268,8 @@ class Scene2Builder:
             drive.CreateMaxForceAttr(effort)
         self._frame(stage, "/World/Cell/Frames/robot_base", "robot_base", (0.35, -1.25, 0.59))
         gripper = UsdGeom.Xform.Define(stage, GRIPPER_ROOT)
-        gripper.AddTranslateOp().Set(Gf.Vec3d(0.16, 0.0, 0.0))
-        gripper.AddRotateYOp().Set(-90.0)
-        self._label(gripper.GetPrim(), "specialized_compliant_gripper_reference", "simulated_mechanism")
+        gripper.AddTranslateOp().Set(Gf.Vec3d(0.0, 0.0, 0.0))
+        self._label(gripper.GetPrim(), "wide_compliant_parallel_jaw_reference", "simulated_mechanism")
         gripper.GetPrim().CreateAttribute("meatcell:openInnerGapM", Sdf.ValueTypeNames.Double).Set(
             GRIPPER_OPEN_INNER_GAP_M
         )
@@ -269,49 +283,128 @@ class Scene2Builder:
             GRIPPER_COMPLIANCE_M_PER_N
         )
         gripper.GetPrim().CreateAttribute("meatcell:mechanismType", Sdf.ValueTypeNames.String).Set(
-            "force_limited_parallel_jaw_with_series_compliance_proxy"
+            "guided_parallel_jaw_with_force_limited_series_compliance_proxy"
         )
-        self._cube(stage, f"{GRIPPER_ROOT}/WristAdapter", (0.18, 0.18, 0.12), (0.0, 0.0, 0.0), self.materials["ToolBlue"], collision=False, role="gripper_wrist_adapter")
-        self._cube(stage, f"{GRIPPER_ROOT}/Crossbar", (0.46, 0.10, 0.10), (0.0, 0.0, -0.10), self.materials["ToolBlue"], collision=False, role="gripper_crossbar")
+        gripper.GetPrim().CreateAttribute("meatcell:contactPadLengthM", Sdf.ValueTypeNames.Double).Set(
+            GRIPPER_PAD_LENGTH_M
+        )
+        gripper.GetPrim().CreateAttribute("meatcell:contactPadHeightM", Sdf.ValueTypeNames.Double).Set(
+            GRIPPER_PAD_HEIGHT_M
+        )
+        gripper.GetPrim().CreateAttribute("meatcell:referenceOnly", Sdf.ValueTypeNames.Bool).Set(True)
+        self._cylinder(
+            stage,
+            f"{GRIPPER_ROOT}/WristAdapter",
+            0.095,
+            0.12,
+            (0.06, 0.0, 0.0),
+            self.materials["DarkSteel"],
+            axis="X",
+            collision=False,
+            role="gripper_wrist_adapter",
+        )
+        self._cube(
+            stage,
+            f"{GRIPPER_ROOT}/DriveHousing",
+            (0.25, 0.42, 0.15),
+            (0.20, 0.0, 0.0),
+            self.materials["ToolBlue"],
+            collision=False,
+            role="enclosed_gripper_linear_drive",
+        )
+        self._cube(
+            stage,
+            f"{GRIPPER_ROOT}/HousingCover",
+            (0.13, 0.33, 0.035),
+            (0.33, 0.0, 0.083),
+            self.materials["Steel"],
+            collision=False,
+            role="washdown_cover_reference",
+        )
+        for z, name in ((-0.045, "Lower"), (0.045, "Upper")):
+            self._cylinder(
+                stage,
+                f"{GRIPPER_ROOT}/GuideRail{name}",
+                0.014,
+                0.34,
+                (0.23, 0.0, z),
+                self.materials["Steel"],
+                axis="Y",
+                collision=False,
+                role="linear_jaw_guide",
+            )
+        tcp = UsdGeom.Xform.Define(stage, f"{GRIPPER_ROOT}/grasp_tcp")
+        tcp.AddTranslateOp().Set(Gf.Vec3d(*GRIPPER_GRASP_CENTER_FLANGE_M))
+        tcp.GetPrim().CreateAttribute("meatcell:frameName", Sdf.ValueTypeNames.String).Set("grasp_tcp")
+        self._label(tcp.GetPrim(), "named_coordinate_frame", "defined")
 
         for finger_path, y, side in zip(
             GRIPPER_FINGER_PATHS,
-            (0.20, -0.20),
+            (GRIPPER_FINGER_OPEN_Y_M, -GRIPPER_FINGER_OPEN_Y_M),
             ("Left", "Right"),
             strict=True,
         ):
             finger = UsdGeom.Xform.Define(stage, finger_path)
-            finger.AddTranslateOp().Set(Gf.Vec3d(0.41, y, 0.0))
+            finger.AddTranslateOp().Set(Gf.Vec3d(GRIPPER_GRASP_CENTER_FLANGE_M[0], y, 0.0))
             UsdPhysics.RigidBodyAPI.Apply(finger.GetPrim())
-            UsdPhysics.MassAPI.Apply(finger.GetPrim()).CreateMassAttr(0.75)
+            UsdPhysics.MassAPI.Apply(finger.GetPrim()).CreateMassAttr(0.90)
             PhysxSchema.PhysxContactReportAPI.Apply(finger.GetPrim()).CreateThresholdAttr(0.0)
-            self._label(finger.GetPrim(), "compliant_gripper_finger", "actuated_reference")
+            self._label(finger.GetPrim(), "guided_compliant_gripper_jaw", "actuated_reference")
             self._cube(
                 stage,
                 f"{finger_path}/Carrier",
-                (0.08, 0.07, 0.36),
-                (0.0, 0.0, 0.0),
+                (0.15, 0.10, 0.11),
+                (-0.23, 0.0, 0.0),
                 self.materials["Steel"],
                 collision=False,
-                rotation=(0.0, -90.0, 0.0),
-                role="gripper_finger_carrier",
+                role="guided_jaw_carriage",
             )
-            pad_y = -0.0475 if side == "Left" else 0.0475
             self._cube(
                 stage,
-                f"{finger_path}/SoftPad",
-                (0.11, 0.035, 0.27),
-                (0.02, pad_y, 0.0),
+                f"{finger_path}/FingerArm",
+                (0.31, 0.060, 0.070),
+                (-0.10, 0.0, 0.0),
+                self.materials["ToolBlue"],
+                collision=False,
+                role="gripper_finger_arm",
+            )
+            self._cube(
+                stage,
+                f"{finger_path}/PadBacking",
+                (GRIPPER_PAD_LENGTH_M, 0.055, GRIPPER_PAD_HEIGHT_M + 0.02),
+                (0.0, 0.0, 0.0),
+                self.materials["DarkSteel"],
+                collision=False,
+                role="compliant_pad_backing",
+            )
+            inward = -GRIPPER_PAD_INWARD_OFFSET_M if side == "Left" else GRIPPER_PAD_INWARD_OFFSET_M
+            core_length = GRIPPER_PAD_LENGTH_M - GRIPPER_PAD_HEIGHT_M
+            self._cube(
+                stage,
+                f"{finger_path}/SoftPadCore",
+                (core_length, GRIPPER_PAD_THICKNESS_M, GRIPPER_PAD_HEIGHT_M),
+                (0.0, inward, 0.0),
                 self.materials["SoftPad"],
                 collision=True,
-                rotation=(0.0, -90.0, 0.0),
                 role="food_contact_compliant_pad_reference",
             )
+            for x, end_name in ((-core_length / 2.0, "Rear"), (core_length / 2.0, "Front")):
+                self._cylinder(
+                    stage,
+                    f"{finger_path}/SoftPad{end_name}",
+                    GRIPPER_PAD_HEIGHT_M / 2.0,
+                    GRIPPER_PAD_THICKNESS_M,
+                    (x, inward, 0.0),
+                    self.materials["SoftPad"],
+                    axis="Y",
+                    collision=True,
+                    role="food_contact_compliant_pad_reference",
+                )
 
         for joint_path, finger_path, anchor_y, lower, upper in zip(
             GRIPPER_JOINT_PATHS,
             GRIPPER_FINGER_PATHS,
-            (0.20, -0.20),
+            (GRIPPER_FINGER_OPEN_Y_M, -GRIPPER_FINGER_OPEN_Y_M),
             (-0.14, 0.0),
             (0.0, 0.14),
             strict=True,
@@ -322,7 +415,7 @@ class Scene2Builder:
             joint.CreateAxisAttr("Y")
             joint.CreateLowerLimitAttr(lower)
             joint.CreateUpperLimitAttr(upper)
-            joint.CreateLocalPos0Attr(Gf.Vec3f(0.41, anchor_y, 0.0))
+            joint.CreateLocalPos0Attr(Gf.Vec3f(GRIPPER_GRASP_CENTER_FLANGE_M[0], anchor_y, 0.0))
             joint.CreateLocalRot0Attr(Gf.Quatf(1.0, Gf.Vec3f(0.0, 0.0, 0.0)))
             joint.CreateLocalPos1Attr(Gf.Vec3f(0.0, 0.0, 0.0))
             joint.CreateLocalRot1Attr(Gf.Quatf(1.0, Gf.Vec3f(0.0, 0.0, 0.0)))
