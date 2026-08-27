@@ -1299,3 +1299,7 @@ Exact scalar equality across separately started RTX processes was false. Bounded
 The machine-readable source is `results/accuracy_matrix/20260827_175301428/accuracy_summary.json`. Page-ready copies are under `assets/project_page/accuracy`.
 
 These numbers measure this reference simulation. They do not measure physical accuracy. Real camera calibration, annotated production images, conveyor encoder captures, workpiece deformation, wet friction, compliant pad tests, cutter timing, OEM controller behavior, and cell commissioning remain required.
+
+### Publication and visual review
+
+Commit `17a45a9` was pushed to `feature/moveit-bridge` and `main`. GitHub Pages run `33121725567` completed successfully. The published accuracy section was reviewed at desktop width and a 390 by 844 narrow viewport. The heading, metrics, chart, notes, and evidence links rendered. The page reported no horizontal overflow at either width.
