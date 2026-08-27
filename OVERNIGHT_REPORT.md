@@ -14,7 +14,9 @@ The exact complete command was `run_tests.ps1`. It passed with 180 Python tests 
 
 Solution A passed with 10.84 mm cutter position error, 0.145 degree angle error, 37.50 ms delivery timing error, 17.67 ms intercept timing error, 2,145 articulation commands, 176.84 mm lift, and zero motion-limit violations. Solution B passed with 21.56 mm position error, 0.629 degree angle error, 8.33 ms delivery timing error, 18.51 ms intercept timing error, 6.00 mm buffer sensor-to-oracle error, 3,673 articulation commands, 176.84 mm lift, and zero motion-limit violations. Both saved stages reloaded. Their H.264 recordings contain 215 and 369 frames. No Isaac or Kit process remained after the suite.
 
-The repository now contains a GitHub Pages workflow that publishes `TECHNICAL_REPORT.html` as the public site index with its checked-in media. The exact deployment run and public URL verification are added below after GitHub finishes the workflow.
+The repository now contains a GitHub Pages workflow that publishes `TECHNICAL_REPORT.html` as the public site index with its checked-in media. Commit `74c7347` was pushed to `feature/moveit-bridge` and fast-forwarded to `main`. GitHub Pages deployment run `33099467297` passed in 20 seconds. The repository homepage was set to `https://lakshya-asu.github.io/carve/`.
+
+The public report returned HTTP 200 with 50,689 bytes, the expected title, and the responsive overflow rule. The Solution A MP4 returned HTTP 200 as `video/mp4` with 1,583,538 bytes. The deployment produced a Node.js deprecation annotation for three official Pages actions. GitHub forced those actions to Node.js 24 and the deployment passed. The warning is retained here rather than hidden.
 
 ## Scheduled release validation, 2026-08-27 09:09 EDT
 

@@ -10,7 +10,7 @@ The complete `run_tests.ps1` gate passed with 180 Python tests. Fresh evidence i
 
 The live MoveIt build was attempted with `validate_moveit.ps1`. It stopped before building because the existing WSL environment has no ROS 2 Humble installation or colcon. The Isaac bundled ROS library also lacks `control_msgs` and MoveIt. No package was installed. The existing JointTrajectory DDS path remains the executed ROS evidence. Live MoveIt execution remains the exact external gate.
 
-The GitHub Pages workflow publishes `TECHNICAL_REPORT.html` as the site index with all report media. The repository README links to the public page. Deployment status and URL verification are recorded in `OVERNIGHT_REPORT.md` after the workflow run.
+The GitHub Pages workflow publishes `TECHNICAL_REPORT.html` as the site index with all report media. Deployment run `33099467297` passed. The public report and a sample MP4 both returned HTTP 200. The repository homepage and README point to `https://lakshya-asu.github.io/carve/`.
 
 ## Technical report redesign, 2026-08-27
 

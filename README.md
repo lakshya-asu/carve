@@ -186,7 +186,7 @@ The scripts use the existing Isaac Sim Python at `C:\Users\jainl\is6\Scripts\pyt
 - `results/yolo/headless_a_v2/isaac_a/metrics.json` and `results/yolo/headless_b_v2/isaac_b/metrics.json` record passing learned-vision integration runs.
 - `results/yolo/recorded_demo/isaac_b/demo.mp4` is the actual rendered overhead-camera recording from the four-cycle YOLO26 Solution B demonstration.
 - `TECHNICAL_REPORT.html` is the complete visual and technical implementation report.
-- `results/full_suite/20260826_205915468` is the latest clean full-suite evidence root.
+- `results/full_suite/20260827_133350136` is the latest clean full-suite evidence root.
 
 Each four-cycle integrated suite runs two nominal cycles, one intentionally failed contact grasp, and one downstream fault cycle. A pass therefore means both nominal cycles delivered successfully and both injected failures recovered as designed. It does not mean 50 percent expected production yield.
 
