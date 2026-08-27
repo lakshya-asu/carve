@@ -832,3 +832,41 @@ No Isaac Sim or Kit process remained after the final command. Batches ran sequen
 T016 remains the exact next software ticket. Scene 2.0 still needs collision-aware FANUC inverse kinematics, time-parameterized MoveIt trajectories, camera-to-conveyor calibration, YOLO and tracker connection, moving interception, transport, reorientation, stationary tray delivery, fault recovery, and a recorded full delivery. The external MoveIt runtime is not installed in the available WSL environment, and system installation was outside this run's authorization.
 
 T015 remains blocked on representative products, selected production gripper and cutter hardware, real camera calibration, conveyor measurements, tissue and grip trials, cutter I/O captures, and safety engineering. The project does not claim OEM fidelity, food-safety validation, real-cell safety validation, physical accuracy, or production readiness.
+
+## Visual project page, 2026-08-27
+
+### Outcome
+
+A new visual entry point is available at `PROJECT_PAGE.html`. It presents the project as an engineering system rather than a collection of scripts. It includes actual Isaac Sim segmentation, RGB, depth, full-cell, close robot, and recorded-video artifacts. It also documents the problem, subsystem responsibilities, message flow, state machine, Solution A and B, compliance model, PLC inputs and outputs, metrics, commands, assumptions, and the exact Scene 2 integration gap.
+
+The page deliberately separates two bodies of evidence. Scene 1 is the tested end-to-end pipeline using the generic Cartesian articulation. Scene 2 is the standard-arm foundation using the FANUC M-10iD/12 official-description reference, ROS 2, RGBD, and articulated compliant jaws. T016 still owns the work to place the complete vision, prediction, IK, interception, and delivery sequence on the FANUC arm.
+
+### Changed files
+
+- `PROJECT_PAGE.html`: full visual project narrative and embedded MP4
+- `project_page/styles.css`: responsive light and dark engineering layout
+- `project_page/app.js`: theme control and command-copy feedback
+- `open_project_page.ps1`: one-command local page launcher
+- `tests/test_project_page.py`: local reference, required content, video, and language gates
+- `README.md` and `BUILD_STATUS.md`: durable entry point and current status
+
+### Validation commands and results
+
+```powershell
+python -m pytest tests\test_project_page.py -q
+python -m pytest -q
+```
+
+The focused project-page tests reported 4 passed. The complete ordinary-Python suite reported 131 passed and 1 skipped in 0.99 seconds. The skip remains the NumPy-dependent perception-interface test in the plain interpreter. The page test confirms that every local `href` and `src` exists, the MP4 is nonempty, required subsystem views are present, and no prohibited dash character appears in the HTML, CSS, or JavaScript.
+
+Direct `file:` navigation through the in-app browser automation interface was blocked by its URL policy. No bypass was attempted. The page was opened as a local Codex file artifact for the user. The repository launcher remains available for normal desktop viewing.
+
+### Evidence used
+
+- YOLO26 output: `results/yolo/example_prediction.jpg`
+- RGB and depth: `results/yolo/recorded_demo/isaac_b/media`
+- Video and contact sheet: `results/yolo/recorded_demo/isaac_b`
+- Standard-arm views and metrics: `results/scene2_compliance_ros`
+- Complete-suite evidence: `results/full_suite/20260826_205915468`
+
+No simulator implementation or metric changed in this documentation pass, so Isaac Sim was not rerun. The page reports the latest completed simulator suite without recasting historical data as a new run. No Isaac Sim or Kit process was started.

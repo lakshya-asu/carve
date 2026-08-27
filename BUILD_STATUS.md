@@ -1,5 +1,13 @@
 # Build status
 
+## Visual project page, 2026-08-27
+
+`PROJECT_PAGE.html` is now the main visual entry point for the repository. It shows the saved YOLO26 segmentation output, rendered overhead RGB and depth, Scene 2 FANUC articulation and compliant gripper, the recorded 31.42 second Solution B MP4, the complete communication path, inputs and outputs, control states, A and B behavior, validation metrics, commands, and limitations.
+
+The page draws only from checked-in implementation documents and executed artifacts. It states the current integration boundary directly. Scene 1 is the complete camera-to-delivery vertical slice. Scene 2 validates the standard articulated arm, ROS 2 boundary, RGBD publication, and compliant gripper, but the complete YOLO-to-FANUC interception loop remains T016.
+
+The one-command page entry point is `open_project_page.ps1`. The focused page tests validate required views, internal anchors, every local media and documentation reference, the nonempty embedded MP4, and the prohibited dash-character rule. The complete ordinary-Python suite now reports 131 passed and 1 skipped. The existing skip is the NumPy-dependent perception test in the plain interpreter.
+
 ## Scene 2.0 FANUC implementation, 2026-08-26
 
 The proposed robot and cell are now present in a new Isaac Sim stage. The implementation imports the official FANUC `m10_12_14d` description as a FANUC M-10iD/12 reference. It retains six revolute joints, official description joint limits, visual meshes, collision meshes, masses, and inertias. The source commit is `fb40c9803a826ba68c7c8e28ba904a25efa7fcd2`.
