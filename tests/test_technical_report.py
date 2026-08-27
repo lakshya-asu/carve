@@ -163,6 +163,12 @@ def test_report_distinguishes_completed_routes_from_research() -> None:
         assert name in text
 
 
+def test_report_links_to_the_public_repository() -> None:
+    text, _ = parse_report()
+    assert 'href="https://github.com/lakshya-asu/carve"' in text
+    assert "View the GitHub repository" in text
+
+
 def test_learning_routes_are_discussion_only() -> None:
     text, _ = parse_report()
     assert "C, D, and E are not being built now" in text
