@@ -1245,3 +1245,57 @@ It passed from a clean process state. Evidence is `results/full_suite/20260827_0
 Two issues were exposed during the clean-suite repetitions and fixed without weakening a gate. The historical abstract-cell buffer-timeout cycle could fail its initial contact check before reaching the intended injected timeout. It now receives one typed, physically simulated matched-velocity contact-settle retry for every non-failed-grasp scenario. The superseded abstract-cell physics matrix is no longer part of the release command because it is not the current FANUC implementation. Its files and historical results remain untouched. The focused Scene 2 compliance fixture was also too close to the cutter guard. It now uses a Lula-verified top-down pose at product center `(0.05, 0.0, 1.10)` m and still fails on any non-product contact.
 
 No Isaac Sim or Kit process remained after the command. The final unit tests and both published integrated artifact audits were run once more after shutdown and all passed.
+
+## Accuracy and robustness pass, 2026-08-27
+
+### Purpose
+
+This pass measured error at each stage of the final Scene 2 path. The simulator oracle is used after execution for scoring only. It is not supplied to YOLO, tracking, planning, grasp selection, or robot control.
+
+### Commands
+
+```powershell
+.\run_solution_a.ps1 -Seed 4099 -Scenario nominal -BeltSpeedMps 0.10 -StartYM 0.02 -StartYawDeg 20 -PerceptionLatencyMs 30 -PositionNoiseMm 1 -YawNoiseDeg 0.35 -OutputRoot results\accuracy_matrix\smoke_new_metrics
+.\run_accuracy_matrix.ps1 -OutputRoot results\accuracy_matrix\20260827_175301428 -Resume
+python tools\summarize_accuracy_matrix.py results\accuracy_matrix\20260827_175301428
+python -m pytest tests\test_accuracy_benchmark.py -q
+```
+
+The complete ordinary Python suite passed 185 tests with the documented Isaac package path.
+
+The first matrix launch exposed two wrapper defects before any Isaac case was accepted. Windows PowerShell treated Isaac startup stderr as a terminating stream, and the wrapper passed an absolute output path to a runner that correctly requires project-relative paths. The wrapper now uses a native process object, keeps stdout and stderr separately, and passes project-relative evidence paths. Rejected launch attempts remain in the logs and are not benchmark rows.
+
+### Matrix
+
+Ten core cases covered A and B, 0.06 to 0.22 m/s, -60 to 50 mm lateral start, -72 to 68 degrees yaw, and repeated nominal seeds. Five stress cases extended to 0.30 m/s, 80 mm lateral offset, 85 degrees yaw, 140 ms latency, 5 mm position noise, and 4 degrees yaw noise.
+
+The core gate passed 10 of 10. The stress accuracy gate passed 2 of 5. All 15 cases produced nonempty RGB, depth, segmentation, trace, trajectory, video, and reloadable USD evidence. No orphaned Isaac or Kit process remained after any case.
+
+| Group | Cases | Passed | Camera mean | Camera p95 | Intercept mean | Intercept p95 | Delivery mean | Delivery p95 | Timing mean |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Core A | 6 | 6 | 5.08 mm | 6.66 mm | 5.50 mm | 7.93 mm | 12.70 mm | 18.41 mm | 9.29 ms |
+| Core B | 4 | 4 | 4.30 mm | 5.73 mm | 4.76 mm | 6.33 mm | 15.98 mm | 22.03 mm | 8.19 ms |
+
+The extreme 0.30 m/s A case was perceived and tracked, but the planner returned `too_late`. The state path was plan, recover, idle. There was no bilateral contact and no false delivery. This is the correct safe outcome, but it fails the nominal accuracy gate.
+
+The high-noise A and B cases completed interception, contact, transport, and delivery. Both exceeded the internal yaw limits. They are functional passes and accuracy failures. The 140 ms A latency case and the 0.26 m/s B high-speed case passed the full stress gate.
+
+### Repeatability
+
+Exact scalar equality across separately started RTX processes was false. Bounded replay passed for both repeated seeds. Solution A placement differed by 0.037 mm and intercept timing by 0.79 ms. Solution B placement differed by 0.067 mm and timing by 3.43 ms. The report now distinguishes exact equality from bounded reproducibility.
+
+### Files changed
+
+- `isaac_sim/run_scene2_integrated.py`: explicit perception stress inputs and oracle-only staged error metrics
+- `meatcell/accuracy_benchmark.py`: distributions, regression thresholds, artifact checks, and replay comparison
+- `run_accuracy_matrix.ps1`: sequential 15-case entry point with clean process handling
+- `run_solution_a.ps1` and `run_solution_b.ps1`: latency and noise inputs
+- `tools/summarize_accuracy_matrix.py`: JSON, CSV, and readable aggregation
+- `tests/test_accuracy_benchmark.py`: focused aggregation, threshold, and replay tests
+- `TECHNICAL_REPORT.html`: benchmark visualization and interpretation
+
+### Evidence and limits
+
+The machine-readable source is `results/accuracy_matrix/20260827_175301428/accuracy_summary.json`. Page-ready copies are under `assets/project_page/accuracy`.
+
+These numbers measure this reference simulation. They do not measure physical accuracy. Real camera calibration, annotated production images, conveyor encoder captures, workpiece deformation, wet friction, compliant pad tests, cutter timing, OEM controller behavior, and cell commissioning remain required.

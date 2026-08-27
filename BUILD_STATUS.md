@@ -216,3 +216,17 @@ The moving grasp now uses 25 percent jaw pre-shaping, a 125 ms belt-speed-matche
 The Solution B stationary tray and target moved 50 mm toward the overhead camera centre. Buffer detections require at least 0.10 confidence and 0.10 visible fraction, remain bounded to the calibrated buffer zone, and are associated by distance to `buffer_frame`. The buffer regrasp includes a 150 ms compliant-drive settle and still requires recent bilateral PhysX contact before the fixed transport constraint is created.
 
 Fresh Solution A position error p95 was 47.34 mm. Fresh Solution B position error p95 was 49.90 mm. Both used a 55 mm simulation gate. These margins are simulation results, not physical accuracy claims.
+
+## Scene 2 accuracy matrix, 2026-08-27
+
+The current Scene 2 pipeline now reports camera pose error, tracked pose error, intercept grasp-point error, intercept timing error, and final delivery error against a simulator oracle that is isolated from control. Perception latency, position noise, and yaw noise are explicit launcher inputs.
+
+The 15-case headless matrix completed sequentially at `results/accuracy_matrix/20260827_175301428`. All 10 core cases passed. Core Solution A covered six runs and Solution B covered four runs. Core speeds ranged from 0.06 to 0.22 m/s, lateral starts from -60 to 50 mm, and yaw from -72 to 68 degrees.
+
+Core Solution A mean errors were 5.08 mm at the camera, 5.08 mm after tracking, 5.50 mm at the intercept grasp point, and 12.70 mm at delivery. Solution B means were 4.30 mm, 4.30 mm, 4.76 mm, and 15.98 mm. Intercept timing error averaged 9.29 ms for A and 8.19 ms for B. All core runs had valid evidence, bilateral contact, verified delivery, and zero joint, velocity, or acceleration violations.
+
+Two of five stress cases passed the full accuracy gate. Two more completed delivery but exceeded the internal 2 degree camera and tracking yaw limit and 3 degree intercept yaw limit under high injected yaw noise. The 0.30 m/s, 80 mm offset, 85 degree case was rejected as too late and recovered to idle without contact or false delivery.
+
+Repeated nominal seeds for A and B were not bitwise identical across separate RTX processes. Both passed the documented bounded replay tolerances. The maximum repeated placement delta was 0.067 mm. The largest timing delta was 3.43 ms. Exact equality is reported as false.
+
+The current one-command entry point is `run_accuracy_matrix.ps1`. It writes `accuracy_summary.json`, `accuracy_cases.csv`, a readable report, and complete per-case Isaac artifacts. This is simulation regression evidence only.

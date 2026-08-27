@@ -63,6 +63,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--belt-speed-mps", type=float, default=DEFAULT_BELT_SPEED_MPS)
     parser.add_argument("--start-y-m", type=float)
     parser.add_argument("--start-yaw-deg", type=float)
+    parser.add_argument("--perception-latency-ms", type=float, default=30.0)
+    parser.add_argument("--position-noise-mm", type=float, default=1.0)
+    parser.add_argument("--yaw-noise-deg", type=float, default=0.35)
     parser.add_argument(
         "--yolo-weights",
         default="models/yolo26_meat_reference_buffer_v2/weights/best.pt",
@@ -191,6 +194,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         Transform,
     )
     from meatcell.eventlog import JsonlEventReader, JsonlEventWriter, RunMetadata, dependency_versions
+    from meatcell.frames import compose
     from meatcell.interception import InterceptionConfig, InterceptionPlanner
     from meatcell.perception import PinholeCalibration
     from meatcell.solutions import (
@@ -214,6 +218,12 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         raise ValueError("The validated lateral start range is -0.09 to 0.09 m")
     if args.start_yaw_deg is not None and not -85.0 <= args.start_yaw_deg <= 85.0:
         raise ValueError("The validated product yaw range is -85 to 85 degrees")
+    if not 0.0 <= args.perception_latency_ms <= 150.0:
+        raise ValueError("Perception latency must be between 0 and 150 ms")
+    if not 0.0 <= args.position_noise_mm <= 10.0:
+        raise ValueError("Position noise must be between 0 and 10 mm")
+    if not 0.0 <= args.yaw_noise_deg <= 8.0:
+        raise ValueError("Yaw noise must be between 0 and 8 degrees")
     if args.solution == "a" and args.scenario == "buffer_timeout":
         raise ValueError("buffer_timeout applies only to Solution B")
     output_root.mkdir(parents=True, exist_ok=True)
@@ -768,11 +778,11 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         weights_path=weights_path,
         seed=args.seed,
         confidence_threshold=0.01,
-        latency_mean_s=0.030,
+        latency_mean_s=args.perception_latency_ms / 1000.0,
         latency_sigma_s=0.002,
         timestamp_jitter_sigma_s=0.0002,
-        position_noise_sigma_m=0.001,
-        yaw_noise_sigma_rad=math.radians(0.35),
+        position_noise_sigma_m=args.position_noise_mm / 1000.0,
+        yaw_noise_sigma_rad=math.radians(args.yaw_noise_deg),
         minimum_component_pixels=30,
         device="cpu",
         refine_color_mask=True,
@@ -798,6 +808,9 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                 "belt_speed_mps": belt_speed_mps,
                 "start_y_m": start_y,
                 "start_yaw_rad": start_yaw,
+                "perception_latency_ms": args.perception_latency_ms,
+                "position_noise_mm": args.position_noise_mm,
+                "yaw_noise_deg": args.yaw_noise_deg,
             },
             sort_keys=True,
         ).encode("utf-8")
@@ -839,12 +852,18 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
     terminal_reason = "partial"
     observation_count = 0
     perception_latencies: list[float] = []
+    perception_oracle_samples: list[dict[str, float]] = []
+    tracking_oracle_samples: list[dict[str, float]] = []
     track = None
     planned_intercept_x = None
     planned_intercept_y = None
     planned_intercept_yaw = None
     planned_intercept_time_s = None
     actual_intercept_time_s = None
+    actual_intercept_grasp_position_m = None
+    actual_intercept_grasp_yaw_rad = None
+    intercept_grasp_position_error_m = None
+    intercept_grasp_yaw_error_rad = None
     lift_distance_m = 0.0
     relative_drift_m = float("inf")
     relative_offsets: list[list[float]] = []
@@ -900,6 +919,37 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             # conveyor region. The sensor oracle above is retained for tests
             # and never participates in perception, tracking, or control.
             chosen = max(candidates, key=lambda item: (item.confidence, item.visible_fraction))
+            perception_position_error_m = float(
+                np.linalg.norm(
+                    np.asarray(
+                        (
+                            chosen.pose_belt.translation.x_m,
+                            chosen.pose_belt.translation.y_m,
+                            chosen.pose_belt.translation.z_m,
+                        ),
+                        dtype=float,
+                    )
+                    - oracle_position
+                )
+            )
+            perception_yaw_error_rad = _angle_error(
+                chosen.pose_belt.yaw_rad,
+                _yaw_from_wxyz(oracle_orientation),
+            )
+            perception_oracle_samples.append(
+                {
+                    "position_error_m": perception_position_error_m,
+                    "yaw_error_rad": perception_yaw_error_rad,
+                    "confidence": float(chosen.confidence),
+                }
+            )
+            add_trace(
+                "perception_oracle_error",
+                frame_index=frame_index,
+                position_error_m=perception_position_error_m,
+                yaw_error_rad=perception_yaw_error_rad,
+                oracle_role="test gate only; not used by perception, planning, or control",
+            )
             pending.append(chosen)
             if first_rgb is None:
                 first_rgb = rgb.copy()
@@ -911,6 +961,30 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             observation_count += 1
             perception_latencies.append(chosen.delivery_time.seconds - chosen.exposure_time.seconds)
             track = tracker.update(chosen, current_time=sim_time(), encoder_speed_mps=belt_speed_mps)
+            track_oracle_position, track_oracle_orientation = product_pose()
+            tracking_position_error_m = float(
+                np.linalg.norm(
+                    np.asarray(
+                        (
+                            track.pose_belt.translation.x_m,
+                            track.pose_belt.translation.y_m,
+                            track.pose_belt.translation.z_m,
+                        ),
+                        dtype=float,
+                    )
+                    - track_oracle_position
+                )
+            )
+            tracking_yaw_error_rad = _angle_error(
+                track.pose_belt.yaw_rad,
+                _yaw_from_wxyz(track_oracle_orientation),
+            )
+            tracking_oracle_samples.append(
+                {
+                    "position_error_m": tracking_position_error_m,
+                    "yaw_error_rad": tracking_yaw_error_rad,
+                }
+            )
             if frame_index == 0:
                 supervisor.transition(CellState.TRACK, sim_time(), "rendered_yolo26_observation_acquired")
                 flush_events()
@@ -1079,6 +1153,34 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                 product_position_m=product_pose()[0].tolist(),
             )
             actual_intercept_time_s = sim_time().seconds
+            actual_intercept_product_position, actual_intercept_product_orientation = product_pose()
+            actual_product_pose = Transform.planar(
+                float(actual_intercept_product_position[0]),
+                float(actual_intercept_product_position[1]),
+                float(actual_intercept_product_position[2]),
+                _yaw_from_wxyz(actual_intercept_product_orientation),
+            )
+            actual_grasp_pose = compose(actual_product_pose, grasp.grasp_in_product)
+            actual_intercept_grasp_position_m = [
+                actual_grasp_pose.translation.x_m,
+                actual_grasp_pose.translation.y_m,
+                actual_grasp_pose.translation.z_m,
+            ]
+            actual_intercept_grasp_yaw_rad = actual_grasp_pose.yaw_rad
+            intercept_grasp_position_error_m = float(
+                math.hypot(
+                    actual_grasp_pose.translation.x_m - planned_intercept_x,
+                    actual_grasp_pose.translation.y_m - planned_intercept_y,
+                )
+            )
+            intercept_grasp_yaw_error_rad = _angle_error(actual_grasp_pose.yaw_rad, planned_intercept_yaw)
+            add_trace(
+                "intercept_oracle_error",
+                position_error_m=intercept_grasp_position_error_m,
+                yaw_error_rad=intercept_grasp_yaw_error_rad,
+                timing_error_s=abs(actual_intercept_time_s - planned_intercept_time_s),
+                oracle_role="test gate only; not used by planning or control",
+            )
             servo_started_s = sim_time().seconds
             servo_duration_s = 0.75
             last_servo_joints = grasp_joints.copy()
@@ -1825,6 +1927,11 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             "yaw_rad": start_yaw,
             "yaw_deg": math.degrees(start_yaw),
         },
+        "test_settings": {
+            "perception_latency_ms": args.perception_latency_ms,
+            "position_noise_mm": args.position_noise_mm,
+            "yaw_noise_deg": args.yaw_noise_deg,
+        },
         "slip_detected": slip_detected,
         "buffer_sensor_oracle_position_error_m": buffer_sensor_oracle_position_error_m,
         "perception": {
@@ -1838,6 +1945,12 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             "track_velocity_mps": track.twist_belt.linear_mps.x_m if track else None,
             "track_speed_error_mps": abs(track.twist_belt.linear_mps.x_m - belt_speed_mps) if track else None,
             "latency_s": perception_latencies,
+            "oracle_role": "test gate only; not used by perception, tracking, planning, or control",
+            "oracle_samples": perception_oracle_samples,
+            "position_error_mean_m": float(np.mean([item["position_error_m"] for item in perception_oracle_samples])) if perception_oracle_samples else None,
+            "position_error_max_m": float(np.max([item["position_error_m"] for item in perception_oracle_samples])) if perception_oracle_samples else None,
+            "yaw_error_mean_rad": float(np.mean([item["yaw_error_rad"] for item in perception_oracle_samples])) if perception_oracle_samples else None,
+            "yaw_error_max_rad": float(np.max([item["yaw_error_rad"] for item in perception_oracle_samples])) if perception_oracle_samples else None,
             "rgb_nonempty": True,
             "depth_nonempty": True,
             "calibration": calibration.__dict__,
@@ -1851,7 +1964,19 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             "planned_time_s": planned_intercept_time_s,
             "actual_time_s": actual_intercept_time_s,
             "timing_error_s": abs(actual_intercept_time_s - planned_intercept_time_s) if actual_intercept_time_s is not None and planned_intercept_time_s is not None else None,
+            "actual_grasp_position_m": actual_intercept_grasp_position_m,
+            "actual_grasp_yaw_rad": actual_intercept_grasp_yaw_rad,
+            "grasp_position_error_m": intercept_grasp_position_error_m,
+            "grasp_yaw_error_rad": intercept_grasp_yaw_error_rad,
             "maximum_conveyor_step_m": maximum_conveyor_step_m,
+        },
+        "tracking": {
+            "oracle_role": "test gate only; not used by tracking, planning, or control",
+            "oracle_samples": tracking_oracle_samples,
+            "position_error_mean_m": float(np.mean([item["position_error_m"] for item in tracking_oracle_samples])) if tracking_oracle_samples else None,
+            "position_error_max_m": float(np.max([item["position_error_m"] for item in tracking_oracle_samples])) if tracking_oracle_samples else None,
+            "yaw_error_mean_rad": float(np.mean([item["yaw_error_rad"] for item in tracking_oracle_samples])) if tracking_oracle_samples else None,
+            "yaw_error_max_rad": float(np.max([item["yaw_error_rad"] for item in tracking_oracle_samples])) if tracking_oracle_samples else None,
         },
         "grasp": {
             "proposal": grasp_proposal.to_dict(),
@@ -1908,6 +2033,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             "joint_velocity_acceleration_limit_violations_allowed": 0,
         },
         "state_sequence": [item["state"] for item in trace if item["kind"] == "state"],
+        "terminal_result": result.to_dict(),
         "sequence": sequence,
         "trace_records": len(trace),
         "event_log_readback_passed": deterministic_log_readback,

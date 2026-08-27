@@ -452,3 +452,13 @@ The stationary-belt pickup gate uses Isaac Sim Lula inverse kinematics to genera
 The same runner executes failed grasp, cutter unavailable, emergency stop, stale observation, forced slip correction, and buffer timeout paths. `tools/audit_scene2_integrated.py` fails closed on missing stage content or reload evidence, sensor output, YOLO identity, controller execution, limit compliance, bilateral contact, lift, product retention, state order, delivery tolerance, video, or trace data.
 
 This proves the complete task sequence in Isaac Sim under documented assumptions. It does not prove external MoveIt planning. The MoveIt package and action adapter are implemented, but a separate ROS 2 and MoveIt process was not installed or commissioned on this workstation. The compliant mechanism, rigid product, friction, camera response, conveyor coupling, and cutter I/O remain uncalibrated simulation references.
+
+## Accuracy measurement and robustness matrix, 2026-08-27
+
+`run_accuracy_matrix.ps1` runs 15 independent Scene 2 processes. Ten core cases vary solution, belt speed, lateral start, yaw, and seed. Five stress cases add geometry limits, higher speed, camera latency, position noise, and yaw noise. Every process starts headless, writes its own evidence directory, and closes before the next process begins.
+
+The runner records simulator ground truth at camera exposure time only for scoring. The YOLO output, tracker, intercept planner, and robot controller cannot read that oracle. The metrics separate camera pose error, tracked pose error, predicted grasp-point error at interception, intercept timing error, and final tray delivery error. This makes it possible to see where error grows instead of treating final placement as a single unexplained number.
+
+The core regression limits are 12 mm mean position and 2 degrees mean yaw for camera and tracking, 15 mm position and 3 degrees yaw at interception, 120 ms intercept timing, 55 mm final position, and 7 degrees final angle. These are internal simulation limits. They are not physical process requirements. Every core case must also have an interior mask grasp, bilateral contact, verified delivery, valid artifacts, stage reload, event-log readback, and zero joint, velocity, or acceleration violations.
+
+Repeated A and B seeds are checked with bounded tolerances because separately launched RTX renders are not bitwise identical. Exact scalar equality is reported separately and is not claimed. Current bounded tolerances include 0.25 mm for camera and tracking position, 0.5 mm at interception, 0.2 mm at delivery, and 5 ms for intercept timing.

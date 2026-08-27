@@ -18,7 +18,7 @@ Run both complete recorded cycles with:
 .\run_scene2_full.ps1
 ```
 
-Carve is a runnable Isaac Sim 6.0.1 project for vision-guided robotic handling of beef, pork, and chicken reference cuts on a moving conveyor. The current executed matrix covers 0.06 to 0.22 m/s, lateral starts from -60 to 50 mm, and yaw from -72 to 68 degrees. Each case releases an aligned product into a stationary cutter-entry tray.
+Carve is a runnable Isaac Sim 6.0.1 project for vision-guided robotic handling of beef, pork, and chicken reference cuts on a moving conveyor. The current 10-case core matrix covers 0.06 to 0.22 m/s, lateral starts from -60 to 50 mm, and yaw from -72 to 68 degrees. A separate stress matrix extends to 0.30 m/s, 80 mm lateral offset, 85 degrees yaw, 140 ms perception latency, 5 mm injected position noise, and 4 degrees injected yaw noise. Each successful case releases an aligned product into a stationary cutter-entry tray.
 
 The saved USD cell includes a conveyor, rigid meat reference workpieces, a FANUC M-10iD/12 official-description reference articulation, a compact compliant two-finger gripper reference, overhead and buffer cameras, calibration frames, guards, a reject bin, `cut_target_frame`, a guarded cutter reference, PLC state, and the Solution B centering buffer.
 
@@ -58,7 +58,15 @@ Run the five-case speed and pose matrix plus Solution B slip correction:
 .\run_speed_pose_matrix.ps1 -IncludeSolutionB
 ```
 
-The Solution A and B launchers also accept `-BeltSpeedMps`, `-StartYM`, and `-StartYawDeg`. The configured input range is wider than the executed matrix. Only the tested range above is presented as demonstrated.
+Run the current 15-case accuracy and robustness benchmark for A and B:
+
+```powershell
+.\run_accuracy_matrix.ps1
+```
+
+This command runs Isaac headless and sequentially. It writes per-case stages, RGB, depth, segmentation, trajectories, traces, videos, logs, a CSV, and `accuracy_summary.json`. The release gate uses 10 core cases. Five stress cases are reported separately. Ground truth scores each run after execution and is not used as a control input.
+
+The Solution A and B launchers also accept `-BeltSpeedMps`, `-StartYM`, `-StartYawDeg`, `-PerceptionLatencyMs`, `-PositionNoiseMm`, and `-YawNoiseDeg`. The configured input range is wider than the core acceptance matrix. Stress results are not presented as normal operating capability.
 
 Run a catalog product recipe without replacing the baseline artifacts:
 
