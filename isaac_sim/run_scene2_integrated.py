@@ -24,7 +24,7 @@ for candidate in (PROJECT_ROOT, PROJECT_ROOT / "third_party" / "python"):
         sys.path.insert(0, str(candidate))
 
 PHYSICS_HZ = 240
-BELT_SPEED_MPS = 0.10
+DEFAULT_BELT_SPEED_MPS = 0.10
 BELT_SURFACE_Z_M = 0.8075
 PRODUCT_CENTER_Z_M = 0.875
 MIN_PAD_CLEARANCE_M = 0.005
@@ -60,6 +60,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--output-root", default="results/scene2_integrated")
     parser.add_argument("--fps", type=int, default=12)
+    parser.add_argument("--belt-speed-mps", type=float, default=DEFAULT_BELT_SPEED_MPS)
+    parser.add_argument("--start-y-m", type=float)
+    parser.add_argument("--start-yaw-deg", type=float)
     parser.add_argument(
         "--yolo-weights",
         default="models/yolo26_meat_reference_buffer_v2/weights/best.pt",
@@ -82,6 +85,7 @@ def _artifact_manifest(output_root: Path, event_path: Path, solution: str) -> di
         "depth_npy": output_root / "overhead_depth_m.npy",
         "segmentation": output_root / "yolo26_segmentation.png",
         "trace": event_path,
+        "trajectory": output_root / "robot_joint_trajectory.json",
     }
     missing = [str(path) for path in artifacts.values() if not path.is_file() or path.stat().st_size == 0]
     if missing:
@@ -138,6 +142,12 @@ def _angle_error(value: float, target: float) -> float:
     return abs(math.atan2(math.sin(value - target), math.cos(value - target)))
 
 
+def _rotate_planar_offset(x_m: float, y_m: float, yaw_rad: float) -> tuple[float, float]:
+    cosine = math.cos(yaw_rad)
+    sine = math.sin(yaw_rad)
+    return cosine * x_m - sine * y_m, sine * x_m + cosine * y_m
+
+
 def _mask_from_rle(value: str, shape: tuple[int, int]) -> object:
     import numpy as np
 
@@ -170,14 +180,12 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         Scene2Builder,
         gripper_target_travel_m,
     )
-    from isaac_sim.stage_builder import product_width_scale_at_grasp
     from isaac_sim.video_recorder import RawVideoRecorder
     from isaac_sim.yolo_perception import YOLO26SegmentationModel
     from meatcell.contracts import (
         CellResult,
         CutterMode,
         CutterState,
-        GraspCandidate,
         SimTime,
         TerminalPath,
         Transform,
@@ -194,11 +202,18 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         SolutionBController,
     )
     from meatcell.grasp import GraspModel, GraspModelConfig
+    from meatcell.grasp_selection import select_mask_grasp
     from meatcell.supervisor import CellState, CellSupervisor
     from meatcell.tracking import ObjectTracker, TrackerConfig
 
     if args.fps <= 0 or PHYSICS_HZ % args.fps != 0:
         raise ValueError("Frame rate must be a positive divisor of 240")
+    if not 0.04 <= args.belt_speed_mps <= 0.30:
+        raise ValueError("The validated conveyor-speed range is 0.04 to 0.30 m/s")
+    if args.start_y_m is not None and not -0.09 <= args.start_y_m <= 0.09:
+        raise ValueError("The validated lateral start range is -0.09 to 0.09 m")
+    if args.start_yaw_deg is not None and not -85.0 <= args.start_yaw_deg <= 85.0:
+        raise ValueError("The validated product yaw range is -85 to 85 degrees")
     if args.solution == "a" and args.scenario == "buffer_timeout":
         raise ValueError("buffer_timeout applies only to Solution B")
     output_root.mkdir(parents=True, exist_ok=True)
@@ -234,11 +249,12 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             UsdPhysics.CollisionAPI(hidden_geometry).CreateCollisionEnabledAttr(False).Set(False)
 
     plc_prim = stage.GetPrimAtPath("/World/Cell/PLC")
-    plc_prim.GetAttribute("meatcell:conveyorSpeedMps").Set(BELT_SPEED_MPS)
-    stage.GetPrimAtPath("/World").GetAttribute("meatcell:conveyorSpeedMps").Set(BELT_SPEED_MPS)
+    belt_speed_mps = float(args.belt_speed_mps)
+    plc_prim.GetAttribute("meatcell:conveyorSpeedMps").Set(belt_speed_mps)
+    stage.GetPrimAtPath("/World").GetAttribute("meatcell:conveyorSpeedMps").Set(belt_speed_mps)
     start_x = -0.18 + rng.uniform(-0.015, 0.015)
-    start_y = rng.uniform(-0.075, 0.075)
-    start_yaw = math.radians(rng.uniform(-8.0, 8.0))
+    start_y = float(args.start_y_m) if args.start_y_m is not None else rng.uniform(-0.075, 0.075)
+    start_yaw = math.radians(float(args.start_yaw_deg) if args.start_yaw_deg is not None else rng.uniform(-75.0, 75.0))
     start_orientation = np.asarray(
         (math.cos(start_yaw / 2.0), 0.0, 0.0, math.sin(start_yaw / 2.0)),
         dtype=np.float32,
@@ -419,6 +435,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
     conveyor_active = True
     trace: list[dict[str, object]] = []
     sequence: list[dict[str, object]] = []
+    trajectory_samples: list[dict[str, object]] = []
 
     pad_paths = [
         str(child.GetPath())
@@ -470,7 +487,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         draw = ImageDraw.Draw(frame)
         draw.rectangle((0, 0, 1280, 58), fill=(8, 14, 19))
         draw.text((18, 10), f"CARVE | Solution {args.solution.upper()} | {args.scenario}", fill=(235, 246, 250))
-        draw.text((18, 33), f"STATE {state_label}   PLC {plc_label}   {track_label}", fill=(107, 224, 204))
+        draw.text((18, 33), f"STATE {state_label}   PLC {plc_label}   BELT {belt_speed_mps:.2f} m/s   {track_label}", fill=(107, 224, 204))
         if overhead_inset is not None:
             inset = Image.fromarray(overhead_inset).resize((256, 192))
             frame.paste(inset, (1008, 74))
@@ -508,7 +525,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         acceleration_limit_violations += int(np.any(np.abs(acceleration) > joint_acceleration_limits * 1.001))
         if conveyor_active:
             position, orientation = product_pose()
-            position[0] += BELT_SPEED_MPS * dt_s
+            position[0] += belt_speed_mps * dt_s
             product.set_world_pose(position.astype(np.float32), orientation.astype(np.float32))
             product_translate_op.Set(Gf.Vec3d(*position.tolist()))
             kinematic_product_positions.append(position.tolist())
@@ -517,6 +534,15 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         previous_command = command_array
         previous_velocity = velocity
         previous_command_time_s = command_time_s
+        if physics_steps % 4 == 0:
+            trajectory_samples.append(
+                {
+                    "time_from_start_s": float(world.current_time),
+                    "positions_rad": command_array[:6].tolist(),
+                    "velocities_radps": velocity[:6].tolist(),
+                    "source": "isaac_articulation_controller",
+                }
+            )
         position, _ = product_pose()
         product_positions.append(position.tolist())
         if not grasp_confirmed:
@@ -587,6 +613,40 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             blend = 0.5 - 0.5 * math.cos(math.pi * phase)
             requested_tcp = start_tcp + (target - start_tcp) * blend
             seed_joints = solve_tcp(label, requested_tcp, seed_joints, target_orientation)
+            apply_and_step(np.concatenate((seed_joints, previous_command[6:])))
+            if phase >= 1.0:
+                break
+        return seed_joints
+
+    def reorient_at_tcp(
+        label: str,
+        target_tcp: object,
+        start_yaw_rad: float,
+        target_yaw_rad: float,
+        duration_s: float,
+    ) -> object:
+        """Rotate the tool smoothly while feedback IK holds the TCP in place."""
+        sequence.append({"label": label, "duration_s": duration_s})
+        add_trace(
+            "motion",
+            label=label,
+            duration_s=duration_s,
+            interpolation="cartesian_tcp_yaw",
+            start_yaw_rad=start_yaw_rad,
+            target_yaw_rad=target_yaw_rad,
+        )
+        target = np.asarray(target_tcp, dtype=float)
+        yaw_delta = math.atan2(
+            math.sin(target_yaw_rad - start_yaw_rad),
+            math.cos(target_yaw_rad - start_yaw_rad),
+        )
+        seed_joints = previous_command[:6].copy()
+        started_s = float(world.current_time)
+        while True:
+            phase = min(1.0, (float(world.current_time) - started_s) / duration_s)
+            blend = 0.5 - 0.5 * math.cos(math.pi * phase)
+            requested_yaw = start_yaw_rad + yaw_delta * blend
+            seed_joints = solve_tcp(label, target, seed_joints, _tool_orientation(requested_yaw))
             apply_and_step(np.concatenate((seed_joints, previous_command[6:])))
             if phase >= 1.0:
                 break
@@ -668,7 +728,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             attribute.Set(value)
         result = PLCState(
             sim_time(),
-            BELT_SPEED_MPS if conveyor_active else 0.0,
+            belt_speed_mps if conveyor_active else 0.0,
             "pork_boneless_loin",
             CutterState(sim_time(), mode, "cut_target_frame", 0.0, 0.0, "pork_boneless_loin", 1, "injected" if fault else None),
             fault,
@@ -707,7 +767,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
     model = YOLO26SegmentationModel(
         weights_path=weights_path,
         seed=args.seed,
-        confidence_threshold=0.05,
+        confidence_threshold=0.01,
         latency_mean_s=0.030,
         latency_sigma_s=0.002,
         timestamp_jitter_sigma_s=0.0002,
@@ -730,7 +790,17 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
     plc = plc_state(ready=args.scenario != "cutter_unavailable")
 
     config_hash = hashlib.sha256(
-        json.dumps({"solution": args.solution, "seed": args.seed, "scenario": args.scenario, "belt_speed_mps": BELT_SPEED_MPS}, sort_keys=True).encode("utf-8")
+        json.dumps(
+            {
+                "solution": args.solution,
+                "seed": args.seed,
+                "scenario": args.scenario,
+                "belt_speed_mps": belt_speed_mps,
+                "start_y_m": start_y,
+                "start_yaw_rad": start_yaw,
+            },
+            sort_keys=True,
+        ).encode("utf-8")
     ).hexdigest()
     event_path = output_root / "cycle_trace.jsonl"
     writer = JsonlEventWriter(
@@ -771,6 +841,8 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
     perception_latencies: list[float] = []
     track = None
     planned_intercept_x = None
+    planned_intercept_y = None
+    planned_intercept_yaw = None
     planned_intercept_time_s = None
     actual_intercept_time_s = None
     lift_distance_m = 0.0
@@ -817,12 +889,17 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                 item for item in observations
                 if -0.60 < item.pose_belt.translation.x_m < 0.25
                 and abs(item.pose_belt.translation.y_m) < 0.25
+                and calibration.belt_surface_z_world_m
+                <= item.pose_belt.translation.z_m
+                <= calibration.belt_surface_z_world_m + 0.16
             ]
             if not candidates:
                 Image.fromarray(rgb).save(output_root / f"failed_rgb_{frame_index}.png")
                 raise RuntimeError("YOLO26 produced no conveyor workpiece detection")
-            expected_position, _ = product_pose()
-            chosen = min(candidates, key=lambda item: abs(item.pose_belt.translation.x_m - expected_position[0]) + abs(item.pose_belt.translation.y_m - expected_position[1]))
+            # Selection is based only on model output inside the calibrated
+            # conveyor region. The sensor oracle above is retained for tests
+            # and never participates in perception, tracking, or control.
+            chosen = max(candidates, key=lambda item: (item.confidence, item.visible_fraction))
             pending.append(chosen)
             if first_rgb is None:
                 first_rgb = rgb.copy()
@@ -833,7 +910,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             writer.append("observation", chosen.delivery_time, chosen)
             observation_count += 1
             perception_latencies.append(chosen.delivery_time.seconds - chosen.exposure_time.seconds)
-            track = tracker.update(chosen, current_time=sim_time(), encoder_speed_mps=BELT_SPEED_MPS)
+            track = tracker.update(chosen, current_time=sim_time(), encoder_speed_mps=belt_speed_mps)
             if frame_index == 0:
                 supervisor.transition(CellState.TRACK, sim_time(), "rendered_yolo26_observation_acquired")
                 flush_events()
@@ -847,12 +924,51 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             raise RuntimeError("YOLO26 track was not confirmed")
 
         mask = _mask_from_rle(first_observation.instance_mask_rle or "", first_rgb.shape[:2])
+        grasp_proposal = select_mask_grasp(
+            mask=mask,
+            depth_m=first_depth,
+            observation=first_observation,
+            track_id=track.track_id,
+            calibration=calibration,
+            surface_to_center_offset_m=PRODUCT_SURFACE_TO_CENTER_M,
+        )
+        grasp_row = int(round(grasp_proposal.grasp_point_v_px))
+        grasp_column = int(round(grasp_proposal.grasp_point_u_px))
+        grasp_point_inside_mask = bool(mask[grasp_row, grasp_column])
+        if not grasp_point_inside_mask:
+            raise RuntimeError("The selected grasp point is outside the YOLO26 instance mask")
         overlay = first_rgb.copy()
         overlay[mask] = (0.45 * overlay[mask] + 0.55 * np.asarray((36, 235, 183))).astype(np.uint8)
         overlay_image = Image.fromarray(overlay)
         draw_overlay = ImageDraw.Draw(overlay_image)
         box = first_observation.bbox
         draw_overlay.rectangle((box.x_min_px, box.y_min_px, box.x_max_px, box.y_max_px), outline=(255, 235, 92), width=3)
+        grasp_u = grasp_proposal.grasp_point_u_px
+        grasp_v = grasp_proposal.grasp_point_v_px
+        jaw_half_length_px = max(16.0, min(46.0, 0.35 * (box.y_max_px - box.y_min_px)))
+        jaw_dx = math.sin(grasp_proposal.jaw_yaw_rad) * jaw_half_length_px
+        jaw_dy = math.cos(grasp_proposal.jaw_yaw_rad) * jaw_half_length_px
+        draw_overlay.line(
+            (grasp_u - jaw_dx, grasp_v - jaw_dy, grasp_u + jaw_dx, grasp_v + jaw_dy),
+            fill=(38, 220, 255),
+            width=4,
+        )
+        draw_overlay.ellipse(
+            (grasp_u - 6, grasp_v - 6, grasp_u + 6, grasp_v + 6),
+            fill=(255, 88, 92),
+            outline=(255, 255, 255),
+            width=2,
+        )
+        label_top = max(0.0, box.y_min_px - 34.0)
+        draw_overlay.rectangle(
+            (box.x_min_px, label_top, min(639.0, box.x_min_px + 330.0), box.y_min_px),
+            fill=(8, 14, 19),
+        )
+        draw_overlay.text(
+            (box.x_min_px + 5.0, label_top + 5.0),
+            f"{grasp_proposal.grasp_class.value}  grasp={grasp_u:.0f},{grasp_v:.0f}  conf={grasp_proposal.confidence:.2f}",
+            fill=(235, 246, 250),
+        )
         overlay_image.save(output_root / "yolo26_segmentation.png")
         Image.fromarray(first_rgb).save(output_root / "overhead_rgb.png")
         finite_depth = first_depth[np.isfinite(first_depth) & (first_depth > 0.0)]
@@ -863,7 +979,10 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         depth_vis[~np.isfinite(first_depth)] = 0.0
         Image.fromarray((255.0 * (1.0 - depth_vis)).astype(np.uint8)).save(output_root / "overhead_depth.png")
         overhead_inset = np.asarray(overlay_image, dtype=np.uint8)
-        track_label = f"{track.track_id}  vx={track.twist_belt.linear_mps.x_m:.3f} m/s"
+        track_label = (
+            f"{track.track_id}  vx={track.twist_belt.linear_mps.x_m:.3f} m/s  "
+            f"{grasp_proposal.grasp_class.value}"
+        )
         set_state("plan")
         supervisor.transition(CellState.PLAN, sim_time(), "confirmed_track_predicted")
         flush_events()
@@ -871,7 +990,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         if args.scenario == "stale_observation":
             for _ in range(48):
                 apply_and_step(previous_command.copy())
-        grasp = GraspCandidate("scene2-top-grasp", track.track_id, Transform.planar(0.0, 0.0, 0.07, 0.0), 0.88, 0.025, 0.040)
+        grasp = grasp_proposal.as_candidate()
         planner = InterceptionPlanner(
             InterceptionConfig(
                 pick_x_min_m=0.275,
@@ -907,16 +1026,35 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         else:
             plan = decision.plan
             planned_intercept_x = plan.interception_pose_world.translation.x_m
+            planned_intercept_y = plan.interception_pose_world.translation.y_m
+            planned_intercept_yaw = plan.interception_pose_world.yaw_rad
             planned_intercept_time_s = plan.intercept_at.seconds
+            intercept_distance = max(0.1, calibration.camera_z_world_m - first_observation.pose_belt.translation.z_m)
+            intercept_u = calibration.cx_px + (planned_intercept_x - calibration.camera_x_world_m) / intercept_distance * calibration.fx_px
+            intercept_v = calibration.cy_px - (planned_intercept_y - calibration.camera_y_world_m) / intercept_distance * calibration.fy_px
+            draw_overlay.line((grasp_u, grasp_v, intercept_u, intercept_v), fill=(255, 235, 92), width=2)
+            draw_overlay.ellipse(
+                (intercept_u - 7, intercept_v - 7, intercept_u + 7, intercept_v + 7),
+                outline=(255, 235, 92),
+                width=3,
+            )
+            draw_overlay.text(
+                (max(2.0, intercept_u - 36.0), max(2.0, intercept_v + 10.0)),
+                "INTERCEPT",
+                fill=(255, 235, 92),
+            )
+            overlay_image.save(output_root / "yolo26_segmentation.png")
+            overhead_inset = np.asarray(overlay_image, dtype=np.uint8)
             supervisor.transition(CellState.WAIT_COMMIT, sim_time(), "timed_interception_reserved")
             supervisor.transition(CellState.INTERCEPT, sim_time(), "fanuc_trajectory_committed")
             flush_events()
             set_state("intercept")
-            intercept_tcp = np.asarray((planned_intercept_x, track.pose_belt.translation.y_m, PRODUCT_CENTER_Z_M + 0.07), dtype=float)
+            intercept_tcp = np.asarray((planned_intercept_x, planned_intercept_y, PRODUCT_CENTER_Z_M + 0.07), dtype=float)
             if args.scenario == "failed_grasp":
                 intercept_tcp[1] += 0.12
-            grasp_joints = solve_tcp("moving_intercept", intercept_tcp, ready_joints)
-            product_width_m = 0.14 * product_width_scale_at_grasp("elongated_rounded_prism", 0.82)
+            intercept_orientation = _tool_orientation(planned_intercept_yaw)
+            grasp_joints = solve_tcp("moving_intercept", intercept_tcp, ready_joints, intercept_orientation)
+            product_width_m = max(0.09, min(0.14, grasp_proposal.estimated_width_m))
             target_travel = gripper_target_travel_m(product_width_m)
             preshape_travel = max(0.0, target_travel - FINAL_GRASP_CLEARANCE_PER_JAW_M)
             preshape_target = np.asarray((-preshape_travel, preshape_travel), dtype=float)
@@ -927,6 +1065,8 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                 ready_joints_rad=ready_joints.tolist(),
                 target_joints_rad=grasp_joints.tolist(),
                 preshape_target_m=preshape_target.tolist(),
+                grasp_proposal=grasp_proposal.to_dict(),
+                trajectory_transport="Isaac articulation controller with a trajectory_msgs-compatible record",
             )
             duration = max(1.0, plan.intercept_at.seconds - sim_time().seconds)
             move("timed approach with near-width jaw preshape", np.arange(8), approach_all, duration)
@@ -944,16 +1084,17 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             last_servo_joints = grasp_joints.copy()
             while sim_time().seconds - servo_started_s < servo_duration_s:
                 servo_target_tcp = intercept_tcp + np.asarray(
-                    (BELT_SPEED_MPS * (sim_time().seconds - planned_intercept_time_s), 0.0, 0.0)
+                    (belt_speed_mps * (sim_time().seconds - planned_intercept_time_s), 0.0, 0.0)
                 )
                 last_servo_joints = solve_tcp(
                     "matched-velocity Cartesian settle",
                     servo_target_tcp,
                     last_servo_joints,
+                    intercept_orientation,
                 )
                 apply_and_step(np.concatenate((last_servo_joints, preshape_target)))
             settled_target_tcp = intercept_tcp + np.asarray(
-                (BELT_SPEED_MPS * (sim_time().seconds - planned_intercept_time_s), 0.0, 0.0)
+                (belt_speed_mps * (sim_time().seconds - planned_intercept_time_s), 0.0, 0.0)
             )
             add_trace(
                 "servo",
@@ -964,9 +1105,14 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             )
             closing_started_s = sim_time().seconds
             closing_end_tcp = intercept_tcp + np.asarray(
-                (BELT_SPEED_MPS * (closing_started_s + FINAL_CLOSE_DURATION_S - planned_intercept_time_s), 0.0, 0.0)
+                (belt_speed_mps * (closing_started_s + FINAL_CLOSE_DURATION_S - planned_intercept_time_s), 0.0, 0.0)
             )
-            closing_end_joints = solve_tcp("matched-velocity closure", closing_end_tcp, last_servo_joints)
+            closing_end_joints = solve_tcp(
+                "matched-velocity closure",
+                closing_end_tcp,
+                last_servo_joints,
+                intercept_orientation,
+            )
             close_target = np.asarray((-target_travel, target_travel), dtype=float)
             close_all = np.concatenate((closing_end_joints, close_target))
             add_trace(
@@ -984,12 +1130,13 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                 phase = min(1.0, elapsed_s / FINAL_CLOSE_DURATION_S)
                 blend = 0.5 - 0.5 * math.cos(math.pi * phase)
                 servo_target_tcp = intercept_tcp + np.asarray(
-                    (BELT_SPEED_MPS * (sim_time().seconds - planned_intercept_time_s), 0.0, 0.0)
+                    (belt_speed_mps * (sim_time().seconds - planned_intercept_time_s), 0.0, 0.0)
                 )
                 closing_end_joints = solve_tcp(
                     "matched-velocity closure servo",
                     servo_target_tcp,
                     closing_end_joints,
+                    intercept_orientation,
                 )
                 finger_command = finger_start + (close_target - finger_start) * blend
                 apply_and_step(np.concatenate((closing_end_joints, finger_command)))
@@ -1069,8 +1216,30 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                         set_state("transfer_direct")
                         cut_yaw = 0.0
                         cut_orientation = _tool_orientation(cut_yaw)
-                        cut_high_tcp = np.asarray((CUT_TARGET_CENTER_M[0], CUT_TARGET_CENTER_M[1], CUT_TARGET_CENTER_M[2] + 0.25), dtype=float)
-                        cut_high = solve_tcp("cutter high", cut_high_tcp, lift_joints, cut_orientation)
+                        reoriented_lift_joints = reorient_at_tcp(
+                            "clearance-held reorientation for cutter presentation",
+                            lift_tcp,
+                            track.pose_belt.yaw_rad,
+                            cut_yaw,
+                            max(1.2, 0.025 * abs(math.degrees(track.pose_belt.yaw_rad - cut_yaw))),
+                        )
+                        settle_robot_at_tcp("reoriented lift", lift_tcp, cut_orientation)
+                        if not grasp_retained("after clearance-held cutter reorientation"):
+                            raise RuntimeError("Grasp was lost during clearance-held cutter reorientation")
+                        cut_offset_x, cut_offset_y = _rotate_planar_offset(
+                            grasp_proposal.grasp_in_product.translation.x_m,
+                            grasp_proposal.grasp_in_product.translation.y_m,
+                            cut_yaw,
+                        )
+                        cut_high_tcp = np.asarray(
+                            (
+                                CUT_TARGET_CENTER_M[0] + cut_offset_x,
+                                CUT_TARGET_CENTER_M[1] + cut_offset_y,
+                                CUT_TARGET_CENTER_M[2] + 0.25,
+                            ),
+                            dtype=float,
+                        )
+                        cut_high = solve_tcp("cutter high", cut_high_tcp, reoriented_lift_joints, cut_orientation)
                         cut_high = move_cartesian(
                             "collision-clear Cartesian transport to cutter entrance",
                             cut_high_tcp,
@@ -1087,7 +1256,14 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                             raise RuntimeError("Cutter permissive rejected a ready direct feed")
                         flush_events()
                         set_state("align_direct")
-                        cut_tcp = np.asarray((CUT_TARGET_CENTER_M[0], CUT_TARGET_CENTER_M[1], CUT_TARGET_CENTER_M[2] + 0.07), dtype=float)
+                        cut_tcp = np.asarray(
+                            (
+                                CUT_TARGET_CENTER_M[0] + cut_offset_x,
+                                CUT_TARGET_CENTER_M[1] + cut_offset_y,
+                                CUT_TARGET_CENTER_M[2] + 0.07,
+                            ),
+                            dtype=float,
+                        )
                         cut_pose = solve_tcp("cut target", cut_tcp, cut_high, cut_orientation)
                         move_cartesian("align product to cut_target_frame", cut_tcp, cut_orientation, 1.6)
                         settle_robot_at_tcp("cut target", cut_tcp, cut_orientation)
@@ -1125,7 +1301,19 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                         raise RuntimeError("Solution B buffer rejected the nominal transfer")
                     flush_events()
                     set_state("transfer_buffer")
-                    buffer_high_tcp = np.asarray((BUFFER_TARGET_CENTER_M[0], BUFFER_TARGET_CENTER_M[1], BUFFER_TARGET_CENTER_M[2] + 0.24), dtype=float)
+                    buffer_offset_x, buffer_offset_y = _rotate_planar_offset(
+                        grasp_proposal.grasp_in_product.translation.x_m,
+                        grasp_proposal.grasp_in_product.translation.y_m,
+                        track.pose_belt.yaw_rad,
+                    )
+                    buffer_high_tcp = np.asarray(
+                        (
+                            BUFFER_TARGET_CENTER_M[0] + buffer_offset_x,
+                            BUFFER_TARGET_CENTER_M[1] + buffer_offset_y,
+                            BUFFER_TARGET_CENTER_M[2] + 0.24,
+                        ),
+                        dtype=float,
+                    )
                     buffer_high = solve_tcp("buffer high", buffer_high_tcp, lift_joints)
                     buffer_high = move_cartesian(
                         "collision-clear Cartesian carry to Solution B buffer",
@@ -1136,7 +1324,14 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                     settle_robot_at_tcp("buffer high", buffer_high_tcp, _tool_orientation(track.pose_belt.yaw_rad))
                     if not grasp_retained("after Cartesian buffer transport"):
                         raise RuntimeError("Grasp was lost during the collision-clear buffer transport")
-                    buffer_tcp = np.asarray((BUFFER_TARGET_CENTER_M[0], BUFFER_TARGET_CENTER_M[1], BUFFER_TARGET_CENTER_M[2] + 0.07), dtype=float)
+                    buffer_tcp = np.asarray(
+                        (
+                            BUFFER_TARGET_CENTER_M[0] + buffer_offset_x,
+                            BUFFER_TARGET_CENTER_M[1] + buffer_offset_y,
+                            BUFFER_TARGET_CENTER_M[2] + 0.07,
+                        ),
+                        dtype=float,
+                    )
                     buffer_pose_joints = solve_tcp("buffer release", buffer_tcp, buffer_high)
                     move_cartesian(
                         "vertical descent into buffer",
@@ -1431,8 +1626,18 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                         flush_events()
                         set_state("feed_buffer")
                         cut_orientation = _tool_orientation(0.0)
+                        reoriented_buffer_lift = reorient_at_tcp(
+                            "clearance-held buffer reorientation for cutter presentation",
+                            buffer_lift_tcp,
+                            observed.pose_belt.yaw_rad,
+                            0.0,
+                            max(1.2, 0.025 * abs(math.degrees(observed.pose_belt.yaw_rad))),
+                        )
+                        settle_robot_at_tcp("reoriented buffer lift", buffer_lift_tcp, cut_orientation)
+                        if not grasp_retained("after clearance-held buffer reorientation"):
+                            raise RuntimeError("Corrected grasp was lost during buffer reorientation")
                         cut_high_tcp = np.asarray((CUT_TARGET_CENTER_M[0], CUT_TARGET_CENTER_M[1], CUT_TARGET_CENTER_M[2] + 0.25), dtype=float)
-                        cut_high = solve_tcp("buffer to cutter high", cut_high_tcp, buffer_lift, cut_orientation)
+                        cut_high = solve_tcp("buffer to cutter high", cut_high_tcp, reoriented_buffer_lift, cut_orientation)
                         cut_high = move_cartesian(
                             "Cartesian transport of corrected product to cutter",
                             cut_high_tcp,
@@ -1479,6 +1684,26 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             recorder.close()
         except Exception:
             pass
+        (output_root / "cycle_trace_summary.json").write_text(
+            json.dumps(trace, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        (output_root / "robot_joint_trajectory.json").write_text(
+            json.dumps(
+                {
+                    "message_type": "trajectory_msgs/msg/JointTrajectory compatible partial failure evidence",
+                    "action_boundary": "/carve/arm_controller/follow_joint_trajectory",
+                    "joint_names": list(expected_dofs[:6]),
+                    "clock": "Isaac simulation time",
+                    "samples": trajectory_samples,
+                    "moveit_runtime_executed": False,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
         raise
 
     all_steps = np.asarray(product_positions, dtype=float)
@@ -1488,7 +1713,35 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
     bilateral_contact = all(any(product_path in pair for pair in pairs) for pairs in contact_pairs)
     unexpected_contact_pairs = sorted({pair for pairs in contact_pairs for pair in pairs if product_path not in pair})
     final_position, final_orientation = product_pose()
+    if not trajectory_samples or trajectory_samples[-1]["time_from_start_s"] < float(world.current_time):
+        trajectory_samples.append(
+            {
+                "time_from_start_s": float(world.current_time),
+                "positions_rad": previous_command[:6].tolist(),
+                "velocities_radps": previous_velocity[:6].tolist(),
+                "source": "isaac_articulation_controller",
+            }
+        )
+    trajectory_path = output_root / "robot_joint_trajectory.json"
+    trajectory_document = {
+        "message_type": "trajectory_msgs/msg/JointTrajectory compatible evidence",
+        "action_boundary": "/carve/arm_controller/follow_joint_trajectory",
+        "joint_names": list(expected_dofs[:6]),
+        "clock": "Isaac simulation time",
+        "samples": trajectory_samples,
+        "moveit_runtime_executed": False,
+        "limitation": "control_msgs and a live MoveIt process are not installed on this workstation",
+    }
+    trajectory_path.write_text(json.dumps(trajectory_document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    trajectory_monotonic = all(
+        right["time_from_start_s"] > left["time_from_start_s"]
+        for left, right in zip(trajectory_samples, trajectory_samples[1:])
+    )
+    trajectory_endpoint_error_rad = float(
+        np.max(np.abs(np.asarray(trajectory_samples[-1]["positions_rad"], dtype=float) - previous_command[:6]))
+    )
     expected_success = args.scenario in {"nominal", "slip_correction"}
+    minimum_trajectory_samples = 100 if expected_success else 50
     terminal_ok = delivered if expected_success else supervisor.state is CellState.IDLE and not delivered
     perception_gate = perceived and tracked and model.model_name.startswith("ultralytics_yolo26")
     delivery_gate = (
@@ -1506,10 +1759,21 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         and joint_limit_violations == 0
         and velocity_limit_violations == 0
         and acceleration_limit_violations == 0
-        and maximum_conveyor_step_m <= BELT_SPEED_MPS / 60.0 * 1.20
+        and maximum_conveyor_step_m <= belt_speed_mps / 60.0 * 1.20
         and minimum_precontact_pad_clearance_m >= MIN_PAD_CLEARANCE_M
         and not unexpected_contact_pairs
         and delivery_gate
+        and grasp_point_inside_mask
+        and grasp_proposal.confidence >= 0.20
+        and len(trajectory_samples) >= minimum_trajectory_samples
+        and trajectory_monotonic
+        and trajectory_endpoint_error_rad <= 1e-6
+        and (
+            not expected_success
+            or actual_intercept_time_s is not None
+            and planned_intercept_time_s is not None
+            and abs(actual_intercept_time_s - planned_intercept_time_s) <= 0.12
+        )
         and (args.scenario != "slip_correction" or slip_detected)
         and (
             not expected_success
@@ -1554,7 +1818,13 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         "initial_product_pose_sets_before_recording": initial_product_teleports,
         "product_pose_sets_after_confirmed_grasp": 0,
         "physics_dt_s": 1.0 / PHYSICS_HZ,
-        "belt_speed_mps": BELT_SPEED_MPS,
+        "belt_speed_mps": belt_speed_mps,
+        "initial_pose": {
+            "x_m": start_x,
+            "y_m": start_y,
+            "yaw_rad": start_yaw,
+            "yaw_deg": math.degrees(start_yaw),
+        },
         "slip_detected": slip_detected,
         "buffer_sensor_oracle_position_error_m": buffer_sensor_oracle_position_error_m,
         "perception": {
@@ -1566,6 +1836,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             "confidence": first_observation.confidence if first_observation else None,
             "track_id": track.track_id if track else None,
             "track_velocity_mps": track.twist_belt.linear_mps.x_m if track else None,
+            "track_speed_error_mps": abs(track.twist_belt.linear_mps.x_m - belt_speed_mps) if track else None,
             "latency_s": perception_latencies,
             "rgb_nonempty": True,
             "depth_nonempty": True,
@@ -1575,12 +1846,17 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         },
         "interception": {
             "planned_x_m": planned_intercept_x,
+            "planned_y_m": planned_intercept_y,
+            "planned_yaw_rad": planned_intercept_yaw,
             "planned_time_s": planned_intercept_time_s,
             "actual_time_s": actual_intercept_time_s,
             "timing_error_s": abs(actual_intercept_time_s - planned_intercept_time_s) if actual_intercept_time_s is not None and planned_intercept_time_s is not None else None,
             "maximum_conveyor_step_m": maximum_conveyor_step_m,
         },
         "grasp": {
+            "proposal": grasp_proposal.to_dict(),
+            "point_inside_instance_mask": grasp_point_inside_mask,
+            "commanded_product_width_m": product_width_m if decision.accepted and decision.plan is not None else None,
             "bilateral_contact": bilateral_contact,
             "peak_contact_force_n": peak_contact_forces.tolist(),
             "unexpected_contact_pairs": unexpected_contact_pairs,
@@ -1607,6 +1883,29 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             "max_command_acceleration": dict(zip(expected_dofs, max_acceleration.tolist(), strict=True)),
             "minimum_precontact_pad_clearance_m": minimum_precontact_pad_clearance_m,
             "maximum_product_step_m": maximum_product_step_m,
+            "trajectory_transport": "Isaac articulation controller sampled at 240 Hz",
+            "trajectory_schema": "trajectory_msgs/msg/JointTrajectory compatible evidence",
+            "trajectory_samples": len(trajectory_samples),
+            "trajectory_time_monotonic": trajectory_monotonic,
+            "trajectory_endpoint_error_rad": trajectory_endpoint_error_rad,
+            "trajectory_path": str(trajectory_path),
+            "moveit_runtime_executed": False,
+            "follow_joint_trajectory_boundary": "/carve/arm_controller/follow_joint_trajectory",
+        },
+        "acceptance_criteria": {
+            "configured_belt_speed_range_mps": [0.04, 0.30],
+            "configured_lateral_range_m": [-0.09, 0.09],
+            "configured_yaw_range_deg": [-85.0, 85.0],
+            "grasp_point_inside_mask_required": True,
+            "minimum_grasp_classifier_confidence": 0.20,
+            "minimum_trajectory_samples": minimum_trajectory_samples,
+            "maximum_intercept_timing_error_s": 0.12,
+            "maximum_delivery_position_error_m": 0.055,
+            "maximum_delivery_angle_error_deg": 7.0,
+            "maximum_delivery_speed_mps": 0.10,
+            "bilateral_contact_required": True,
+            "minimum_lift_m": 0.10,
+            "joint_velocity_acceleration_limit_violations_allowed": 0,
         },
         "state_sequence": [item["state"] for item in trace if item["kind"] == "state"],
         "sequence": sequence,

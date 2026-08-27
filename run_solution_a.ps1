@@ -2,6 +2,12 @@ param(
     [int]$Seed = 2601,
     [ValidateSet("nominal", "failed_grasp", "cutter_unavailable", "emergency_stop", "stale_observation")]
     [string]$Scenario = "nominal",
+    [ValidateRange(0.04, 0.30)]
+    [double]$BeltSpeedMps = 0.10,
+    [ValidateRange(-0.09, 0.09)]
+    [double]$StartYM = 0.0,
+    [ValidateRange(-85.0, 85.0)]
+    [double]$StartYawDeg = 0.0,
     [string]$OutputRoot = ""
 )
 
@@ -21,7 +27,7 @@ $env:OMNI_KIT_ACCEPT_EULA = "YES"
 $env:PYTHONPATH = "C:\Users\jainl\is6\Lib\site-packages"
 Push-Location -LiteralPath $projectRoot
 try {
-    & $isaacPython isaac_sim\run_scene2_integrated.py --solution a --seed $Seed --scenario $Scenario --output-root $OutputRoot --fps 12
+    & $isaacPython isaac_sim\run_scene2_integrated.py --solution a --seed $Seed --scenario $Scenario --belt-speed-mps $BeltSpeedMps --start-y-m $StartYM --start-yaw-deg $StartYawDeg --output-root $OutputRoot --fps 12
     if ($LASTEXITCODE -ne 0) { throw "Isaac Sim process failed with exit code $LASTEXITCODE" }
     $metricsPath = Join-Path $OutputRoot "scene2_integrated_metrics.json"
     if (-not (Test-Path -LiteralPath $metricsPath)) { throw "Integrated metrics were not written" }

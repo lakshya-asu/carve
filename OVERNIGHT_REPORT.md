@@ -1122,6 +1122,96 @@ The renderer also reports low-resolution DLSS, host-copy performance, and initia
 
 The complete Isaac Sim pipeline is runnable under documented assumptions. The exact next software integration task is to commission an external ROS 2 and MoveIt `FollowJointTrajectory` environment against the tested core-message bridge. This requires an existing authorized ROS 2 and MoveIt environment. It was not installed during this build.
 
+## Variable-speed, grasp-selection, and trajectory hardening: 2026-08-27
+
+### Scope
+
+This pass added variable belt speed, lateral position, yaw-aware grasp selection, a visible grasp overlay, product-relative placement compensation, a standard JointTrajectory transport, a broader simulator matrix, and fresh recovery videos. All Isaac runs were headless and sequential. Each launcher closed its Isaac or Kit process before the next run.
+
+### Exact commands
+
+```powershell
+.\run_solution_a.ps1 -Seed 3101 -Scenario nominal -BeltSpeedMps 0.06 -StartYM -0.06 -StartYawDeg -35 -OutputRoot results/speed_pose_matrix/final_20260827_v2/slow_diagonal_right
+.\run_solution_a.ps1 -Seed 3102 -Scenario nominal -BeltSpeedMps 0.10 -StartYM 0.04 -StartYawDeg 0 -OutputRoot results/speed_pose_matrix/final_20260827_v2/nominal_longitudinal
+.\run_solution_a.ps1 -Seed 3103 -Scenario nominal -BeltSpeedMps 0.14 -StartYM -0.03 -StartYawDeg 32 -OutputRoot results/speed_pose_matrix/final_20260827_v2/medium_diagonal_left
+.\run_solution_a.ps1 -Seed 3104 -Scenario nominal -BeltSpeedMps 0.18 -StartYM 0.05 -StartYawDeg 68 -OutputRoot results/speed_pose_matrix/final_20260827_v2/fast_transverse
+.\run_solution_a.ps1 -Seed 3105 -Scenario nominal -BeltSpeedMps 0.22 -StartYM -0.05 -StartYawDeg -72 -OutputRoot results/speed_pose_matrix/final_20260827_v2/maximum_validated_transverse
+.\run_solution_b.ps1 -Seed 3110 -Scenario slip_correction -BeltSpeedMps 0.16 -StartYM 0.03 -StartYawDeg 28 -OutputRoot results/speed_pose_matrix/final_20260827_v2/solution_b_slip_correction
+.\run_solution_a.ps1 -Seed 3120 -Scenario failed_grasp -BeltSpeedMps 0.18 -StartYM -0.02 -StartYawDeg 45 -OutputRoot results/speed_pose_failures/failed_grasp_fast
+.\run_solution_a.ps1 -Seed 3121 -Scenario cutter_unavailable -BeltSpeedMps 0.14 -StartYM 0.02 -StartYawDeg -25 -OutputRoot results/speed_pose_failures/cutter_unavailable
+.\run_solution_a.ps1 -Seed 3122 -Scenario stale_observation -BeltSpeedMps 0.10 -StartYM -0.03 -StartYawDeg 20 -OutputRoot results/speed_pose_failures/stale_observation
+.\run_solution_a.ps1 -Seed 3123 -Scenario emergency_stop -BeltSpeedMps 0.16 -StartYM 0.01 -StartYawDeg 38 -OutputRoot results/speed_pose_failures/emergency_stop
+```
+
+The reusable one-command matrix entry is:
+
+```powershell
+.\run_speed_pose_matrix.ps1 -IncludeSolutionB
+```
+
+### Nominal and slip matrix results
+
+| Case | Solution | Speed | Start Y | Yaw | Grasp class | YOLO confidence | Grasp confidence | Intercept error | Placement error | Result |
+| --- | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | --- |
+| Slow diagonal | A | 0.06 m/s | -60 mm | -35 deg | diagonal right | 0.4702 | 0.8713 | 18.3 ms | 19.8 mm | passed |
+| Nominal longitudinal | A | 0.10 m/s | 40 mm | 0 deg | longitudinal | 0.2887 | 0.8703 | 4.4 ms | 10.8 mm | passed |
+| Medium diagonal | A | 0.14 m/s | -30 mm | 32 deg | diagonal left | 0.2534 | 0.8708 | 18.2 ms | 11.6 mm | passed |
+| Fast transverse | A | 0.18 m/s | 50 mm | 68 deg | transverse | 0.0156 | 0.8687 | 7.6 ms | 10.4 mm | passed |
+| High-speed transverse | A | 0.22 m/s | -50 mm | -72 deg | transverse | 0.1801 | 0.8650 | 16.0 ms | 11.2 mm | passed |
+| Forced slip correction | B | 0.16 m/s | 30 mm | 28 deg | diagonal left | 0.4137 | 0.8714 | 12.4 ms | 20.7 mm | passed |
+
+All six cases had bilateral contact, more than 177 mm lift, a mask-interior grasp point, a reloadable USD stage, monotonic trajectory evidence, nonempty video, and zero joint, velocity, or acceleration violations. The five Solution A videos contain 189 to 255 rendered frames. The Solution B video contains 346 rendered frames and 861 recorded trajectory samples.
+
+### Recovery results
+
+| Scenario | Expected state path | Delivered | Contact | Video frames | Result |
+| --- | --- | ---: | ---: | ---: | --- |
+| failed grasp | plan, intercept, recover, idle | no | no | 75 | passed |
+| cutter unavailable | plan, intercept, verify grasp, reject, idle | no | yes | 128 | passed |
+| stale observation | plan, recover, idle | no | no | 28 | passed |
+| emergency stop | plan, intercept, verify grasp, safe stop, idle | no | yes | 105 | passed |
+
+### Failures found and fixed
+
+1. A mask-clearance plateau selected the first equally valid pixel. On a longitudinal product this created a 109 mm product-relative offset and the grasp was lost during lift. `mask_pca_clearance_v2` keeps candidates within 90 percent of maximum clearance, then chooses the most central one. The same seed passed with a 71 mm maximum product-to-tool distance.
+2. An off-center thick-region grasp placed the tool center at the cutter center and left the product center 89 mm away. Cutter and buffer TCP targets now compensate for the measured product-relative grasp transform. The repeated slow case passed at 10.4 mm in the focused rerun and 19.8 mm in the final matrix output.
+3. A high-yaw transport changed tool orientation too abruptly and lost the product. Reorientation now interpolates tool yaw while feedback IK holds the TCP at clearance height. The -72 degree, 0.22 m/s case passed.
+4. The 68 degree frame produced no YOLO proposal at the former 0.05 threshold. Raw inference showed valid proposals at 0.01599 and 0.01471. The runtime proposal threshold is now 0.01. Detection confidence remains in metrics and the low value is presented as a retraining priority.
+5. A permissive threshold also exposed masks on robot geometry. Candidate selection formerly used the simulator product pose to choose the nearest detection. That hidden oracle dependency was removed. The runner now filters candidates with the calibrated conveyor X, Y, and product-height volume and chooses the highest-confidence valid proposal.
+6. Early stale-observation recovery produced 69 valid trajectory samples and failed a nominal-only 100-sample threshold. Expected recovery now requires 50 samples, while successful delivery still requires 100. No motion or delivery tolerance was weakened.
+
+### Visual and machine-readable evidence
+
+The public page contains six successful simulator videos, four recovery videos, posters, and six grasp overlays under `assets/project_page/speed_pose`. `matrix_summary.json` records the page metrics and the simulation-only warning. The overlay shows the YOLO-derived mask, bounding box, selected grasp point, jaw axis, grasp class, classifier confidence, and predicted intercept.
+
+Every integrated result contains a saved USDA stage, RGB, metric depth array and preview, YOLO overlay, JSON Lines event trace, summarized trace, JointTrajectory-compatible articulation record, metrics, and MP4. Solution B also contains buffer RGB and depth.
+
+### Remaining blockers and exact next work
+
+The 0.0156 YOLO confidence at 68 degrees is the clearest perception weakness. The next perception task is to add transverse and partially occluded simulator images, then train and compare a new checkpoint without lowering the pass gates. Real annotated camera data is still required before claiming a useful physical detector.
+
+The exact external motion task remains a live `control_msgs/action/FollowJointTrajectory` server connected to MoveIt in an authorized ROS 2 environment. The current ROS bridge accepts standard JointTrajectory messages, and the internal Isaac trajectory is fully recorded, but MoveIt did not generate or execute these paths.
+
+Physical product mechanics, wet friction, compliant pad behavior, cutter I/O, OEM controller limits, food safety, and safety-rated stopping remain external data and engineering blockers. No physical, OEM, food-safety, real-cell safety, or production claim is made.
+
+### Final clean release gate
+
+The final complete command passed:
+
+```powershell
+.\run_tests.ps1
+```
+
+Evidence is `results/full_suite/20260827_114303264`. It reported 161 Python tests passed. Setup, fixed-step physics, saved-stage reload, compliant gripper, rendered RGB and depth, ROS publication, strict command rejection, standard JointTrajectory execution, Solution A, Solution B, and both nominal artifact audits passed. The ROS probe published one trajectory. The bridge accepted and completed it, applied 113 sampled commands through the articulation controller, and finished with 0.000842 rad maximum joint error.
+
+The documented matrix command also passed as one uninterrupted entry point:
+
+```powershell
+.\run_speed_pose_matrix.ps1 -IncludeSolutionB -OutputRoot results/speed_pose_matrix/release_20260827
+```
+
+Its machine-readable summary is `results/speed_pose_matrix/release_20260827/matrix_summary.json`. All six rows passed. Placement errors were 10.43 to 17.42 mm and intercept errors were 5.41 to 15.60 ms in that release execution. No Isaac or Kit process remained afterward.
+
 T015 remains blocked on real inputs: representative workpieces, real annotated camera data, lens calibration, conveyor timing and encoder logs, measured friction and tissue deformation, production gripper tests, cutter PLC traces, OEM controller limits, hygienic design review, machine safety engineering, and physical commissioning. The project does not claim OEM fidelity, physical accuracy, food-safety validation, real-cell safety validation, or production readiness.
 
 ### Final clean suite

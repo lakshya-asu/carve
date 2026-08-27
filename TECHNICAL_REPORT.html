@@ -190,9 +190,17 @@
     .timeline-item::before { content: ""; position: absolute; left: -1.7rem; top: .75rem; width: .55rem; height: .55rem; border-radius: 50%; background: var(--cyan); }
     .timeline time { color: var(--cyan); font-variant-numeric: tabular-nums; }
     .timeline p { margin: 0; color: var(--muted); }
+    .speed-feature { display: grid; grid-template-columns: 1.2fr .8fr; gap: 1rem; margin-top: 1.2rem; }
+    .speed-feature img { width: 100%; height: auto; }
+    .speed-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; margin-top: .75rem; }
+    .speed-gallery article { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .speed-gallery video { width: 100%; aspect-ratio: 16/9; object-fit: contain; }
+    .speed-gallery strong, .speed-gallery span { display: block; padding: 0 .85rem; }
+    .speed-gallery strong { margin-top: .7rem; }
+    .speed-gallery span { padding-bottom: .8rem; color: var(--muted); font-size: .82rem; }
     footer { padding: 42px 0 62px; color: var(--muted); border-top: 1px solid var(--line); }
     @media (max-width: 960px) {
-      .hero-grid, .section-head, .two-col, .three-col, .recipe-visuals { grid-template-columns: 1fr; }
+      .hero-grid, .section-head, .two-col, .three-col, .recipe-visuals, .speed-feature { grid-template-columns: 1fr; }
       .stat-grid { grid-template-columns: repeat(2, 1fr); }
       .pipeline { grid-template-columns: repeat(3, 1fr); }
       .pipe-step:nth-child(3)::after { display: none; }
@@ -202,7 +210,7 @@
       .shell { width: min(100% - 20px, 1240px); }
       header { padding-top: 54px; }
       section { padding: 46px 0; }
-      .stat-grid, .media-grid, .file-map, .pipeline { grid-template-columns: 1fr; }
+      .stat-grid, .media-grid, .file-map, .pipeline, .speed-gallery { grid-template-columns: 1fr; }
       .pipe-step::after { display: none; }
       .bar-row { grid-template-columns: 1fr; }
       .bar-value { text-align: left; }
@@ -230,6 +238,7 @@
         <a href="#control">Control</a>
         <a href="#vision">YOLO26</a>
         <a href="#evidence">Evidence</a>
+        <a href="#speed-envelope">Speed envelope</a>
         <a href="#implementation">Implementation</a>
       </nav>
     </div>
@@ -610,6 +619,47 @@
       </div>
     </section>
 
+    <section class="shell" id="speed-envelope">
+      <div class="section-head">
+        <h2>Variable speed, pose, and grasp selection</h2>
+        <p>This is the current executed envelope, not a configured-limit claim. Five Solution A runs cover 0.06 to 0.22 m/s, lateral starts from -60 to 50 mm, and product yaw from -72 to 68 degrees. A sixth Solution B run adds buffer re-observation and forced slip correction.</p>
+      </div>
+      <div class="speed-feature">
+        <article class="panel">
+          <video controls preload="metadata" poster="assets/project_page/speed_pose/high_speed_transverse_poster.png">
+            <source src="assets/project_page/speed_pose/high_speed_transverse.mp4" type="video/mp4">
+          </video>
+          <div class="panel-body"><strong>High-speed transverse cycle</strong><p class="metric-note">0.22 m/s, -72 degrees, bilateral contact, 177.0 mm lift, 16.0 ms intercept timing error, and 11.2 mm placement error.</p></div>
+        </article>
+        <article class="panel">
+          <img class="evidence-image" src="assets/project_page/speed_pose/fast_transverse_grasp.png" width="640" height="480" alt="YOLO mask and bounding box with grasp point, jaw axis, and intercept marker">
+          <div class="panel-body"><strong>What the robot receives</strong><p class="metric-note">The green region is the YOLO-derived product mask. Yellow marks the box and predicted intercept. Red is the selected image point. Cyan is the jaw axis. The same typed proposal sets the robot intercept pose, tool yaw, and jaw width.</p></div>
+        </article>
+      </div>
+      <div class="table-wrap" style="margin-top:1rem">
+        <table>
+          <thead><tr><th>Case</th><th>Speed</th><th>Yaw</th><th>Grasp</th><th>Timing</th><th>Placement</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>Slow diagonal</td><td>0.06 m/s</td><td>-35 deg</td><td>Diagonal right</td><td>18.3 ms</td><td>19.8 mm</td><td>Pass</td></tr>
+            <tr><td>Nominal</td><td>0.10 m/s</td><td>0 deg</td><td>Longitudinal</td><td>4.4 ms</td><td>10.8 mm</td><td>Pass</td></tr>
+            <tr><td>Medium diagonal</td><td>0.14 m/s</td><td>32 deg</td><td>Diagonal left</td><td>18.2 ms</td><td>11.6 mm</td><td>Pass</td></tr>
+            <tr><td>Fast transverse</td><td>0.18 m/s</td><td>68 deg</td><td>Transverse</td><td>7.6 ms</td><td>10.4 mm</td><td>Pass</td></tr>
+            <tr><td>High-speed transverse</td><td>0.22 m/s</td><td>-72 deg</td><td>Transverse</td><td>16.0 ms</td><td>11.2 mm</td><td>Pass</td></tr>
+            <tr><td>Solution B slip</td><td>0.16 m/s</td><td>28 deg</td><td>Diagonal left</td><td>12.4 ms</td><td>20.7 mm</td><td>Pass</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warning" style="margin-top:1rem"><strong>Perception boundary found by the test</strong><p>The 68 degree case produced only 0.0156 YOLO confidence on its first accepted frame. The pipeline still passed because YOLO produced a valid proposal and the calibrated product-height filter rejected robot geometry. This low score is not hidden. Transverse-angle training data and real camera images are the next perception priority.</p></div>
+      <div class="speed-gallery">
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/slow_diagonal_right_poster.png"><source src="assets/project_page/speed_pose/slow_diagonal_right.mp4" type="video/mp4"></video><strong>Slow diagonal</strong><span>0.06 m/s</span></article>
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/nominal_longitudinal_poster.png"><source src="assets/project_page/speed_pose/nominal_longitudinal.mp4" type="video/mp4"></video><strong>Nominal longitudinal</strong><span>0.10 m/s</span></article>
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/medium_diagonal_left_poster.png"><source src="assets/project_page/speed_pose/medium_diagonal_left.mp4" type="video/mp4"></video><strong>Medium diagonal</strong><span>0.14 m/s</span></article>
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/fast_transverse_poster.png"><source src="assets/project_page/speed_pose/fast_transverse.mp4" type="video/mp4"></video><strong>Fast transverse</strong><span>0.18 m/s</span></article>
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/solution_b_slip_poster.png"><source src="assets/project_page/speed_pose/solution_b_slip.mp4" type="video/mp4"></video><strong>Solution B</strong><span>0.16 m/s with slip correction</span></article>
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/emergency_stop_poster.png"><source src="assets/project_page/speed_pose/emergency_stop.mp4" type="video/mp4"></video><strong>Emergency stop</strong><span>Expected safe-stop recovery</span></article>
+      </div>
+    </section>
+
     <section class="shell" id="implementation">
       <div class="section-head">
         <h2>Where the implementation lives</h2>
@@ -626,6 +676,8 @@
         <div class="file"><code>meatcell/tracking.py</code><p>Associates observations, maintains lifecycle and covariance, fuses conveyor speed, and predicts future state.</p></div>
         <div class="file"><code>meatcell/interception.py</code><p>Evaluates candidate times and rejects stale, late, uncertain, unreachable, or unsafe plans.</p></div>
         <div class="file"><code>meatcell/grasp.py</code><p>Separates capture, hold, damage proxy, slip estimate, and corrected product pose.</p></div>
+        <div class="file"><code>meatcell/grasp_selection.py</code><p>Classifies product orientation and selects a central high-clearance image point from the YOLO mask. It publishes the typed grasp proposal used by the robot.</p></div>
+        <div class="file"><code>meatcell/trajectory.py</code><p>Validates and samples standard six-joint trajectories using simulation time. The ROS bridge accepts JointTrajectory messages; live MoveIt action execution remains outside the tested boundary.</p></div>
         <div class="file"><code>meatcell/solutions.py</code><p>Implements Solution A direct feed, Solution B buffer flow, delivery tolerances, and PLC permissive sequence handling.</p></div>
         <div class="file"><code>meatcell/supervisor.py</code><p>Enforces legal state transitions and explicit success, reject, recovered, safe-stop, and partial terminal paths.</p></div>
       </div>
@@ -642,6 +694,9 @@
 
 # Run both final integrated cycles
 .\run_scene2_full.ps1
+
+# Run the speed, pose, grasp, and Solution B slip matrix
+.\run_speed_pose_matrix.ps1 -IncludeSolutionB
 
 # Run a product recipe through either architecture
 .\run_recipe.ps1 -Recipe beef_center_cut_tenderloin -Solution a

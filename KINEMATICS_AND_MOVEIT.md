@@ -122,7 +122,15 @@ The focused ROS gate does not test MoveIt, a trajectory action server, stale tra
 
 The complete conveyor interception task is nevertheless validated inside Isaac Sim through the internal Lula and articulation path described above. This is separate from, and does not imply, MoveIt validation.
 
-The next gate implements the standard trajectory action bridge, builds the FANUC MoveIt configuration in an existing ROS 2 environment, and replaces the probe command with a collision-checked trajectory.
+## Standard trajectory transport now implemented
+
+`meatcell/trajectory.py` defines a strict six-joint trajectory contract and a simulation-clock sampler. `isaac_sim/scene2_ros_bridge.py` subscribes to `/carve/arm_controller/joint_trajectory` using `trajectory_msgs/msg/JointTrajectory`. It rejects incomplete or reordered names, nonfinite values, nonmonotonic timestamps, and limit violations. Accepted trajectories are sampled from Isaac simulation time and sent to the actual FANUC articulation controller.
+
+The integrated task runner saves the articulation commands it actually executed to `robot_joint_trajectory.json`. This proves trajectory shape, timestamp order, endpoint agreement, and articulation execution. It is compatible evidence, not a claim that MoveIt generated the path.
+
+The focused ROS gate now publishes one standard JointTrajectory over DDS. The bridge accepted and completed it, sampled 113 commands against the Isaac clock, applied them through the actual FANUC articulation controller, and reached 0.000842 rad maximum final joint error. Evidence is `results/full_suite/20260827_114303264/scene2/scene2_validation.json`.
+
+The next external gate adds `control_msgs/action/FollowJointTrajectory`, starts a real MoveIt process in an authorized ROS 2 environment, builds the FANUC planning scene, and replaces at least one internal transit path with a collision-checked MoveIt result. That external gate remains open.
 
 ## Sources
 

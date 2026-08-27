@@ -413,6 +413,22 @@ The workstation user accepted the NVIDIA EULA and explicitly authorized headless
 
 The simulator may demonstrate software behavior under its assumptions. It cannot validate food safety, real-cell safety, OEM fidelity, physical accuracy, or production readiness.
 
+## Variable-speed vision and grasp update, 2026-08-27
+
+The current Scene 2 integrated runner accepts a belt speed from 0.04 to 0.30 m/s, a lateral start from -0.09 to 0.09 m, and a product yaw from -85 to 85 degrees. These are configured limits. The executed acceptance matrix covers 0.06 to 0.22 m/s, -0.06 to 0.05 m lateral start, and -72 to 68 degrees. No claim is made outside that demonstrated matrix.
+
+The overhead camera renders RGB and metric depth. YOLO26 proposes one or more instance masks. A calibrated conveyor volume filter removes detections outside the product layer using only camera-derived X, Y, and Z. It does not use the ground-truth product pose. A pork-color connected-component refinement may trim a YOLO proposal to the visible product, but it cannot create a detection when YOLO returns none. The simulator product pose is logged only as an oracle for later error checks.
+
+`meatcell/grasp_selection.py` converts the accepted mask into `VisionGraspProposal`. The proposal contains the track ID, classifier name, grasp class, image point, belt pose, product-relative transform, jaw yaw, approach vector, estimated width, boundary clearance, capture margin, quality, and confidence. The geometric classifier labels longitudinal, diagonal left, diagonal right, or transverse orientation. It keeps candidates near maximum mask clearance, then selects the most central safe point. This reduces the product-to-tool lever arm while preserving interior clearance.
+
+The same proposal drives the visible overlay, interception planner, gripper width, tool yaw, and product-center placement compensation. The overlay uses a green mask, yellow bounding box, red grasp point, cyan jaw axis, and yellow predicted intercept. The controller compensates for the measured product-relative grasp offset when it presents the product to `cut_target_frame`.
+
+The robot command path records the actual six-joint articulation samples in `robot_joint_trajectory.json`. The document uses standard JointTrajectory joint names, positions, velocities, and simulation-relative timestamps. `scene2_ros_bridge.py` also accepts `trajectory_msgs/msg/JointTrajectory`, validates exact joint order, monotonic time, finite values, and limits, then samples the trajectory using the Isaac clock. A live `FollowJointTrajectory` action server and external MoveIt planner remain untested because `control_msgs` and MoveIt are not installed.
+
+Each nominal acceptance case requires nonempty RGB and depth, a YOLO-derived mask, an interior grasp point, classifier confidence of at least 0.20, a confirmed track, intercept timing error at most 0.12 s, bilateral contact, at least 0.10 m lift, product retention within 0.13 m of the tool, delivery position error at most 0.055 m, delivery angle error at most 7 degrees, stationary speed error at most 0.10 m/s, at least 100 trajectory samples, monotonic trajectory time, stage reload, nonempty video, and zero joint, velocity, or acceleration violations.
+
+Expected failure cases use a different terminal rule. They must detect the injected condition, avoid a false delivery, execute the specified recovery, produce at least 50 trajectory samples, and return to idle or safe stop as appropriate. Current executed cases cover failed grasp, cutter unavailable, stale observation, emergency stop, and Solution B slip correction.
+
 ## Scene 2.0 FANUC cell
 
 Scene 2.0 is built by `isaac_sim/scene2_builder.py` and exercised by `isaac_sim/run_scene2.py`. It references the project-local USD conversion of the official FANUC `m10_12_14d` description. The articulation has joints J1 through J6 under one Isaac articulation root. The cell builder adds the conveyor, recipe-shaped workpieces, gripper reference, fixed RGBD camera, photoeye, cutter-entry tray, reject bin, guards, PLC attributes, lighting, and named frames.

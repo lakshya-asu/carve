@@ -37,7 +37,7 @@ def parse_page() -> tuple[str, PageParser]:
 
 def test_project_page_has_required_views_and_sections() -> None:
     text, parser = parse_page()
-    for anchor in {"top", "views", "demo", "system", "results", "run"}:
+    for anchor in {"top", "views", "demo", "envelope", "system", "results", "run"}:
         assert anchor in parser.ids
     for phrase in {
         "YOLO26",
@@ -66,11 +66,31 @@ def test_project_page_local_references_exist() -> None:
 
 def test_project_page_publishes_both_final_scene2_recordings() -> None:
     text, parser = parse_page()
-    assert parser.video_sources == [
+    assert parser.video_sources[:2] == [
         "assets/project_page/scene2_solution_a.mp4",
         "assets/project_page/scene2_solution_b.mp4",
     ]
+    assert len(parser.video_sources) >= 12
+    for required in {
+        "assets/project_page/speed_pose/slow_diagonal_right.mp4",
+        "assets/project_page/speed_pose/fast_transverse.mp4",
+        "assets/project_page/speed_pose/high_speed_transverse.mp4",
+        "assets/project_page/speed_pose/solution_b_slip.mp4",
+        "assets/project_page/speed_pose/failed_grasp.mp4",
+        "assets/project_page/speed_pose/emergency_stop.mp4",
+    }:
+        assert required in parser.video_sources
     assert "fanuc_presentation.mp4" not in text
+
+
+def test_published_speed_matrix_is_machine_readable_and_honest() -> None:
+    path = ROOT / "assets" / "project_page" / "speed_pose" / "matrix_summary.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert payload["simulation_only"] is True
+    assert payload["demonstrated_speed_range_mps"] == [0.06, 0.22]
+    assert len(payload["cases"]) == 6
+    assert all(item["passed"] for item in payload["cases"])
+    assert min(item["detection_confidence"] for item in payload["cases"]) < 0.02
 
 
 def test_published_cycles_pass_integrated_contact_motion_and_delivery_gates() -> None:

@@ -14,6 +14,7 @@
     <a class="wordmark" href="#top" aria-label="Carve home">CARVE<span aria-hidden="true">/</span></a>
     <nav aria-label="Project sections">
       <a href="#views">Views</a>
+      <a href="#envelope">Envelope</a>
       <a href="#system">System</a>
       <a href="#results">Results</a>
       <a href="#run">Run it</a>
@@ -44,7 +45,7 @@
       <div><strong>Vision</strong><span>YOLO26 segmentation</span></div>
       <div><strong>Delivery target</strong><span>Stationary cutter tray</span></div>
       <div><strong>Robot</strong><span>FANUC M-10iD/12 reference</span></div>
-      <div><strong>Integrated gate</strong><span>A and B passed</span></div>
+      <div><strong>Demonstrated speed</strong><span>0.06 to 0.22 m/s</span></div>
     </section>
 
     <section class="section intro" aria-labelledby="problem-title">
@@ -131,6 +132,74 @@
       </div>
     </section>
 
+    <section class="section envelope-section" id="envelope" aria-labelledby="envelope-title">
+      <div class="section-heading envelope-heading">
+        <div>
+          <p class="eyebrow">Executed speed and pose matrix</p>
+          <h2 id="envelope-title">One cell. Five belt conditions.</h2>
+        </div>
+        <p>The test matrix changes belt speed, lateral position, and product yaw. Every successful row begins with rendered RGBD, runs YOLO26, chooses a mask-interior grasp, commands the Isaac articulation, requires bilateral contact, and checks the cutter delivery.</p>
+      </div>
+
+      <div class="envelope-feature">
+        <div class="video-shell reveal">
+          <video controls preload="metadata" poster="assets/project_page/speed_pose/high_speed_transverse_poster.png">
+            <source src="assets/project_page/speed_pose/high_speed_transverse.mp4" type="video/mp4">
+          </video>
+          <strong>High-speed transverse case: 0.22 m/s, -72 degrees</strong>
+          <a class="text-link" href="assets/project_page/speed_pose/high_speed_transverse.mp4">Open MP4</a>
+        </div>
+        <div class="grasp-explainer">
+          <img src="assets/project_page/speed_pose/fast_transverse_grasp.png" width="640" height="480" alt="Transverse product mask with yellow bounding box, red grasp point, cyan jaw axis, and predicted intercept line">
+          <div class="overlay-key" aria-label="Grasp overlay legend">
+            <span><i class="key-mask"></i>YOLO mask</span>
+            <span><i class="key-box"></i>Bounding box</span>
+            <span><i class="key-point"></i>Selected grasp point</span>
+            <span><i class="key-axis"></i>Jaw closing axis</span>
+            <span><i class="key-intercept"></i>Predicted intercept</span>
+          </div>
+          <p>The geometric grasp classifier uses the YOLO instance mask. PCA estimates the undirected major axis. The selector keeps points near maximum boundary clearance, then chooses the most central safe point to reduce the lever arm during lift.</p>
+        </div>
+      </div>
+
+      <div class="matrix-table" role="region" aria-label="Speed and pose results" tabindex="0">
+        <table>
+          <thead><tr><th>Case</th><th>Speed</th><th>Start Y</th><th>Yaw</th><th>Grasp class</th><th>Timing error</th><th>Placement error</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>Slow diagonal</td><td>0.06 m/s</td><td>-60 mm</td><td>-35 deg</td><td>Diagonal right</td><td>18.3 ms</td><td>19.8 mm</td><td><span class="pass-mark">Pass</span></td></tr>
+            <tr><td>Nominal longitudinal</td><td>0.10 m/s</td><td>40 mm</td><td>0 deg</td><td>Longitudinal</td><td>4.4 ms</td><td>10.8 mm</td><td><span class="pass-mark">Pass</span></td></tr>
+            <tr><td>Medium diagonal</td><td>0.14 m/s</td><td>-30 mm</td><td>32 deg</td><td>Diagonal left</td><td>18.2 ms</td><td>11.6 mm</td><td><span class="pass-mark">Pass</span></td></tr>
+            <tr><td>Fast transverse</td><td>0.18 m/s</td><td>50 mm</td><td>68 deg</td><td>Transverse</td><td>7.6 ms</td><td>10.4 mm</td><td><span class="pass-mark">Pass</span></td></tr>
+            <tr><td>High-speed transverse</td><td>0.22 m/s</td><td>-50 mm</td><td>-72 deg</td><td>Transverse</td><td>16.0 ms</td><td>11.2 mm</td><td><span class="pass-mark">Pass</span></td></tr>
+            <tr><td>Solution B slip correction</td><td>0.16 m/s</td><td>30 mm</td><td>28 deg</td><td>Diagonal left</td><td>12.4 ms</td><td>20.7 mm</td><td><span class="pass-mark">Pass</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="metric-context">This demonstrates 0.06 to 0.22 m/s, -60 to 50 mm lateral offset, and -72 to 68 degrees in simulation. The launchers accept a wider configured range, but values outside this executed matrix are not claimed as validated.</p>
+
+      <div class="clip-strip" aria-label="Additional successful simulator recordings">
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/slow_diagonal_right_poster.png"><source src="assets/project_page/speed_pose/slow_diagonal_right.mp4" type="video/mp4"></video><strong>0.06 m/s</strong><span>Diagonal right</span></article>
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/nominal_longitudinal_poster.png"><source src="assets/project_page/speed_pose/nominal_longitudinal.mp4" type="video/mp4"></video><strong>0.10 m/s</strong><span>Longitudinal</span></article>
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/medium_diagonal_left_poster.png"><source src="assets/project_page/speed_pose/medium_diagonal_left.mp4" type="video/mp4"></video><strong>0.14 m/s</strong><span>Diagonal left</span></article>
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/fast_transverse_poster.png"><source src="assets/project_page/speed_pose/fast_transverse.mp4" type="video/mp4"></video><strong>0.18 m/s</strong><span>Transverse</span></article>
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/solution_b_slip_poster.png"><source src="assets/project_page/speed_pose/solution_b_slip.mp4" type="video/mp4"></video><strong>Solution B</strong><span>Slip correction</span></article>
+      </div>
+    </section>
+
+    <section class="section recovery-section" aria-labelledby="recovery-title">
+      <div class="section-heading">
+        <p class="eyebrow">Expected failure evidence</p>
+        <h2 id="recovery-title">A recovery can pass without a delivery.</h2>
+        <p>Pass means the commanded fault is detected, no false success is reported, and the controller reaches the expected known-safe state. These clips are separate executed Isaac runs.</p>
+      </div>
+      <div class="recovery-grid">
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/failed_grasp_poster.png"><source src="assets/project_page/speed_pose/failed_grasp.mp4" type="video/mp4"></video><h3>Failed grasp</h3><p>No bilateral contact. Open jaws, vertical retract, recover, idle.</p></article>
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/cutter_unavailable_poster.png"><source src="assets/project_page/speed_pose/cutter_unavailable.mp4" type="video/mp4"></video><h3>Cutter unavailable</h3><p>Contact is valid, but the cutter permissive is false. Release to reject and return idle.</p></article>
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/stale_observation_poster.png"><source src="assets/project_page/speed_pose/stale_observation.mp4" type="video/mp4"></video><h3>Stale observation</h3><p>Reject the expired plan before approach. The robot remains in a known state.</p></article>
+        <article><video controls preload="metadata" poster="assets/project_page/speed_pose/emergency_stop_poster.png"><source src="assets/project_page/speed_pose/emergency_stop.mp4" type="video/mp4"></video><h3>Emergency stop</h3><p>Hold zero motion, enter safe stop, reset, open in a controlled way, return idle.</p></article>
+      </div>
+    </section>
+
     <section class="section architecture" id="system" aria-labelledby="system-title">
       <div class="section-heading">
         <h2 id="system-title">One closed loop, with clear boundaries.</h2>
@@ -166,7 +235,7 @@
         </article>
         <article>
           <span class="part-number">03</span><h3>Vision model</h3>
-          <p>A replaceable interface supports YOLO26 segmentation as the learned baseline and a color model for deterministic test isolation.</p>
+          <p>A replaceable interface runs YOLO26 segmentation. A pork-color connected-component refinement trims each YOLO proposal to the visible product. It cannot create a detection when YOLO returns none.</p>
           <dl><div><dt>Input</dt><dd>Rendered RGB image</dd></div><div><dt>Output</dt><dd>Mask, class, confidence, pixel region</dd></div></dl>
         </article>
         <article>
@@ -361,7 +430,7 @@
         </article>
         <article class="maturity-next">
           <h3>External integration boundary</h3>
-          <p>The internal Lula IK and articulation path is complete. A separate ROS 2 and MoveIt FollowJointTrajectory stack was not installed or commissioned on this machine, so live MoveIt execution remains an external integration task.</p>
+          <p>The internal Lula IK and Isaac articulation path is complete. A standard ROS 2 JointTrajectory subscriber and simulation-clock sampler are implemented. A live MoveIt FollowJointTrajectory action was not executed because control_msgs and MoveIt are not installed on this machine.</p>
         </article>
       </div>
     </section>
@@ -390,6 +459,7 @@
         <div><span>Validate setup</span><code>.\validate_setup.ps1</code><button type="button" data-copy=".\validate_setup.ps1">Copy</button></div>
         <div><span>Solution A, full FANUC cycle</span><code>.\run_solution_a.ps1</code><button type="button" data-copy=".\run_solution_a.ps1">Copy</button></div>
         <div><span>Solution B, full FANUC cycle</span><code>.\run_solution_b.ps1</code><button type="button" data-copy=".\run_solution_b.ps1">Copy</button></div>
+        <div><span>Speed and pose matrix</span><code>.\run_speed_pose_matrix.ps1 -IncludeSolutionB</code><button type="button" data-copy=".\run_speed_pose_matrix.ps1 -IncludeSolutionB">Copy</button></div>
         <div><span>Both solutions</span><code>.\run_scene2_full.ps1</code><button type="button" data-copy=".\run_scene2_full.ps1">Copy</button></div>
         <div><span>Complete suite</span><code>.\run_tests.ps1</code><button type="button" data-copy=".\run_tests.ps1">Copy</button></div>
       </div>

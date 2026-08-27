@@ -16,7 +16,7 @@ Run both complete recorded cycles with:
 .\run_scene2_full.ps1
 ```
 
-Carve is a runnable Isaac Sim 6.0.1 project for vision-guided robotic handling of beef, pork, and chicken reference cuts on a moving conveyor. The final integrated demonstration operates at 0.10 m/s and releases aligned products into a stationary cutter-entry tray.
+Carve is a runnable Isaac Sim 6.0.1 project for vision-guided robotic handling of beef, pork, and chicken reference cuts on a moving conveyor. The current executed matrix covers 0.06 to 0.22 m/s, lateral starts from -60 to 50 mm, and yaw from -72 to 68 degrees. Each case releases an aligned product into a stationary cutter-entry tray.
 
 The saved USD cell includes a conveyor, rigid meat reference workpieces, a FANUC M-10iD/12 official-description reference articulation, a compact compliant two-finger gripper reference, overhead and buffer cameras, calibration frames, guards, a reject bin, `cut_target_frame`, a guarded cutter reference, PLC state, and the Solution B centering buffer.
 
@@ -49,6 +49,14 @@ Run both final integrated cycles:
 ```powershell
 .\run_scene2_full.ps1
 ```
+
+Run the five-case speed and pose matrix plus Solution B slip correction:
+
+```powershell
+.\run_speed_pose_matrix.ps1 -IncludeSolutionB
+```
+
+The Solution A and B launchers also accept `-BeltSpeedMps`, `-StartYM`, and `-StartYawDeg`. The configured input range is wider than the executed matrix. Only the tested range above is presented as demonstrated.
 
 Run a catalog product recipe without replacing the baseline artifacts:
 
@@ -89,7 +97,7 @@ Run the focused Scene 2.0 compliant-gripper load, hold, release, and recovery ga
 .\validate_compliant_gripper.ps1
 ```
 
-This focused bridge uses the ROS 2 Humble libraries bundled with Isaac Sim. It publishes fixed simulation time, measured FANUC joint states, rendered RGB, rendered depth, and camera calibration over DDS. It also proves command rejection and real articulation-controller execution. The complete task runner uses Isaac Lula IK and the articulation controller. The external MoveIt process is not installed or commissioned on this workstation.
+This focused bridge uses the ROS 2 Humble libraries bundled with Isaac Sim. It publishes fixed simulation time, measured FANUC joint states, rendered RGB, rendered depth, and camera calibration over DDS. It accepts strict six-joint commands and standard `trajectory_msgs/msg/JointTrajectory` messages, validates them, and samples accepted trajectories against simulation time. The complete task runner uses Isaac Lula IK and the articulation controller and saves its executed command stream in the same JointTrajectory-compatible shape. The `control_msgs` action package and external MoveIt process are not installed or commissioned on this workstation.
 
 Run the bounded five-seed hardening matrix for both solutions:
 

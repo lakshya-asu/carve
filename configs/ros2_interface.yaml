@@ -34,6 +34,11 @@ topics:
     type: sensor_msgs/msg/JointState
     publisher: trajectory_action_bridge
     subscriber: isaac_sim
+  joint_trajectory:
+    name: /carve/arm_controller/joint_trajectory
+    type: trajectory_msgs/msg/JointTrajectory
+    publisher: moveit_or_trajectory_client
+    subscriber: isaac_sim
   rgb:
     name: /carve/camera/overhead/color/image_raw
     type: sensor_msgs/msg/Image
@@ -81,3 +86,8 @@ command_rules:
   hold_last_command_on_stale_input: true
   safe_stop_on_plc_fault: true
 
+moveit_boundary:
+  available_now: trajectory_msgs/msg/JointTrajectory sampled on simulation time
+  planned_action: /carve/arm_controller/follow_joint_trajectory
+  planned_action_type: control_msgs/action/FollowJointTrajectory
+  limitation: control_msgs and a live MoveIt process are not installed on this workstation

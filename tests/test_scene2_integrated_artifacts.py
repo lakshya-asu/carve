@@ -23,6 +23,7 @@ def _write_required_artifacts(root: Path) -> Path:
         "overhead_depth.png",
         "overhead_depth_m.npy",
         "yolo26_segmentation.png",
+        "robot_joint_trajectory.json",
     ):
         (root / name).write_bytes(b"evidence")
     event_path = root / "cycle_trace.jsonl"

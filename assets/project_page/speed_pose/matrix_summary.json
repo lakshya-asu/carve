@@ -1,0 +1,16 @@
+{
+  "generated_from": "results/speed_pose_matrix/final_20260827_v2",
+  "simulation_only": true,
+  "demonstrated_speed_range_mps": [0.06, 0.22],
+  "demonstrated_lateral_range_m": [-0.06, 0.05],
+  "demonstrated_yaw_range_deg": [-72.0, 68.0],
+  "cases": [
+    {"name":"slow_diagonal_right","solution":"a","speed_mps":0.06,"start_y_m":-0.06,"yaw_deg":-35.0,"grasp_class":"diagonal_right","detection_confidence":0.4702167809,"grasp_confidence":0.8713075472,"timing_error_ms":18.3,"placement_error_mm":19.8,"passed":true},
+    {"name":"nominal_longitudinal","solution":"a","speed_mps":0.10,"start_y_m":0.04,"yaw_deg":0.0,"grasp_class":"longitudinal","detection_confidence":0.2886818349,"grasp_confidence":0.8703482875,"timing_error_ms":4.4,"placement_error_mm":10.8,"passed":true},
+    {"name":"medium_diagonal_left","solution":"a","speed_mps":0.14,"start_y_m":-0.03,"yaw_deg":32.0,"grasp_class":"diagonal_left","detection_confidence":0.2534430921,"grasp_confidence":0.8708032272,"timing_error_ms":18.2,"placement_error_mm":11.6,"passed":true},
+    {"name":"fast_transverse","solution":"a","speed_mps":0.18,"start_y_m":0.05,"yaw_deg":68.0,"grasp_class":"transverse","detection_confidence":0.0156391989,"grasp_confidence":0.8686953859,"timing_error_ms":7.6,"placement_error_mm":10.4,"passed":true},
+    {"name":"high_speed_transverse","solution":"a","speed_mps":0.22,"start_y_m":-0.05,"yaw_deg":-72.0,"grasp_class":"transverse","detection_confidence":0.1800702661,"grasp_confidence":0.8649948258,"timing_error_ms":16.0,"placement_error_mm":11.2,"passed":true},
+    {"name":"solution_b_slip_correction","solution":"b","speed_mps":0.16,"start_y_m":0.03,"yaw_deg":28.0,"grasp_class":"diagonal_left","detection_confidence":0.4137003124,"grasp_confidence":0.8714057574,"timing_error_ms":12.4,"placement_error_mm":20.7,"passed":true}
+  ],
+  "warning": "These are deterministic Isaac Sim results. They do not validate physical handling, food safety, real-cell safety, OEM fidelity, or production performance."
+}

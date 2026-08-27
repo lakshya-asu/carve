@@ -10,6 +10,8 @@ from dataclasses import dataclass
 import math
 from typing import Any
 
+from meatcell.trajectory import JointTrajectoryCommand, TrajectoryPoint, sample_joint_trajectory, validate_joint_trajectory
+
 
 JOINT_NAMES = ("J1", "J2", "J3", "J4", "J5", "J6")
 
@@ -19,6 +21,7 @@ class Ros2TopicNames:
     clock: str = "/clock"
     joint_states: str = "/carve/joint_states"
     joint_command: str = "/carve/robot/joint_command"
+    joint_trajectory: str = "/carve/arm_controller/joint_trajectory"
     rgb: str = "/carve/camera/overhead/color/image_raw"
     depth: str = "/carve/camera/overhead/depth/image_rect_raw"
     camera_info: str = "/carve/camera/overhead/camera_info"
@@ -71,6 +74,7 @@ class Scene2RosBridge:
         import rclpy
         from rosgraph_msgs.msg import Clock
         from sensor_msgs.msg import CameraInfo, Image, JointState
+        from trajectory_msgs.msg import JointTrajectory
 
         if not rclpy.ok():
             rclpy.init()
@@ -79,6 +83,7 @@ class Scene2RosBridge:
         self._CameraInfo = CameraInfo
         self._Image = Image
         self._JointState = JointState
+        self._JointTrajectory = JointTrajectory
         self.articulation = articulation
         self.camera = camera
         self.lower_limits = lower_limits
@@ -96,7 +101,12 @@ class Scene2RosBridge:
         self.command_sub = self.node.create_subscription(
             JointState, self.topics.joint_command, self._command_callback, 10
         )
+        self.trajectory_sub = self.node.create_subscription(
+            JointTrajectory, self.topics.joint_trajectory, self._trajectory_callback, 10
+        )
         self._latest_command: JointCommand | None = None
+        self._active_trajectory: JointTrajectoryCommand | None = None
+        self._trajectory_started_s: float | None = None
         self._command_sequence = 0
         self.rejected_commands = 0
         self.published_clock = 0
@@ -104,6 +114,8 @@ class Scene2RosBridge:
         self.published_rgb = 0
         self.published_depth = 0
         self.last_rejection = ""
+        self.accepted_trajectories = 0
+        self.completed_trajectories = 0
 
     @staticmethod
     def _stamp(seconds: float) -> Any:
@@ -132,12 +144,60 @@ class Scene2RosBridge:
         self._command_sequence += 1
         self._latest_command = JointCommand(positions, velocities, self._command_sequence)
 
+    @staticmethod
+    def _duration_seconds(value: Any) -> float:
+        return float(value.sec) + float(value.nanosec) / 1_000_000_000.0
+
+    def _trajectory_callback(self, message: Any) -> None:
+        try:
+            points = tuple(
+                TrajectoryPoint(
+                    self._duration_seconds(item.time_from_start),
+                    tuple(float(value) for value in item.positions),
+                    tuple(float(value) for value in item.velocities) if item.velocities else None,
+                )
+                for item in message.points
+            )
+            trajectory = validate_joint_trajectory(
+                expected_joint_names=JOINT_NAMES,
+                joint_names=message.joint_names,
+                points=points,
+                lower_limits=self.lower_limits,
+                upper_limits=self.upper_limits,
+            )
+        except ValueError as exc:
+            self.rejected_commands += 1
+            self.last_rejection = str(exc)
+            return
+        self.accepted_trajectories += 1
+        self._active_trajectory = JointTrajectoryCommand(
+            trajectory.joint_names,
+            trajectory.points,
+            self.accepted_trajectories,
+        )
+        self._trajectory_started_s = None
+
     def spin_once(self) -> None:
         self._rclpy.spin_once(self.node, timeout_sec=0.0)
 
     def consume_command(self) -> JointCommand | None:
         command = self._latest_command
         self._latest_command = None
+        return command
+
+    def consume_trajectory_sample(self, sim_seconds: float) -> JointCommand | None:
+        if self._active_trajectory is None:
+            return None
+        if self._trajectory_started_s is None:
+            self._trajectory_started_s = sim_seconds
+        elapsed_s = max(0.0, sim_seconds - self._trajectory_started_s)
+        positions = sample_joint_trajectory(self._active_trajectory, elapsed_s)
+        self._command_sequence += 1
+        command = JointCommand(positions, None, self._command_sequence)
+        if elapsed_s >= self._active_trajectory.duration_s:
+            self.completed_trajectories += 1
+            self._active_trajectory = None
+            self._trajectory_started_s = None
         return command
 
     def publish_clock(self, sim_seconds: float) -> None:
@@ -224,4 +284,6 @@ class Scene2RosBridge:
             "published_joint_states": self.published_joint_states,
             "published_rgb": self.published_rgb,
             "published_depth": self.published_depth,
+            "accepted_trajectories": self.accepted_trajectories,
+            "completed_trajectories": self.completed_trajectories,
         }

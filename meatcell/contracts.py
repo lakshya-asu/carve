@@ -249,6 +249,13 @@ class TrackLifecycle(ContractEnum):
     EXPIRED = "expired"
 
 
+class GraspClass(ContractEnum):
+    LONGITUDINAL = "longitudinal"
+    DIAGONAL_LEFT = "diagonal_left"
+    DIAGONAL_RIGHT = "diagonal_right"
+    TRANSVERSE = "transverse"
+
+
 class CutterMode(ContractEnum):
     BLOCKED = "blocked"
     READY = "ready"
@@ -333,6 +340,58 @@ class GraspCandidate(Contract):
             raise ValueError("GraspCandidate.quality must be between 0 and 1")
         _finite("GraspCandidate.boundary_clearance_m", self.boundary_clearance_m)
         _finite("GraspCandidate.capture_margin_m", self.capture_margin_m)
+
+
+@dataclass(frozen=True)
+class VisionGraspProposal(Contract):
+    proposal_id: str
+    track_id: str
+    classifier_name: str
+    grasp_class: GraspClass
+    grasp_point_u_px: float
+    grasp_point_v_px: float
+    grasp_pose_belt: Transform
+    grasp_in_product: Transform
+    jaw_yaw_rad: float
+    approach_vector_belt: Vector3
+    estimated_width_m: float
+    boundary_clearance_m: float
+    capture_margin_m: float
+    quality: float
+    confidence: float
+
+    def __post_init__(self) -> None:
+        for name in ("proposal_id", "track_id", "classifier_name"):
+            _not_blank(f"VisionGraspProposal.{name}", getattr(self, name))
+        for name in (
+            "grasp_point_u_px",
+            "grasp_point_v_px",
+            "jaw_yaw_rad",
+            "estimated_width_m",
+            "boundary_clearance_m",
+            "capture_margin_m",
+            "quality",
+            "confidence",
+        ):
+            _finite(f"VisionGraspProposal.{name}", getattr(self, name))
+        if self.grasp_point_u_px < 0.0 or self.grasp_point_v_px < 0.0:
+            raise ValueError("VisionGraspProposal image coordinates must be nonnegative")
+        if self.estimated_width_m <= 0.0:
+            raise ValueError("VisionGraspProposal estimated width must be positive")
+        if self.boundary_clearance_m <= 0.0 or self.capture_margin_m <= 0.0:
+            raise ValueError("VisionGraspProposal margins must be positive")
+        if not 0.0 <= self.quality <= 1.0 or not 0.0 <= self.confidence <= 1.0:
+            raise ValueError("VisionGraspProposal quality and confidence must be between 0 and 1")
+
+    def as_candidate(self) -> GraspCandidate:
+        return GraspCandidate(
+            self.proposal_id,
+            self.track_id,
+            self.grasp_in_product,
+            self.quality,
+            self.boundary_clearance_m,
+            self.capture_margin_m,
+        )
 
 
 @dataclass(frozen=True)

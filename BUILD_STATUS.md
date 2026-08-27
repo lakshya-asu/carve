@@ -1,5 +1,17 @@
 # Build status
 
+## Variable-speed and orientation pass, 2026-08-27
+
+The current Scene 2 implementation has now passed a five-case Solution A matrix from 0.06 to 0.22 m/s with lateral starts from -60 to 50 mm and yaw from -72 to 68 degrees. The classifier produced longitudinal, diagonal-left, diagonal-right, and transverse grasp classes. All five cases used rendered RGBD, YOLO26 proposals, calibrated conveyor-volume filtering, a mask-interior grasp, timed articulation control, bilateral PhysX contact, dynamic lift, cutter-frame alignment, tray release, and verification. Placement error was 10.4 to 19.8 mm and intercept timing error was 4.4 to 18.3 ms. Every case recorded zero joint, velocity, and acceleration violations.
+
+Solution B also passed at 0.16 m/s and 28 degrees with rendered buffer re-observation and forced slip correction. Its placement error was 20.7 mm. Fresh failed-grasp, cutter-unavailable, stale-observation, and emergency-stop cases reached their expected recovery states without reporting delivery.
+
+The geometric grasp selector is version `mask_pca_clearance_v2`. It fixes the unstable first-pixel choice on broad clearance plateaus by choosing the most central point among near-maximum-clearance candidates. Delivery motion compensates for the resulting product-relative grasp offset. YOLO remains the proposal source. A calibrated product-height filter removes robot-geometry masks without using the simulator product pose. The 68 degree case exposed low YOLO confidence at 0.0156, so transverse-angle real and synthetic retraining remains a priority.
+
+The ROS bridge now accepts standard JointTrajectory messages. The live `FollowJointTrajectory` action and external MoveIt planner remain untested because the required packages are not installed. This is simulation evidence only.
+
+The final clean suite is `results/full_suite/20260827_114303264`. It passed 161 Python tests, setup, stage reload, compliant-gripper, ROS sensor, direct command, standard JointTrajectory, Solution A, Solution B, and artifact-audit gates. The one-command speed matrix also passed at `results/speed_pose_matrix/release_20260827`. No Isaac or Kit process remained after either command.
+
 ## Final integrated FANUC Scene 2 gate, 2026-08-27
 
 The complete simulator vertical slice now runs on the FANUC M-10iD/12 official-description reference articulation in Scene 2. Solution A and Solution B both passed from rendered RGBD and YOLO26 perception through tracking, prediction, timed moving-conveyor interception, bilateral PhysX contact, dynamic rigid-body lift, Cartesian transport, reorientation, `cut_target_frame` alignment, stationary cutter-entry tray release, verification, PLC acknowledgment, retract, and trace audit.

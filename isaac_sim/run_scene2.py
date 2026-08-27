@@ -75,7 +75,9 @@ def _run_ros2_gate(
     start = all_start[np.asarray(robot_indices, dtype=int)]
     offset = np.array([0.04, -0.035, 0.03, 0.025, -0.02, 0.03], dtype=float)
     target = np.minimum(np.maximum(start + offset, lower + 0.02), upper - 0.02)
+    direct_target = start + 0.5 * (target - start)
     command_applied = False
+    trajectory_applied = False
     try:
         for step in range(720):
             sim_seconds = float(world.current_time)
@@ -85,12 +87,22 @@ def _run_ros2_gate(
             if step % 16 == 0:
                 bridge.publish_camera(sim_seconds)
             if step == 72:
-                probe.publish_invalid_partial_command(tuple(float(value) for value in target))
+                probe.publish_invalid_partial_command(tuple(float(value) for value in direct_target))
             if step >= 96 and step % 24 == 0 and not command_applied:
-                probe.publish_command(tuple(float(value) for value in target))
+                probe.publish_command(tuple(float(value) for value in direct_target))
+            if step >= 240 and step % 24 == 0 and bridge.accepted_trajectories == 0:
+                probe.publish_trajectory(
+                    tuple(float(value) for value in direct_target),
+                    tuple(float(value) for value in target),
+                    0.8,
+                )
             probe.spin_once()
             bridge.spin_once()
             command = bridge.consume_command()
+            trajectory_command = bridge.consume_trajectory_sample(sim_seconds)
+            if trajectory_command is not None:
+                command = trajectory_command
+                trajectory_applied = True
             if command is not None:
                 controller.apply_action(
                     ArticulationAction(
@@ -109,7 +121,10 @@ def _run_ros2_gate(
         snapshot = probe.snapshot
         passed = bool(
             command_applied
+            and trajectory_applied
             and bridge.rejected_commands >= 1
+            and bridge.accepted_trajectories >= 1
+            and bridge.completed_trajectories >= 1
             and snapshot.clocks > 0
             and snapshot.joint_states > 0
             and snapshot.rgb_images > 0
@@ -123,6 +138,7 @@ def _run_ros2_gate(
             "passed": passed,
             "transport": "ROS 2 DDS using Isaac Sim bundled Humble libraries",
             "command_applied_by_articulation_controller": command_applied,
+            "trajectory_applied_by_articulation_controller": trajectory_applied,
             "target_joint_positions_rad": target.tolist(),
             "measured_joint_positions_rad": measured.tolist(),
             "max_joint_error_rad": float(error.max()),
@@ -135,6 +151,7 @@ def _run_ros2_gate(
                 "last_rgb_bytes": snapshot.last_rgb_bytes,
                 "last_depth_bytes": snapshot.last_depth_bytes,
                 "commands_published": probe.commands_published,
+                "trajectories_published": probe.trajectories_published,
             },
             "bridge": bridge.metrics(),
         }

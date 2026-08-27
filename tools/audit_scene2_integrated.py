@@ -83,13 +83,34 @@ def audit_integrated_metrics(metrics_path: Path, expected_solution: str | None =
     _require(int(perception["observation_count"]) >= 2, "Tracking lacks two observations")
     _require(perception["rgb_nonempty"] and perception["depth_nonempty"], "Rendered RGBD evidence is empty")
     _require(payload["event_log_readback_passed"] is True, "Deterministic event-log readback failed")
+    _require(0.04 <= float(payload["belt_speed_mps"]) <= 0.30, "Belt speed is outside the validated range")
+    _require(abs(float(payload["initial_pose"]["y_m"])) <= 0.09, "Initial lateral pose is outside the validated range")
+    _require(abs(float(payload["initial_pose"]["yaw_deg"])) <= 85.0, "Initial yaw is outside the validated range")
 
     motion = payload["motion"]
     _require(int(motion["articulation_controller_commands"]) > 0, "No articulation-controller commands ran")
     for key in ("joint_limit_violations", "velocity_limit_violations", "acceleration_limit_violations"):
         _require(int(motion[key]) == 0, f"Motion gate failed: {key}")
+    _require(int(motion["trajectory_samples"]) >= 100, "The robot trajectory has too few samples")
+    _require(motion["trajectory_time_monotonic"] is True, "Robot trajectory time is not monotonic")
+    _require(float(motion["trajectory_endpoint_error_rad"]) <= 1e-6, "Robot trajectory endpoint does not match the controller")
+    _require(motion["moveit_runtime_executed"] is False, "Metrics incorrectly claim a live MoveIt runtime")
+
+    trajectory_path = _resolve_evidence_path(payload["artifacts"]["trajectory"], metrics_path)
+    _require(trajectory_path.is_file() and trajectory_path.stat().st_size > 0, "Robot trajectory evidence is missing")
+    trajectory = json.loads(trajectory_path.read_text(encoding="utf-8"))
+    _require(tuple(trajectory["joint_names"]) == ("J1", "J2", "J3", "J4", "J5", "J6"), "Trajectory joint order is invalid")
+    samples = trajectory["samples"]
+    _require(len(samples) == int(motion["trajectory_samples"]), "Trajectory sample count differs from metrics")
+    times = [float(item["time_from_start_s"]) for item in samples]
+    _require(all(right > left for left, right in zip(times, times[1:])), "Trajectory evidence time is not monotonic")
+    _require(all(len(item["positions_rad"]) == 6 for item in samples), "Trajectory sample is incomplete")
 
     grasp = payload["grasp"]
+    proposal = grasp["proposal"]
+    _require(grasp["point_inside_instance_mask"] is True, "Selected grasp point is outside the instance mask")
+    _require(float(proposal["confidence"]) >= 0.20, "Grasp classifier confidence is below the gate")
+    _require(proposal["grasp_class"]["value"] in {"longitudinal", "diagonal_left", "diagonal_right", "transverse"}, "Grasp class is invalid")
     _require(grasp["bilateral_contact"] is True, "Bilateral physical contact was not confirmed")
     _require(float(grasp["lift_distance_m"]) >= 0.10, "Physical lift was too small")
     _require(float(grasp["maximum_product_to_tcp_distance_m"]) <= float(grasp["retention_limit_m"]), "Grasp retention failed")
@@ -101,6 +122,7 @@ def audit_integrated_metrics(metrics_path: Path, expected_solution: str | None =
     _require(float(measurement["position_error_m"]) <= 0.055, "Delivery position error exceeded 55 mm")
     _require(float(measurement["angle_error_rad"]) <= math.radians(7.0), "Delivery angle error exceeded 7 degrees")
     _require(float(measurement["speed_error_mps"]) <= 0.10, "Delivery speed exceeded the stationary-tray limit")
+    _require(float(payload["interception"]["timing_error_s"]) <= 0.12, "Interception timing error exceeded 120 ms")
 
     required_states = {"plan", "intercept", "verify_grasp", "retract"}
     required_states |= {"transfer_direct", "align_direct"} if solution == "a" else {"transfer_buffer", "settle", "reobserve_buffer", "feed_buffer"}
@@ -128,6 +150,11 @@ def audit_integrated_metrics(metrics_path: Path, expected_solution: str | None =
         "angle_error_rad": measurement["angle_error_rad"],
         "timing_error_s": measurement["timing_error_s"],
         "maximum_product_to_tcp_distance_m": grasp["maximum_product_to_tcp_distance_m"],
+        "belt_speed_mps": payload["belt_speed_mps"],
+        "initial_yaw_deg": payload["initial_pose"]["yaw_deg"],
+        "grasp_class": proposal["grasp_class"]["value"],
+        "grasp_classifier_confidence": proposal["confidence"],
+        "trajectory_samples": motion["trajectory_samples"],
         "buffer_sensor_oracle_position_error_m": payload["buffer_sensor_oracle_position_error_m"],
     }
 
