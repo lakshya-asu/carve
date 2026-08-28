@@ -20,6 +20,9 @@ Tickets are executed in dependency order. Each ticket file contains its own acce
 | T014 | Integration tests and overnight report | T005 through T013 | done |
 | T015 | Physical calibration and OEM asset replacement | T014 | blocked |
 | T016 | Connect Scene 2.0 FANUC cell to the complete task pipeline | T014 | review |
+| T017 | Solution C learned grasp-affordance scorer | T016 | done |
+| T018 | Solution D closed-loop reactive interception | T017 | done |
+| T019 | Solution E bounded learned contact-segment skill | T018 | blocked |
 
 The source of truth for scope is `PROBLEM_STATEMENT.md`. The source of truth for architecture is `SYSTEM_DESIGN.md`.
 
@@ -30,3 +33,5 @@ The durable T014 hardening profile has six scenario slots. It covers two nominal
 The 2026-08-26 learned-vision extension also passed T014 without changing ticket status. YOLO26 segmentation consumed rendered Isaac RGB, produced masks used with rendered depth, and drove complete four-cycle A and B suites. Evidence is under `results/yolo`.
 
 The complete in-simulator FANUC pipeline now passes for Solution A and Solution B. T016 is in review because its simulator acceptance is complete but the separate ROS 2 and MoveIt `FollowJointTrajectory` bridge is not installed or commissioned. T015 remains blocked on physical calibration, production gripper selection, cutter I/O, and real safety evidence.
+
+T017 and T018 passed their complete-cell simulator and regression gates on 2026-08-28. T019 has a complete shadow-only simulator slice, but bounded learned execution remains blocked on representative physical force, tactile, slip, tissue-damage, and recovery data. Learned outputs remain below the deterministic freshness, reach, timing, joint, velocity, acceleration, collision, PLC, emergency-stop, verification, recovery, and audit gates.

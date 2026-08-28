@@ -89,6 +89,7 @@ def audit_integrated_metrics(metrics_path: Path, expected_solution: str | None =
 
     motion = payload["motion"]
     _require(int(motion["articulation_controller_commands"]) > 0, "No articulation-controller commands ran")
+    _require(float(motion["maximum_physics_step_error_s"]) <= 1e-9, "Controller physics step differed from 1/240 second")
     for key in ("joint_limit_violations", "velocity_limit_violations", "acceleration_limit_violations"):
         _require(int(motion[key]) == 0, f"Motion gate failed: {key}")
     _require(int(motion["trajectory_samples"]) >= 100, "The robot trajectory has too few samples")

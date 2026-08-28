@@ -1,14 +1,24 @@
 # Build status
 
+## C, D, and E validated simulator status, 2026-08-28
+
+Solutions C and D now pass their dependency-ordered complete-cell gates. Solution E has a passing shadow-only vertical slice. Bounded learned contact execution remains blocked on representative physical force, tactile, slip, tissue-damage, and recovery data.
+
+T017 is done. Its learned grasp-affordance scorer passed six full A and B baseline, learned, and replay cycles. A stronger matched dataset contains 25 separately executed candidates, split into 15 fit and 10 held-out rows. The two held-out seed groups had zero selection regret and zero selected-candidate safety violations, but several outcome heads remain degenerate simulator proxies. T018 is done. Its eight paired disturbance comparisons improved mean intercept position error by 20.016 mm, with six of eight positive pairs and both frozen replay gates passing. T019 remains blocked for execution, but its five-run integrated shadow matrix passed with zero learned commands and a fail-closed emergency-stop proposal.
+
+Fresh evidence is under `results/solution_c/matched_training/20260828_verified_v2`, `results/solution_c/comparison/20260827_deterministic`, `results/solution_d/comparison/20260827_recovery`, `results/solution_e/comparison/20260828_shadow_v1`, and `results/hybrid_comparison/20260828_final_clean`. The final hybrid matrix passed all eight required A/B S0 through S3 cases. S4 is explicitly not run because E execution is blocked. The final ordinary suite and documented release gate passed 226 tests at `results/full_suite/20260828_122846985`.
+
+The comparison plan treats A and B as cell-flow choices and C, D, and E as control capabilities. It defines deterministic, C-only, D-only, C-plus-D, and C-plus-D-plus-E stacks. In the final matched pose-disturbance seed, C preserved delivery but did not improve interception. D improved intercept position by 11.230 mm for A and 11.232 mm for B. C plus D improved it by 11.261 mm for A and 11.239 mm for B. The recommended hybrid retains YOLO26, geometric safety filters, deterministic motion and PLC supervision, learned grasp ranking, and bounded reactive correction. E remains outside execution until its physical-data gate is met.
+
 ## Solution map, learning research, and report revision, 2026-08-27
 
-The project page now opens with a five-route branch diagram. Solutions A and B are clearly marked as implemented. Solution C is a learned grasp-candidate scorer, Solution D is closed-loop reactive interception, and Solution E is a bounded learned contact skill. C, D, and E are research proposals. They are not presented as completed simulator evidence.
+At this 2026-08-27 checkpoint, the project page opened with a five-route branch diagram and treated C, D, and E as research proposals. The 2026-08-28 status above supersedes that implementation state.
 
 Three durable documents were added. `END_TO_END_CHAIN.md` defines every stage, input, output, handoff, check, and recovery boundary. `DECISIONS_AND_TESTS.md` records the main design decisions, why they were made, what was built, and the measured A/B evidence. `GENERALIZED_SOLUTION_RESEARCH.md` compares the current deterministic routes with three learning-based extensions and cites the primary or official sources used.
 
 The recovery evidence videos now use two wide columns on desktop and one column on narrow screens. This replaces the compressed four-video row while retaining all four fault cases. The Pages workflow includes the three new documents.
 
-`DEMO_COMMANDS.md` keeps the visible Scene 2 command, final A and B runs, speed and orientation matrix, recovery scenarios, and full regression command in one copy-ready place. C, D, and E have no launchers and remain discussion-only.
+`DEMO_COMMANDS.md` initially kept the visible Scene 2 command, final A and B runs, speed and orientation matrix, recovery scenarios, and full regression command in one copy-ready place. The 2026-08-28 update adds C, D, and E shadow launchers.
 
 The complete ordinary Python suite passed 188 tests after these changes.
 

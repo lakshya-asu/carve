@@ -472,10 +472,18 @@ The current implemented routes are:
 - Solution A: perceive on the main conveyor, intercept once, then deliver directly to the cutter-entry tray.
 - Solution B: intercept, place in a centering buffer, observe again, correct the pose, then deliver to the cutter-entry tray.
 
-The researched extensions are:
+The implemented simulator extensions are:
 
-- Solution C: learn a grasp-candidate score from RGBD, mask geometry, product recipe, contact outcome, and slip outcome. The planner still owns timing, limits, collision checks, and execution.
-- Solution D: update the target and command a bounded Cartesian correction while the product moves. This is useful when latency and conveyor variation make a single open-loop intercept brittle.
-- Solution E: learn only the short contact-rich segment around closure, stabilization, reorientation, and release. This should be trained only after representative physical demonstrations and force or tactile measurements exist.
+- Solution C: a regularized multi-outcome scorer ranks several geometry-safe RGBD grasp candidates. The planner still owns timing, limits, collision checks, contact execution, and recovery. Invalid or low-margin inference falls back to `mask_pca_clearance_v2`.
+- Solution D: a same-identity reactive controller refreshes the target during approach. Translation and yaw corrections are deadbanded, quantized, capped, and stopped at the no-return time. Invalid updates retain the last safe deterministic trajectory or fail closed.
+- Solution E shadow: a five-phase behavior clone proposes close, stabilize, slip-correction, reorientation, and release values. It runs inside live complete-cell cycles but has an enforced `shadow_only` execution policy. Every proposal records the gate result and retains the deterministic command.
 
-No C, D, or E runtime is approved for the current build. They remain discussion-only options. If a later evidence review approves a learning experiment, the research order is C, then D, then E. C addresses the clearest current weakness without replacing the working timing and recovery architecture. D requires a commissioned reactive controller. E requires physical data and the largest validation effort. The full rationale and source list are in `GENERALIZED_SOLUTION_RESEARCH.md`.
+C and D passed their complete-cell comparison and replay gates on 2026-08-28. E replay and shadow evaluation passed. Bounded learned E execution is not approved. Representative physical force, tactile, slip, tissue-damage, and recovery data are required before that boundary can change. The full rationale and source list are in `GENERALIZED_SOLUTION_RESEARCH.md`.
+
+The final matched S0 through S3 matrix passed all eight required A/B cases at seed 5901 with a pose disturbance. D improved intercept position by about 11.23 mm in both flows. The C plus D hybrid retained that gain. C alone preserved delivery but did not improve interception in the matched seed. S4 is explicitly not run because E execution remains disabled.
+
+### Learned proposal boundary
+
+The C scorer receives only candidates already accepted by mask containment, width, clearance, and reach geometry. The D updater receives the committed track and grasp identity plus fresh rendered observations and measured articulation state. The E model receives explicit contact phase, solution route, yaw, product width, force-imbalance proxy, slip state, PLC readiness, emergency-stop state, and age.
+
+None of these outputs can write PLC state, skip freshness, change a track identity, bypass no-return, relax IK or motion limits, waive collision checks, override emergency stop, suppress verification, or alter audit thresholds. C may select among safe proposals. D may apply bounded precontact corrections. E currently records proposals only.

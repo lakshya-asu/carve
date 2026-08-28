@@ -17,6 +17,16 @@ These files are selected copies of executed Isaac Sim evidence. They are tracked
 
 The final runners use rendered perception, tracking, prediction, a moving conveyor, the FANUC articulation controller, bilateral PhysX contact, physical product retention without pose writes after grasp, reorientation, cutter-frame alignment, PLC-style I/O, release, verification, and recovery.
 
+## Learned-route simulator evidence
+
+- `learning/solution_c_grasp.png`, `solution_c_a.mp4`, and `solution_c_summary.json`: learned ranking among geometry-safe grasp candidates.
+- `learning/solution_d_updates.png`, `solution_d_a_belt_ramp.mp4`, and `solution_d_summary.json`: same-target reactive corrections during a belt ramp.
+- `learning/solution_e_shadow.png`, `solution_e_b_slip_shadow.mp4`, and `solution_e_summary.json`: five-phase shadow proposals with zero learned commands.
+- `learning/solution_c_training_summary.json` and `solution_c_heldout_evaluation.json`: the 15-row fit, 10-row held-out matched C record and held-out candidate evidence.
+- `learning/hybrid_experiment_manifest.json` and `hybrid_comparison_summary.json`: the final eight-case A/B S0 through S3 ablation. S4 is recorded as not run.
+
+C and D pass integrated simulator comparison gates. E passes replay and shadow evaluation only. Representative physical force, tactile, slip, tissue-damage, and recovery data are still required before bounded learned execution.
+
 ## Historical Scene 2 presentation
 
 - `fanuc_real_pickup.mp4`: 13.42 second continuous stationary-belt pickup recording used by the page

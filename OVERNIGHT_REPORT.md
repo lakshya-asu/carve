@@ -1,5 +1,67 @@
 # Overnight build report
 
+## 2026-08-28 12:23 America/New_York: final hybrid matrix passed
+
+The final matched A/B control-stack matrix passed all eight required S0 through S3 cases at seed 5901 with a pose disturbance. Aggregate evidence is `results/hybrid_comparison/20260828_final_clean/comparison_summary.json`.
+
+- S0 deterministic, S1 learned ranking, S2 reactive interception, and S3 learned ranking plus reactive interception all completed both A and B delivery flows.
+- All eight required runs confirmed grasp and retained lift, saved complete artifacts, matched the manifest and model hashes, and reported zero collision, joint, velocity, or acceleration violations.
+- C alone preserved delivery but did not improve intercept position in this seed. The delta was -0.013 mm for A and -0.058 mm for B.
+- D improved intercept position by 11.230 mm for A and 11.232 mm for B.
+- C plus D improved intercept position by 11.261 mm for A and 11.239 mm for B.
+- A delivery position error ranged from 10.551 to 21.829 mm. B ranged from 17.494 to 20.975 mm. A cycle time was 63.75 seconds. B cycle time was 114.5 seconds.
+- S4 is recorded as `not_run`. E remains shadow-only, with zero learned actions approved or executed.
+
+The stronger C data record is `results/solution_c/matched_training/20260828_verified_v2`. It contains 25 separately executed candidate trials, with 15 fit rows and 10 held-out rows. The model SHA-256 is `0a6b819ba11296b7034e28658e4bca5c8361118d5fe3de903f4af09870ed356d`. Two held-out seed groups had zero regret and zero selected-candidate safety violations. This does not establish generalization because contact, excessive-contact, and slip targets remain uncalibrated or degenerate simulator proxies.
+
+Two matrix attempts were interrupted by a duplicate active CARVE task that was retraining C concurrently. Its exact process tree was stopped after identification, and its partial `20260828_fixed240_v3` evidence was preserved. Both interrupted B directories remain under the final matrix root. The duplicate task confirmed it stopped. Launcher guards now detect project batch parents, the Isaac venv host, and the base-Python simulator child.
+
+The final ordinary suite passed 226 tests. The documented release gate passed at `results/full_suite/20260828_122846985`. Release A delivered at 10.531 mm. Release B delivered at 21.322 mm with 1.312 mm buffer sensor-to-oracle error. Both had zero collision and motion-limit violations.
+
+Exact next action: collect representative synchronized physical force, tactile, slip, tissue-damage, and recovery demonstrations before considering bounded learned E execution.
+
+## 2026-08-28 11:44 America/New_York: C and D complete, E shadow complete
+
+Solutions C and D now pass their dependency-ordered CARVE simulator gates. Solution E has the best credible runnable shadow slice. Bounded learned contact execution remains blocked by missing representative physical force, tactile, slip, tissue-damage, and recovery data.
+
+### Solution C
+
+- `run_solution_c.ps1` runs training plus six full A and B baseline, learned, and replay cycles.
+- Aggregate: `results/solution_c/comparison/20260827_deterministic/comparison_summary.json`, passed.
+- Initial vertical-slice model SHA-256: `1af3fc14db22ac1b425bcf6a500e3919df2c40ef6dd528a7b43787e60d6d1834`.
+- Stronger matched model SHA-256: `0a6b819ba11296b7034e28658e4bca5c8361118d5fe3de903f4af09870ed356d`.
+- Success rate was 1.0. A and B bounded replay passed.
+- The initial model used 10 fit and 5 held-out rows. The stronger matched record uses 15 fit and 10 held-out executed-candidate rows. Both support simulator claims only.
+
+### Solution D
+
+- `run_solution_d.ps1` runs eight paired predict-once and reactive disturbance comparisons across A and B.
+- Aggregate: `results/solution_d/comparison/20260827_recovery/comparison_summary.json`, passed.
+- Six of eight pairs improved intercept position error. Mean improvement was 20.016 mm.
+- Latency failed closed. A replay delivery delta was 0.163 mm. B replay delivery delta was 0.252 mm. Both passed the unchanged 0.300 mm threshold.
+- A fixed 6 mm rendered buffer-camera X correction addressed a repeatable sensor bias. The simulator oracle remains test-only.
+- One transient FFmpeg pipe failure was preserved as failed-attempt evidence. Its sequential rerun passed without threshold changes.
+
+### Solution E
+
+- `run_solution_e.ps1` fits and evaluates a five-phase behavior clone in complete Scene 2 cycles.
+- Training used 33 complete cycles and 165 phase rows. Each phase used 28 fit and 5 held-out rows.
+- Model SHA-256: `10ee95ceaad3613fe5010f9bb82b6a8ee28ac1c33465d6e663d9fdea3eff697b`.
+- Aggregate: `results/solution_e/comparison/20260828_shadow_v1/comparison_summary.json`, passed.
+- Nominal A, replay A, nominal B, B slip correction, and A emergency stop reached their expected paths.
+- Close, stabilize, slip correction, reorientation, and release proposals were recorded inside the live cycles. Zero learned actions executed.
+- Emergency stop rejected the release proposal. Bounded replay passed with a maximum phase delta below 0.00000003.
+
+### Regression and claim boundary
+
+- Focused and ordinary tests passed. The final ordinary count is 226.
+- `run_tests.ps1` passed at `results/full_suite/20260828_122846985`, including Isaac setup, ROS and compliant-gripper checks, and full A and B cycles.
+- Release A delivered at 10.531 mm. Release B delivered at 21.322 mm with 1.312 mm buffer sensor-to-oracle error.
+- No collision, joint, velocity, or acceleration violation was reported.
+- This is simulator evidence. It does not establish OEM fidelity, physical accuracy, food safety, real-cell safety, production readiness, or learned-policy hardware validity.
+
+Exact next action: collect representative synchronized physical force, tactile, slip, tissue-damage, and recovery demonstrations before considering bounded learned E execution.
+
 ## ROS 2, MoveIt, responsive report, and public page, 2026-08-27
 
 The technical report now fits the viewport without horizontal scrolling. Images, videos, SVGs, tables, code blocks, and grids shrink or reflow. Wide data tables become labeled rows on narrow screens. The three recipe images now live under `assets/project_page/recipes`, so the public report does not depend on ignored result files.

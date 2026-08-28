@@ -146,10 +146,11 @@ def test_report_keeps_required_sections_and_local_evidence() -> None:
     assert missing == []
 
 
-def test_report_distinguishes_completed_routes_from_research() -> None:
+def test_report_distinguishes_baselines_validated_routes_and_shadow() -> None:
     text, parser = parse_report()
-    assert "A and B are implemented" in text
-    assert "C, D, and E are researched extensions, not completed simulator results" in text
+    assert "A and B remain the regression baselines" in text
+    assert "C and D pass integrated simulator gates" in text
+    assert "E passes shadow evaluation only" in text
     assert "Learned grasp score" in text
     assert "Reactive intercept" in text
     assert "Bounded manipulation skill" in text
@@ -169,13 +170,19 @@ def test_report_links_to_the_public_repository() -> None:
     assert "View the GitHub repository" in text
 
 
-def test_learning_routes_are_discussion_only() -> None:
+def test_learning_route_claim_boundaries_are_explicit() -> None:
     text, _ = parse_report()
-    assert "C, D, and E are not being built now" in text
-    assert "C  DISCUSSION" in text
-    assert "D  DISCUSSION" in text
-    assert "E  DISCUSSION" in text
-    assert "No C, D, or E runtime is implemented" in text
+    assert "C  VALIDATED" in text
+    assert "D  VALIDATED" in text
+    assert "E  SHADOW" in text
+    assert "zero learned commands" in text.lower()
+    assert "physical contact data blocks execution" in text.lower()
+    for summary in (
+        "assets/project_page/learning/solution_c_summary.json",
+        "assets/project_page/learning/solution_d_summary.json",
+        "assets/project_page/learning/solution_e_summary.json",
+    ):
+        assert summary in text
 
 
 def test_report_includes_durable_design_rules_and_research_sources() -> None:

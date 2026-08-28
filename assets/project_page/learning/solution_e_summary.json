@@ -1,0 +1,842 @@
+{
+  "bounded_replay": {
+    "passed": true,
+    "phase_absolute_deltas": {
+      "close": 1.3914794039227019e-08,
+      "release": 9.876037765366164e-10,
+      "reorientation": 2.8673901697473525e-08,
+      "slip_correction": 1.3640334526242422e-08,
+      "stabilize": 1.2903255741658626e-08
+    },
+    "tolerance": 0.01
+  },
+  "claim_boundary": "Complete Isaac Sim Scene 2 shadow evidence only. Learned outputs were never executed.",
+  "emergency_stop_fail_closed": true,
+  "execution_policy": "shadow_only",
+  "no_new_violations": true,
+  "passed": true,
+  "physical_data_blocker": "Representative real force, tactile, slip, tissue-damage, and recovery data is required before bounded learned execution or hardware-validity claims.",
+  "route": "solution_e",
+  "runs": {
+    "a_emergency_shadow": {
+      "acceleration_limit_violations": 0,
+      "collision_violations": 0,
+      "cycle_time_s": 10.75,
+      "delivered": false,
+      "delivery_position_error_m": null,
+      "delivery_yaw_error_rad": null,
+      "depth": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_emergency_shadow\\overhead_depth_m.npy",
+      "executed_action_count": 0,
+      "grasp_confirmed": true,
+      "joint_limit_violations": 0,
+      "model_sha256": "10ee95ceaad3613fe5010f9bb82b6a8ee28ac1c33465d6e663d9fdea3eff697b",
+      "passed": true,
+      "phases": [
+        "close",
+        "release",
+        "slip_correction",
+        "stabilize"
+      ],
+      "records": [
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.0,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12276901849698756,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.2602870015783425
+          },
+          "phase": "close",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "close",
+            "uncertainty": 3.053046199186227e-08,
+            "unit": "s",
+            "value": 0.349999419560415
+          },
+          "state": "intercept",
+          "time_s": 6.741667018
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.8005437999508995,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12276901849698756,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.2602870015783425
+          },
+          "phase": "stabilize",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "stabilize",
+            "uncertainty": 3.925345116728707e-08,
+            "unit": "s",
+            "value": 0.4499998430489524
+          },
+          "state": "verify_grasp",
+          "time_s": 7.104167037
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.8005437999508995,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12276901849698756,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.2602870015783425
+          },
+          "phase": "slip_correction",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "slip_correction",
+            "uncertainty": 3.167131382081096e-07,
+            "unit": "m",
+            "value": 1.2463174266606402e-08
+          },
+          "state": "settle",
+          "time_s": 9.362500488
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.8005437999508995,
+            "emergency_stop": true,
+            "plc_ready": false,
+            "product_width_m": 0.12276901849698756,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.2602870015783425
+          },
+          "phase": "release",
+          "proposal": {
+            "accepted_by_shadow_gate": false,
+            "executed": false,
+            "fallback_reason": "emergency_stop",
+            "phase": "release",
+            "uncertainty": 5.669942941821659e-08,
+            "unit": "s",
+            "value": 0.6499997732929325
+          },
+          "state": "safe_stop",
+          "time_s": 9.362500488
+        }
+      ],
+      "recovery_path": "recovered",
+      "retained_lift": true,
+      "rgb": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_emergency_shadow\\overhead_rgb.png",
+      "shadow_gate_passed": true,
+      "slip_detected": false,
+      "trace": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_emergency_shadow\\cycle_trace.jsonl",
+      "trajectory": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_emergency_shadow\\robot_joint_trajectory.json",
+      "usd": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_emergency_shadow\\carve_scene2_a.usda",
+      "velocity_limit_violations": 0,
+      "video": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_emergency_shadow\\scene2_solution_a_emergency_stop.mp4",
+      "visualization": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_emergency_shadow\\contact_skill_shadow.png"
+    },
+    "a_shadow": {
+      "acceleration_limit_violations": 0,
+      "collision_violations": 0,
+      "cycle_time_s": 18.083333333333332,
+      "delivered": true,
+      "delivery_position_error_m": 0.011330299525541458,
+      "delivery_yaw_error_rad": 0.009807573315530763,
+      "depth": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow\\overhead_depth_m.npy",
+      "executed_action_count": 0,
+      "grasp_confirmed": true,
+      "joint_limit_violations": 0,
+      "model_sha256": "10ee95ceaad3613fe5010f9bb82b6a8ee28ac1c33465d6e663d9fdea3eff697b",
+      "passed": true,
+      "phases": [
+        "close",
+        "release",
+        "reorientation",
+        "slip_correction",
+        "stabilize"
+      ],
+      "records": [
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.0,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12317064611341222,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.3597162706317886
+          },
+          "phase": "close",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "close",
+            "uncertainty": 3.053046199186227e-08,
+            "unit": "s",
+            "value": 0.34999948564306527
+          },
+          "state": "intercept",
+          "time_s": 6.829167023
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.7646294594342573,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12317064611341222,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.3597162706317886
+          },
+          "phase": "stabilize",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "stabilize",
+            "uncertainty": 3.925345116728707e-08,
+            "unit": "s",
+            "value": 0.4499999015736547
+          },
+          "state": "verify_grasp",
+          "time_s": 7.183333708
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.7646294594342573,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12317064611341222,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.3597162706317886
+          },
+          "phase": "slip_correction",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "slip_correction",
+            "uncertainty": 3.167131382081096e-07,
+            "unit": "m",
+            "value": 8.33846108177232e-08
+          },
+          "state": "settle",
+          "time_s": 9.475000494
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.7646294594342573,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12317064611341222,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.3597162706317886
+          },
+          "phase": "reorientation",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "reorientation",
+            "uncertainty": 8.722989135456771e-08,
+            "unit": "scale",
+            "value": 0.9999997812747891
+          },
+          "state": "transfer_direct",
+          "time_s": 9.475000494
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.7646294594342573,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12317064611341222,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.0
+          },
+          "phase": "release",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "release",
+            "uncertainty": 5.669942941821659e-08,
+            "unit": "s",
+            "value": 0.6499995312264735
+          },
+          "state": "align_direct",
+          "time_s": 15.900000829
+        }
+      ],
+      "recovery_path": "success",
+      "retained_lift": true,
+      "rgb": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow\\overhead_rgb.png",
+      "shadow_gate_passed": true,
+      "slip_detected": false,
+      "trace": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow\\cycle_trace.jsonl",
+      "trajectory": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow\\robot_joint_trajectory.json",
+      "usd": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow\\carve_scene2_a.usda",
+      "velocity_limit_violations": 0,
+      "video": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow\\scene2_solution_a_nominal.mp4",
+      "visualization": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow\\contact_skill_shadow.png"
+    },
+    "a_shadow_replay": {
+      "acceleration_limit_violations": 0,
+      "collision_violations": 0,
+      "cycle_time_s": 18.083333333333332,
+      "delivered": true,
+      "delivery_position_error_m": 0.011064712897619117,
+      "delivery_yaw_error_rad": 0.008806679733686684,
+      "depth": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow_replay\\overhead_depth_m.npy",
+      "executed_action_count": 0,
+      "grasp_confirmed": true,
+      "joint_limit_violations": 0,
+      "model_sha256": "10ee95ceaad3613fe5010f9bb82b6a8ee28ac1c33465d6e663d9fdea3eff697b",
+      "passed": true,
+      "phases": [
+        "close",
+        "release",
+        "reorientation",
+        "slip_correction",
+        "stabilize"
+      ],
+      "records": [
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.0,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12306925962647444,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.3402762643068137
+          },
+          "phase": "close",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "close",
+            "uncertainty": 3.053046199186227e-08,
+            "unit": "s",
+            "value": 0.3499994717282712
+          },
+          "state": "intercept",
+          "time_s": 6.804167022
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.7714040640349937,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12306925962647444,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.3402762643068137
+          },
+          "phase": "stabilize",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "stabilize",
+            "uncertainty": 3.925345116728707e-08,
+            "unit": "s",
+            "value": 0.449999888670399
+          },
+          "state": "verify_grasp",
+          "time_s": 7.170833707
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.7714040640349937,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12306925962647444,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.3402762643068137
+          },
+          "phase": "slip_correction",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "slip_correction",
+            "uncertainty": 3.167131382081096e-07,
+            "unit": "m",
+            "value": 6.974427629148078e-08
+          },
+          "state": "settle",
+          "time_s": 9.433333825
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.7714040640349937,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12306925962647444,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.3402762643068137
+          },
+          "phase": "reorientation",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "reorientation",
+            "uncertainty": 8.722989135456771e-08,
+            "unit": "scale",
+            "value": 0.9999997526008874
+          },
+          "state": "transfer_direct",
+          "time_s": 9.433333825
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.7714040640349937,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12306925962647444,
+            "slip_detected": false,
+            "solution_b": false,
+            "yaw_rad": 0.0
+          },
+          "phase": "release",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "release",
+            "uncertainty": 5.669942941821659e-08,
+            "unit": "s",
+            "value": 0.6499995302388697
+          },
+          "state": "align_direct",
+          "time_s": 15.862500827
+        }
+      ],
+      "recovery_path": "success",
+      "retained_lift": true,
+      "rgb": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow_replay\\overhead_rgb.png",
+      "shadow_gate_passed": true,
+      "slip_detected": false,
+      "trace": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow_replay\\cycle_trace.jsonl",
+      "trajectory": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow_replay\\robot_joint_trajectory.json",
+      "usd": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow_replay\\carve_scene2_a.usda",
+      "velocity_limit_violations": 0,
+      "video": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow_replay\\scene2_solution_a_nominal.mp4",
+      "visualization": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\a_shadow_replay\\contact_skill_shadow.png"
+    },
+    "b_shadow": {
+      "acceleration_limit_violations": 0,
+      "collision_violations": 0,
+      "cycle_time_s": 30.833333333333332,
+      "delivered": true,
+      "delivery_position_error_m": 0.0218889696701888,
+      "delivery_yaw_error_rad": 0.0020630252687648606,
+      "depth": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_shadow\\overhead_depth_m.npy",
+      "executed_action_count": 0,
+      "grasp_confirmed": true,
+      "joint_limit_violations": 0,
+      "model_sha256": "10ee95ceaad3613fe5010f9bb82b6a8ee28ac1c33465d6e663d9fdea3eff697b",
+      "passed": true,
+      "phases": [
+        "close",
+        "release",
+        "reorientation",
+        "slip_correction",
+        "stabilize"
+      ],
+      "records": [
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.0,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12297381972899177,
+            "slip_detected": false,
+            "solution_b": true,
+            "yaw_rad": -0.29737629208530564
+          },
+          "phase": "close",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "close",
+            "uncertainty": 3.053046199186227e-08,
+            "unit": "s",
+            "value": 0.34999967215408057
+          },
+          "state": "intercept",
+          "time_s": 6.750000352
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 1.0,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12297381972899177,
+            "slip_detected": false,
+            "solution_b": true,
+            "yaw_rad": -0.29737629208530564
+          },
+          "phase": "stabilize",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "stabilize",
+            "uncertainty": 3.925345116728707e-08,
+            "unit": "s",
+            "value": 0.4500003146439367
+          },
+          "state": "verify_grasp",
+          "time_s": 7.104167037
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 1.0,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12297381972899177,
+            "slip_detected": false,
+            "solution_b": true,
+            "yaw_rad": -0.29737629208530564
+          },
+          "phase": "slip_correction",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "slip_correction",
+            "uncertainty": 3.167131382081096e-07,
+            "unit": "m",
+            "value": 0.0004993326367340677
+          },
+          "state": "settle",
+          "time_s": 9.362500488
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 1.0,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12297381972899177,
+            "slip_detected": true,
+            "solution_b": true,
+            "yaw_rad": -0.31111410472619744
+          },
+          "phase": "slip_correction",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "slip_correction",
+            "uncertainty": 3.167131382081096e-07,
+            "unit": "m",
+            "value": 0.0009988261041505688
+          },
+          "state": "reobserve_buffer",
+          "time_s": 18.004167606
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.010691222448398601,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12297381972899177,
+            "slip_detected": true,
+            "solution_b": true,
+            "yaw_rad": -0.31415926535897937
+          },
+          "phase": "reorientation",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "reorientation",
+            "uncertainty": 8.722989135456771e-08,
+            "unit": "scale",
+            "value": 0.9999997486626542
+          },
+          "state": "feed_buffer",
+          "time_s": 23.437501222
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.013536310961460126,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12297381972899177,
+            "slip_detected": true,
+            "solution_b": true,
+            "yaw_rad": 0.0
+          },
+          "phase": "release",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "release",
+            "uncertainty": 5.669942941821659e-08,
+            "unit": "s",
+            "value": 0.6499995544170869
+          },
+          "state": "feed_buffer",
+          "time_s": 28.666668162
+        }
+      ],
+      "recovery_path": "success",
+      "retained_lift": true,
+      "rgb": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_shadow\\overhead_rgb.png",
+      "shadow_gate_passed": true,
+      "slip_detected": true,
+      "trace": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_shadow\\cycle_trace.jsonl",
+      "trajectory": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_shadow\\robot_joint_trajectory.json",
+      "usd": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_shadow\\carve_scene2_b.usda",
+      "velocity_limit_violations": 0,
+      "video": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_shadow\\scene2_solution_b_nominal.mp4",
+      "visualization": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_shadow\\contact_skill_shadow.png"
+    },
+    "b_slip_shadow": {
+      "acceleration_limit_violations": 0,
+      "collision_violations": 0,
+      "cycle_time_s": 30.833333333333332,
+      "delivered": true,
+      "delivery_position_error_m": 0.02192922487065509,
+      "delivery_yaw_error_rad": 0.0004905029978818881,
+      "depth": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_slip_shadow\\overhead_depth_m.npy",
+      "executed_action_count": 0,
+      "grasp_confirmed": true,
+      "joint_limit_violations": 0,
+      "model_sha256": "10ee95ceaad3613fe5010f9bb82b6a8ee28ac1c33465d6e663d9fdea3eff697b",
+      "passed": true,
+      "phases": [
+        "close",
+        "release",
+        "reorientation",
+        "slip_correction",
+        "stabilize"
+      ],
+      "records": [
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.0,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12311113713357444,
+            "slip_detected": false,
+            "solution_b": true,
+            "yaw_rad": -0.3102665189727299
+          },
+          "phase": "close",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "close",
+            "uncertainty": 3.053046199186227e-08,
+            "unit": "s",
+            "value": 0.3499996844298724
+          },
+          "state": "intercept",
+          "time_s": 6.858333691
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 1.0,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12311113713357444,
+            "slip_detected": false,
+            "solution_b": true,
+            "yaw_rad": -0.3102665189727299
+          },
+          "phase": "stabilize",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "stabilize",
+            "uncertainty": 3.925345116728707e-08,
+            "unit": "s",
+            "value": 0.45000033042709764
+          },
+          "state": "verify_grasp",
+          "time_s": 7.22083371
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 1.0,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12311113713357444,
+            "slip_detected": false,
+            "solution_b": true,
+            "yaw_rad": -0.3102665189727299
+          },
+          "phase": "slip_correction",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "slip_correction",
+            "uncertainty": 3.167131382081096e-07,
+            "unit": "m",
+            "value": 0.0004993375767566648
+          },
+          "state": "settle",
+          "time_s": 9.479167161
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 1.0,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12311113713357444,
+            "slip_detected": true,
+            "solution_b": true,
+            "yaw_rad": -0.3197327847407969
+          },
+          "phase": "slip_correction",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "slip_correction",
+            "uncertainty": 3.167131382081096e-07,
+            "unit": "m",
+            "value": 0.000998829407054646
+          },
+          "state": "reobserve_buffer",
+          "time_s": 18.087500943
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.00885551831361651,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12311113713357444,
+            "slip_detected": true,
+            "solution_b": true,
+            "yaw_rad": -0.31415926535897937
+          },
+          "phase": "reorientation",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "reorientation",
+            "uncertainty": 8.722989135456771e-08,
+            "unit": "scale",
+            "value": 0.9999997627277558
+          },
+          "state": "feed_buffer",
+          "time_s": 23.554167895
+        },
+        {
+          "deterministic_command_retained": true,
+          "observation": {
+            "age_s": 0.0,
+            "contact_force_imbalance": 0.0024486718076678535,
+            "emergency_stop": false,
+            "plc_ready": true,
+            "product_width_m": 0.12311113713357444,
+            "slip_detected": true,
+            "solution_b": true,
+            "yaw_rad": 0.0
+          },
+          "phase": "release",
+          "proposal": {
+            "accepted_by_shadow_gate": true,
+            "executed": false,
+            "fallback_reason": null,
+            "phase": "release",
+            "uncertainty": 5.669942941821659e-08,
+            "unit": "s",
+            "value": 0.6499995537214283
+          },
+          "state": "feed_buffer",
+          "time_s": 28.775001501
+        }
+      ],
+      "recovery_path": "success",
+      "retained_lift": true,
+      "rgb": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_slip_shadow\\overhead_rgb.png",
+      "shadow_gate_passed": true,
+      "slip_detected": true,
+      "trace": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_slip_shadow\\cycle_trace.jsonl",
+      "trajectory": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_slip_shadow\\robot_joint_trajectory.json",
+      "usd": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_slip_shadow\\carve_scene2_b.usda",
+      "velocity_limit_violations": 0,
+      "video": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_slip_shadow\\scene2_solution_b_slip_correction.mp4",
+      "visualization": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_e\\comparison\\20260828_shadow_v1\\b_slip_shadow\\contact_skill_shadow.png"
+    }
+  },
+  "schema_version": 1
+}

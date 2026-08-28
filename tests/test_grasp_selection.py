@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from meatcell.contracts import BoundingBox, GraspClass, ObjectObservation, ObservationSource, SimTime, Transform, Vector3
-from meatcell.grasp_selection import classify_grasp_yaw, select_mask_grasp
+from meatcell.grasp_selection import classify_grasp_yaw, generate_mask_grasp_candidates, select_mask_grasp
 from meatcell.perception import PinholeCalibration
 
 
@@ -60,3 +60,38 @@ def test_mask_grasp_is_inside_mask_and_serializes_as_robot_candidate() -> None:
     assert candidate.track_id == "track-1"
     assert candidate.quality == proposal.quality
     assert candidate.to_json() == candidate.to_json()
+
+
+def test_mask_candidate_generator_returns_unique_geometry_safe_points() -> None:
+    mask = np.zeros((120, 160), dtype=bool)
+    mask[35:85, 25:135] = True
+    depth = np.full(mask.shape, 1.4, dtype=np.float32)
+    observation = ObjectObservation(
+        "detection-2",
+        SimTime(0),
+        SimTime.from_seconds(0.03),
+        "meat_reference",
+        0.88,
+        BoundingBox(25.0, 35.0, 135.0, 85.0),
+        None,
+        Transform.planar(0.0, 0.0, 0.88, math.radians(20.0)),
+        Vector3(1e-5, 1e-5, 1e-5),
+        1e-4,
+        1.0,
+        0.95,
+        ObservationSource.SEGMENTATION,
+    )
+    calibration = PinholeCalibration(0.0, 0.0, 2.28, 500.0, 500.0, 80.0, 60.0, 0.8075, 0.002, 0.002)
+    candidates = generate_mask_grasp_candidates(
+        mask=mask,
+        depth_m=depth,
+        observation=observation,
+        track_id="track-2",
+        calibration=calibration,
+        surface_to_center_offset_m=0.0,
+    )
+    pixels = {(round(item.grasp_point_u_px), round(item.grasp_point_v_px)) for item in candidates}
+    assert len(candidates) == 5
+    assert len(pixels) == 5
+    assert all(mask[v, u] for u, v in pixels)
+    assert all(item.boundary_clearance_m >= 0.012 for item in candidates)

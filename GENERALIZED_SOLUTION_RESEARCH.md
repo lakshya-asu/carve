@@ -2,7 +2,7 @@
 
 Date: 27 August 2026
 
-Status: design research. The three solutions in this document are proposals. They have not been implemented or tested in CARVE.
+Status: design research plus simulator implementation record. C and D now pass integrated Scene 2 gates. E passes replay and shadow evaluation only. Bounded learned execution is blocked on representative physical contact data.
 
 ## Research question
 
@@ -12,7 +12,16 @@ How should CARVE grow from a deterministic conveyor interception demonstration i
 
 The next useful learned component is a grasp-affordance scorer. It should rank several physically feasible grasp candidates from RGBD geometry and measured outcomes. It should not replace tracking, timed interception, collision checks, PLC permissives, or the cycle supervisor.
 
-After that, add closed-loop reactive updates during approach. A full learned manipulation skill should be the third stage, first in shadow mode and then inside a bounded action interface. A large vision-language-action model is not the first production baseline for one repeated product recipe.
+After that, add closed-loop reactive updates during approach. A full learned manipulation skill should be the third stage, first in shadow mode and then inside a bounded action interface. The first two stages and the E shadow slice were completed on 2026-08-28. A large vision-language-action model is not the first baseline for one repeated product recipe.
+
+## Implemented simulator outcome, 2026-08-28
+
+- C ranks several geometry-safe RGBD grasp candidates with a small auditable model. Six full A and B baseline, learned, and replay cycles passed. A stronger record contains 25 separately executed candidate trials, with 15 fit and 10 held-out rows. Its two held-out groups had zero selection regret, but several outcome heads remain degenerate simulator proxies.
+- D keeps the same track and grasp identity while applying capped, quantized corrections until no-return. Eight paired disturbance comparisons passed. Mean intercept position error improved by 20.016 mm.
+- E fits a five-phase behavior clone from complete Scene 2 demonstrations and records proposals inside live A and B cycles. It is shadow-only. Five cases passed, including slip correction and emergency stop, with zero learned commands.
+- The deterministic freshness, reach, timing, joint, velocity, acceleration, collision, PLC, emergency-stop, verification, recovery, and audit gates remain authoritative for every route.
+- Physical workpiece, force, tactile, slip, tissue-damage, and recovery measurements remain the exact gate before E can execute learned actions.
+- The final matched hybrid matrix passed all eight required A/B S0 through S3 cases. D and C plus D improved intercept position by about 11.23 mm in both flows. C alone preserved delivery without improving interception in that seed. S4 remained not run.
 
 ## What “learning a grasping skill” means here
 

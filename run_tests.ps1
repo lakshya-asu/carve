@@ -1,12 +1,24 @@
 $ErrorActionPreference = "Stop"
 $projectRoot = $PSScriptRoot
 $isaacPython = "C:\Users\jainl\is6\Scripts\python.exe"
-$unitPython = (Get-Command python -ErrorAction Stop).Source
+$ordinaryPython = (Get-Command python -ErrorAction Stop).Source
 if (-not (Test-Path -LiteralPath $isaacPython)) {
     throw "Isaac Sim Python was not found at $isaacPython"
 }
+$existingIsaac = @(Get-CimInstance Win32_Process | Where-Object {
+    ($_.ExecutablePath -like "C:\Users\jainl\is6*" -and $_.Name -in @("kit.exe", "isaac-sim.exe")) -or
+    ($_.Name -eq "python.exe" -and $_.CommandLine -match "isaac_sim[\\/]") -or
+    ($_.ProcessId -ne $PID -and $_.Name -in @("pwsh.exe", "powershell.exe") -and
+        $_.CommandLine -match "run_(solution_[abcde]|hybrid_comparison|tests|hardening|accuracy_matrix|speed_pose_matrix)\.ps1")
+})
+if ($existingIsaac.Count -gt 0) {
+    throw "The release gate requires a clean Isaac state; found $($existingIsaac.Count) existing Isaac process(es)."
+}
+$ordinarySitePackages = (& $ordinaryPython -c "import sysconfig; print(sysconfig.get_paths()['purelib'])").Trim()
+$isaacSitePackages = "C:\Users\jainl\is6\Lib\site-packages"
+$unitPython = $isaacPython
 $env:OMNI_KIT_ACCEPT_EULA = "YES"
-$env:PYTHONPATH = "C:\Users\jainl\is6\Lib\site-packages"
+$env:PYTHONPATH = "$ordinarySitePackages;$isaacSitePackages"
 $runId = Get-Date -Format "yyyyMMdd_HHmmssfff"
 $fullRunRoot = "results/full_suite/$runId"
 $fullRunPath = Join-Path $projectRoot $fullRunRoot
@@ -35,5 +47,9 @@ try {
     Write-Output "Complete suite evidence: $fullRunPath"
 }
 finally {
+    Get-CimInstance Win32_Process | Where-Object {
+        ($_.ExecutablePath -like "C:\Users\jainl\is6*" -and $_.Name -in @("kit.exe", "isaac-sim.exe")) -or
+        ($_.Name -eq "python.exe" -and $_.CommandLine -match "isaac_sim[\\/]")
+    } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
     Pop-Location
 }

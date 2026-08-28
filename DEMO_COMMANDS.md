@@ -65,10 +65,44 @@ Each case passes only when it detects the injected condition, avoids a false del
 
 This is the release gate. It is not the quickest live demonstration.
 
+## Solution C learned grasp ranking
+
+Train the scorer, then run the paired A and B baseline, learned, and replay matrix:
+
+```powershell
+.\run_solution_c.ps1
+```
+
+## Solution D reactive interception
+
+Run predict-once and reactive A/B pairs for belt ramp, encoder bias, latency spike, and pose disturbance:
+
+```powershell
+.\run_solution_d.ps1
+```
+
+## Solution E shadow evaluation
+
+Fit the five-phase behavior clone and run nominal A, replay A, nominal B, B slip correction, and A emergency stop. Learned outputs are recorded but never executed:
+
+```powershell
+.\run_solution_e.ps1
+```
+
+## Final hybrid ablation
+
+Run matched A and B cases for the deterministic baseline, C only, D only, C plus D, and the explicitly blocked S4 entry:
+
+```powershell
+.\run_hybrid_comparison.ps1 -OutputRoot results\hybrid_comparison\demo
+```
+
+The manifest records S4 as `not_run`. The command does not execute learned contact actions.
+
 ## Close Isaac Sim after a manual visible session
 
 Close the Isaac window normally. The automated Solution A and B launchers stop the simulator processes they own after each run.
 
 ## Current boundary
 
-These commands exercise Solutions A and B. Solutions C, D, and E are discussion-only research options. They are not implemented and are not part of any launcher.
+Solutions A and B remain the executed regression baselines. C and D are integrated simulator capabilities with one-command launchers. E is integrated in shadow-only mode. Bounded learned E execution is disabled until representative physical force, tactile, slip, tissue-damage, and recovery data exist.

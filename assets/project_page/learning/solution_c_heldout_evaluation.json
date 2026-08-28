@@ -1,0 +1,676 @@
+{
+  "claim_boundary": "Held-out Isaac Sim matched-candidate evidence only. No physical grasp claim.",
+  "gates": {
+    "maximum_mean_regret": 0.1,
+    "minimum_mean_improvement_over_geometric": -0.02,
+    "selected_candidate_safety_violations_allowed": 0
+  },
+  "groups": [
+    {
+      "baseline_actual_utility": 0.7494193252688875,
+      "baseline_candidate_index": 0,
+      "candidates": [
+        {
+          "actual_utility": 0.7494193252688875,
+          "candidate_index": 0,
+          "predicted_outcomes": {
+            "contact_probability": 1.0,
+            "delivery_probability": 0.8357665561684932,
+            "excessive_contact_probability": 1.0,
+            "retained_lift_probability": 0.9436375462819324,
+            "slip_probability": 0.0
+          },
+          "predicted_utility": 0.6386607023273377,
+          "raw_outcomes": {
+            "acceleration_limit_violations": 0,
+            "bilateral_contact": true,
+            "collision_violations": 0,
+            "cycle_time_s": 16.916666666666668,
+            "delivered": true,
+            "delivery_measurement": {
+              "__type__": "DeliveryMeasurement",
+              "angle_error_rad": 0.0013292709263304364,
+              "position_error_m": 0.010465461539715242,
+              "schema_version": 1,
+              "speed_error_mps": 1.1601821408389848e-05,
+              "timing_error_s": 0.037500059000000974
+            },
+            "excessive_contact_proxy_threshold_n": 140.0,
+            "joint_limit_violations": 0,
+            "lift_distance_m": 0.1772434115409851,
+            "maximum_contact_force_proxy_n": 2181.2245566504307,
+            "maximum_product_to_tcp_distance_m": 0.06979442910139838,
+            "slip_detected": false,
+            "terminal_result": {
+              "__type__": "CellResult",
+              "collision_count": 0,
+              "delivered": true,
+              "episode_id": "scene2-a-nominal-5101",
+              "finished_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 17770834260,
+                "schema_version": 1
+              },
+              "grasped": true,
+              "joint_limit_violation_count": 0,
+              "perceived": true,
+              "placement_angle_error_rad": 0.0013292709263304364,
+              "placement_position_error_m": 0.010465461539715242,
+              "schema_version": 1,
+              "slip_detected": false,
+              "solution": "a",
+              "started_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 0,
+                "schema_version": 1
+              },
+              "terminal_path": {
+                "__enum__": "TerminalPath",
+                "value": "success"
+              },
+              "terminal_reason": "delivery_verified",
+              "timing_error_s": 0.037500059000000974,
+              "tracked": true,
+              "transfer_speed_error_mps": 1.1601821408389848e-05
+            },
+            "velocity_limit_violations": 0
+          }
+        },
+        {
+          "actual_utility": 0.41711258392701467,
+          "candidate_index": 1,
+          "predicted_outcomes": {
+            "contact_probability": 1.0,
+            "delivery_probability": 0.5954440615858385,
+            "excessive_contact_probability": 1.0,
+            "retained_lift_probability": 0.5463672060535243,
+            "slip_probability": 0.0
+          },
+          "predicted_utility": 0.17533110828981727,
+          "raw_outcomes": {
+            "acceleration_limit_violations": 0,
+            "bilateral_contact": true,
+            "collision_violations": 0,
+            "cycle_time_s": 17.083333333333332,
+            "delivered": true,
+            "delivery_measurement": {
+              "__type__": "DeliveryMeasurement",
+              "angle_error_rad": 0.019307652250379812,
+              "position_error_m": 0.020650868701989247,
+              "schema_version": 1,
+              "speed_error_mps": 3.986890226043882e-06,
+              "timing_error_s": 0.025000058999999908
+            },
+            "excessive_contact_proxy_threshold_n": 140.0,
+            "joint_limit_violations": 0,
+            "lift_distance_m": 0.17772626876831055,
+            "maximum_contact_force_proxy_n": 2200.643806125919,
+            "maximum_product_to_tcp_distance_m": 0.08359442819892625,
+            "slip_detected": false,
+            "terminal_result": {
+              "__type__": "CellResult",
+              "collision_count": 0,
+              "delivered": true,
+              "episode_id": "scene2-a-nominal-5101",
+              "finished_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 17883334266,
+                "schema_version": 1
+              },
+              "grasped": true,
+              "joint_limit_violation_count": 0,
+              "perceived": true,
+              "placement_angle_error_rad": 0.019307652250379812,
+              "placement_position_error_m": 0.020650868701989247,
+              "schema_version": 1,
+              "slip_detected": false,
+              "solution": "a",
+              "started_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 0,
+                "schema_version": 1
+              },
+              "terminal_path": {
+                "__enum__": "TerminalPath",
+                "value": "success"
+              },
+              "terminal_reason": "delivery_verified",
+              "timing_error_s": 0.025000058999999908,
+              "tracked": true,
+              "transfer_speed_error_mps": 3.986890226043882e-06
+            },
+            "velocity_limit_violations": 0
+          }
+        },
+        {
+          "actual_utility": 0.40768281808925766,
+          "candidate_index": 2,
+          "predicted_outcomes": {
+            "contact_probability": 1.0,
+            "delivery_probability": 0.5568481685133172,
+            "excessive_contact_probability": 1.0,
+            "retained_lift_probability": 0.5149740435568482,
+            "slip_probability": 0.0
+          },
+          "predicted_utility": 0.13676235298652814,
+          "raw_outcomes": {
+            "acceleration_limit_violations": 0,
+            "bilateral_contact": true,
+            "collision_violations": 0,
+            "cycle_time_s": 16.75,
+            "delivered": true,
+            "delivery_measurement": {
+              "__type__": "DeliveryMeasurement",
+              "angle_error_rad": 0.013403496262984234,
+              "position_error_m": 0.010630507407348942,
+              "schema_version": 1,
+              "speed_error_mps": 1.0944394435819393e-06,
+              "timing_error_s": 0.016666725000000326
+            },
+            "excessive_contact_proxy_threshold_n": 140.0,
+            "joint_limit_violations": 0,
+            "lift_distance_m": 0.1776936650276184,
+            "maximum_contact_force_proxy_n": 2164.721719376355,
+            "maximum_product_to_tcp_distance_m": 0.0905647697623143,
+            "slip_detected": false,
+            "terminal_result": {
+              "__type__": "CellResult",
+              "collision_count": 0,
+              "delivered": true,
+              "episode_id": "scene2-a-nominal-5101",
+              "finished_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 17629167586,
+                "schema_version": 1
+              },
+              "grasped": true,
+              "joint_limit_violation_count": 0,
+              "perceived": true,
+              "placement_angle_error_rad": 0.013403496262984234,
+              "placement_position_error_m": 0.010630507407348942,
+              "schema_version": 1,
+              "slip_detected": false,
+              "solution": "a",
+              "started_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 0,
+                "schema_version": 1
+              },
+              "terminal_path": {
+                "__enum__": "TerminalPath",
+                "value": "success"
+              },
+              "terminal_reason": "delivery_verified",
+              "timing_error_s": 0.016666725000000326,
+              "tracked": true,
+              "transfer_speed_error_mps": 1.0944394435819393e-06
+            },
+            "velocity_limit_violations": 0
+          }
+        },
+        {
+          "actual_utility": -0.15,
+          "candidate_index": 3,
+          "predicted_outcomes": {
+            "contact_probability": 1.0,
+            "delivery_probability": 0.37106297319295506,
+            "excessive_contact_probability": 1.0,
+            "retained_lift_probability": 0.13464873812876277,
+            "slip_probability": 0.0
+          },
+          "predicted_utility": -0.10003683889326168,
+          "raw_outcomes": {
+            "acceleration_limit_violations": 0,
+            "bilateral_contact": true,
+            "collision_violations": 0,
+            "cycle_time_s": 15.166666666666666,
+            "delivered": false,
+            "delivery_measurement": null,
+            "excessive_contact_proxy_threshold_n": 140.0,
+            "joint_limit_violations": 0,
+            "lift_distance_m": 0.17685729265213013,
+            "maximum_contact_force_proxy_n": 2155.149423733011,
+            "maximum_product_to_tcp_distance_m": 0.6433394546892971,
+            "slip_detected": false,
+            "terminal_result": {
+              "__type__": "CellResult",
+              "collision_count": 0,
+              "delivered": false,
+              "episode_id": "scene2-a-nominal-5101",
+              "finished_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 15979167500,
+                "schema_version": 1
+              },
+              "grasped": true,
+              "joint_limit_violation_count": 0,
+              "perceived": true,
+              "placement_angle_error_rad": null,
+              "placement_position_error_m": null,
+              "schema_version": 1,
+              "slip_detected": false,
+              "solution": "a",
+              "started_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 0,
+                "schema_version": 1
+              },
+              "terminal_path": {
+                "__enum__": "TerminalPath",
+                "value": "recovered"
+              },
+              "terminal_reason": "matched_candidate_lost_during_transport",
+              "timing_error_s": null,
+              "tracked": true,
+              "transfer_speed_error_mps": null
+            },
+            "velocity_limit_violations": 0
+          }
+        },
+        {
+          "actual_utility": -0.15,
+          "candidate_index": 4,
+          "predicted_outcomes": {
+            "contact_probability": 1.0,
+            "delivery_probability": 0.25573610806620795,
+            "excessive_contact_probability": 1.0,
+            "retained_lift_probability": 0.0785682148285558,
+            "slip_probability": 0.0
+          },
+          "predicted_utility": -0.1299072705220354,
+          "raw_outcomes": {
+            "acceleration_limit_violations": 0,
+            "bilateral_contact": true,
+            "collision_violations": 0,
+            "cycle_time_s": 7.916666666666667,
+            "delivered": false,
+            "delivery_measurement": null,
+            "excessive_contact_proxy_threshold_n": 140.0,
+            "joint_limit_violations": 0,
+            "lift_distance_m": 0.0,
+            "maximum_contact_force_proxy_n": 2086.7991312772488,
+            "maximum_product_to_tcp_distance_m": 0.13705785378083335,
+            "slip_detected": false,
+            "terminal_result": {
+              "__type__": "CellResult",
+              "collision_count": 0,
+              "delivered": false,
+              "episode_id": "scene2-a-nominal-5101",
+              "finished_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 8779167125,
+                "schema_version": 1
+              },
+              "grasped": true,
+              "joint_limit_violation_count": 0,
+              "perceived": true,
+              "placement_angle_error_rad": null,
+              "placement_position_error_m": null,
+              "schema_version": 1,
+              "slip_detected": false,
+              "solution": "a",
+              "started_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 0,
+                "schema_version": 1
+              },
+              "terminal_path": {
+                "__enum__": "TerminalPath",
+                "value": "recovered"
+              },
+              "terminal_reason": "matched_candidate_lift_ik_unreachable",
+              "timing_error_s": null,
+              "tracked": true,
+              "transfer_speed_error_mps": null
+            },
+            "velocity_limit_violations": 0
+          }
+        }
+      ],
+      "improvement_over_geometric": 0.0,
+      "oracle_actual_utility": 0.7494193252688875,
+      "oracle_candidate_index": 0,
+      "regret": 0.0,
+      "selected_actual_utility": 0.7494193252688875,
+      "selected_candidate_index": 0,
+      "selected_safety_passed": true,
+      "trial_group_id": "41d070b6c0f7f685"
+    },
+    {
+      "baseline_actual_utility": 0.7260147115006026,
+      "baseline_candidate_index": 0,
+      "candidates": [
+        {
+          "actual_utility": 0.7260147115006026,
+          "candidate_index": 0,
+          "predicted_outcomes": {
+            "contact_probability": 1.0,
+            "delivery_probability": 1.0,
+            "excessive_contact_probability": 1.0,
+            "retained_lift_probability": 1.0,
+            "slip_probability": 0.0
+          },
+          "predicted_utility": 0.85,
+          "raw_outcomes": {
+            "acceleration_limit_violations": 0,
+            "bilateral_contact": true,
+            "collision_violations": 0,
+            "cycle_time_s": 16.25,
+            "delivered": true,
+            "delivery_measurement": {
+              "__type__": "DeliveryMeasurement",
+              "angle_error_rad": 0.003117032051809205,
+              "position_error_m": 0.010441994390731835,
+              "schema_version": 1,
+              "speed_error_mps": 5.551504486396598e-06,
+              "timing_error_s": 0.016666725000000326
+            },
+            "excessive_contact_proxy_threshold_n": 140.0,
+            "joint_limit_violations": 0,
+            "lift_distance_m": 0.1769106388092041,
+            "maximum_contact_force_proxy_n": 2320.844758108904,
+            "maximum_product_to_tcp_distance_m": 0.07109612088852045,
+            "slip_detected": false,
+            "terminal_result": {
+              "__type__": "CellResult",
+              "collision_count": 0,
+              "delivered": true,
+              "episode_id": "scene2-a-nominal-5102",
+              "finished_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 17129167560,
+                "schema_version": 1
+              },
+              "grasped": true,
+              "joint_limit_violation_count": 0,
+              "perceived": true,
+              "placement_angle_error_rad": 0.003117032051809205,
+              "placement_position_error_m": 0.010441994390731835,
+              "schema_version": 1,
+              "slip_detected": false,
+              "solution": "a",
+              "started_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 0,
+                "schema_version": 1
+              },
+              "terminal_path": {
+                "__enum__": "TerminalPath",
+                "value": "success"
+              },
+              "terminal_reason": "delivery_verified",
+              "timing_error_s": 0.016666725000000326,
+              "tracked": true,
+              "transfer_speed_error_mps": 5.551504486396598e-06
+            },
+            "velocity_limit_violations": 0
+          }
+        },
+        {
+          "actual_utility": 0.4894153015666739,
+          "candidate_index": 1,
+          "predicted_outcomes": {
+            "contact_probability": 1.0,
+            "delivery_probability": 1.0,
+            "excessive_contact_probability": 1.0,
+            "retained_lift_probability": 0.7567036324555041,
+            "slip_probability": 0.0
+          },
+          "predicted_utility": 0.6067036324555041,
+          "raw_outcomes": {
+            "acceleration_limit_violations": 0,
+            "bilateral_contact": true,
+            "collision_violations": 0,
+            "cycle_time_s": 16.416666666666668,
+            "delivered": true,
+            "delivery_measurement": {
+              "__type__": "DeliveryMeasurement",
+              "angle_error_rad": 0.013270775645474756,
+              "position_error_m": 0.016581762697632355,
+              "schema_version": 1,
+              "speed_error_mps": 5.410495556365508e-05,
+              "timing_error_s": 0.012500058000000536
+            },
+            "excessive_contact_proxy_threshold_n": 140.0,
+            "joint_limit_violations": 0,
+            "lift_distance_m": 0.17756885290145874,
+            "maximum_contact_force_proxy_n": 1743.4719320811068,
+            "maximum_product_to_tcp_distance_m": 0.0817389216669899,
+            "slip_detected": false,
+            "terminal_result": {
+              "__type__": "CellResult",
+              "collision_count": 0,
+              "delivered": true,
+              "episode_id": "scene2-a-nominal-5102",
+              "finished_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 17225000898,
+                "schema_version": 1
+              },
+              "grasped": true,
+              "joint_limit_violation_count": 0,
+              "perceived": true,
+              "placement_angle_error_rad": 0.013270775645474756,
+              "placement_position_error_m": 0.016581762697632355,
+              "schema_version": 1,
+              "slip_detected": false,
+              "solution": "a",
+              "started_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 0,
+                "schema_version": 1
+              },
+              "terminal_path": {
+                "__enum__": "TerminalPath",
+                "value": "success"
+              },
+              "terminal_reason": "delivery_verified",
+              "timing_error_s": 0.012500058000000536,
+              "tracked": true,
+              "transfer_speed_error_mps": 5.410495556365508e-05
+            },
+            "velocity_limit_violations": 0
+          }
+        },
+        {
+          "actual_utility": 0.49113351467309485,
+          "candidate_index": 2,
+          "predicted_outcomes": {
+            "contact_probability": 1.0,
+            "delivery_probability": 1.0,
+            "excessive_contact_probability": 1.0,
+            "retained_lift_probability": 0.6538296554112858,
+            "slip_probability": 0.0
+          },
+          "predicted_utility": 0.5038296554112858,
+          "raw_outcomes": {
+            "acceleration_limit_violations": 0,
+            "bilateral_contact": true,
+            "collision_violations": 0,
+            "cycle_time_s": 16.25,
+            "delivered": true,
+            "delivery_measurement": {
+              "__type__": "DeliveryMeasurement",
+              "angle_error_rad": 0.0014982803857276413,
+              "position_error_m": 0.010144054403084198,
+              "schema_version": 1,
+              "speed_error_mps": 6.679437986953513e-07,
+              "timing_error_s": 0.016666725000000326
+            },
+            "excessive_contact_proxy_threshold_n": 140.0,
+            "joint_limit_violations": 0,
+            "lift_distance_m": 0.17703759670257568,
+            "maximum_contact_force_proxy_n": 2274.0098148728257,
+            "maximum_product_to_tcp_distance_m": 0.08733596070498982,
+            "slip_detected": false,
+            "terminal_result": {
+              "__type__": "CellResult",
+              "collision_count": 0,
+              "delivered": true,
+              "episode_id": "scene2-a-nominal-5102",
+              "finished_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 17129167560,
+                "schema_version": 1
+              },
+              "grasped": true,
+              "joint_limit_violation_count": 0,
+              "perceived": true,
+              "placement_angle_error_rad": 0.0014982803857276413,
+              "placement_position_error_m": 0.010144054403084198,
+              "schema_version": 1,
+              "slip_detected": false,
+              "solution": "a",
+              "started_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 0,
+                "schema_version": 1
+              },
+              "terminal_path": {
+                "__enum__": "TerminalPath",
+                "value": "success"
+              },
+              "terminal_reason": "delivery_verified",
+              "timing_error_s": 0.016666725000000326,
+              "tracked": true,
+              "transfer_speed_error_mps": 6.679437986953513e-07
+            },
+            "velocity_limit_violations": 0
+          }
+        },
+        {
+          "actual_utility": -0.15,
+          "candidate_index": 3,
+          "predicted_outcomes": {
+            "contact_probability": 1.0,
+            "delivery_probability": 0.88205308040515,
+            "excessive_contact_probability": 1.0,
+            "retained_lift_probability": 0.2784424399724218,
+            "slip_probability": 0.0
+          },
+          "predicted_utility": 0.09560101189320072,
+          "raw_outcomes": {
+            "acceleration_limit_violations": 0,
+            "bilateral_contact": true,
+            "collision_violations": 0,
+            "cycle_time_s": 10.916666666666666,
+            "delivered": false,
+            "delivery_measurement": null,
+            "excessive_contact_proxy_threshold_n": 140.0,
+            "joint_limit_violations": 0,
+            "lift_distance_m": 0.17213696241378784,
+            "maximum_contact_force_proxy_n": 1563.2087273713446,
+            "maximum_product_to_tcp_distance_m": 0.14672036035786673,
+            "slip_detected": false,
+            "terminal_result": {
+              "__type__": "CellResult",
+              "collision_count": 0,
+              "delivered": false,
+              "episode_id": "scene2-a-nominal-5102",
+              "finished_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 11750000613,
+                "schema_version": 1
+              },
+              "grasped": true,
+              "joint_limit_violation_count": 0,
+              "perceived": true,
+              "placement_angle_error_rad": null,
+              "placement_position_error_m": null,
+              "schema_version": 1,
+              "slip_detected": false,
+              "solution": "a",
+              "started_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 0,
+                "schema_version": 1
+              },
+              "terminal_path": {
+                "__enum__": "TerminalPath",
+                "value": "recovered"
+              },
+              "terminal_reason": "matched_candidate_lost_during_reorientation",
+              "timing_error_s": null,
+              "tracked": true,
+              "transfer_speed_error_mps": null
+            },
+            "velocity_limit_violations": 0
+          }
+        },
+        {
+          "actual_utility": -0.15,
+          "candidate_index": 4,
+          "predicted_outcomes": {
+            "contact_probability": 1.0,
+            "delivery_probability": 0.8542254312255939,
+            "excessive_contact_probability": 1.0,
+            "retained_lift_probability": 0.2199054284886217,
+            "slip_probability": 0.0
+          },
+          "predicted_utility": 0.03784880947954189,
+          "raw_outcomes": {
+            "acceleration_limit_violations": 0,
+            "bilateral_contact": true,
+            "collision_violations": 0,
+            "cycle_time_s": 8.833333333333334,
+            "delivered": false,
+            "delivery_measurement": null,
+            "excessive_contact_proxy_threshold_n": 140.0,
+            "joint_limit_violations": 0,
+            "lift_distance_m": -0.0001793503761291504,
+            "maximum_contact_force_proxy_n": 2038.4688872704508,
+            "maximum_product_to_tcp_distance_m": 0.31355130603137765,
+            "slip_detected": false,
+            "terminal_result": {
+              "__type__": "CellResult",
+              "collision_count": 0,
+              "delivered": false,
+              "episode_id": "scene2-a-nominal-5102",
+              "finished_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 9679167171,
+                "schema_version": 1
+              },
+              "grasped": true,
+              "joint_limit_violation_count": 0,
+              "perceived": true,
+              "placement_angle_error_rad": null,
+              "placement_position_error_m": null,
+              "schema_version": 1,
+              "slip_detected": false,
+              "solution": "a",
+              "started_at": {
+                "__type__": "SimTime",
+                "nanoseconds": 0,
+                "schema_version": 1
+              },
+              "terminal_path": {
+                "__enum__": "TerminalPath",
+                "value": "recovered"
+              },
+              "terminal_reason": "matched_candidate_lost_during_lift",
+              "timing_error_s": null,
+              "tracked": true,
+              "transfer_speed_error_mps": null
+            },
+            "velocity_limit_violations": 0
+          }
+        }
+      ],
+      "improvement_over_geometric": 0.0,
+      "oracle_actual_utility": 0.7260147115006026,
+      "oracle_candidate_index": 0,
+      "regret": 0.0,
+      "selected_actual_utility": 0.7260147115006026,
+      "selected_candidate_index": 0,
+      "selected_safety_passed": true,
+      "trial_group_id": "fc7de62657e62829"
+    }
+  ],
+  "held_out_group_count": 2,
+  "maximum_regret": 0.0,
+  "mean_improvement_over_geometric": 0.0,
+  "mean_regret": 0.0,
+  "passed": true,
+  "schema_version": 1
+}

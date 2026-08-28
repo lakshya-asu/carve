@@ -1,0 +1,77 @@
+{
+  "claim_boundary": "Simulator outcome model only. Contact force and excessive-contact targets are uncalibrated proxies.",
+  "dataset_sha256": "8b02c8cef3ebdc77ae6bbc93448a65050ab8b7f9ec8cd6f0196b1c55eea6df9d",
+  "fit": {
+    "heads": {
+      "contact_probability": {
+        "prediction_max": 1.0,
+        "prediction_min": 1.0,
+        "rmse": 0.0
+      },
+      "delivery_probability": {
+        "prediction_max": 1.0,
+        "prediction_min": 0.247868504874727,
+        "rmse": 0.2475996616435291
+      },
+      "excessive_contact_probability": {
+        "prediction_max": 1.0,
+        "prediction_min": 1.0,
+        "rmse": 0.0
+      },
+      "retained_lift_probability": {
+        "prediction_max": 1.0,
+        "prediction_min": 0.07111719561340124,
+        "rmse": 0.09973601590384289
+      },
+      "slip_probability": {
+        "prediction_max": 0.0,
+        "prediction_min": 0.0,
+        "rmse": 0.0
+      }
+    },
+    "row_count": 15
+  },
+  "fit_seeds": [
+    5001,
+    5002,
+    5003
+  ],
+  "held_out": {
+    "heads": {
+      "contact_probability": {
+        "prediction_max": 1.0,
+        "prediction_min": 1.0,
+        "rmse": 0.0
+      },
+      "delivery_probability": {
+        "prediction_max": 1.0,
+        "prediction_min": 0.25573610806620795,
+        "rmse": 0.4338465438395427
+      },
+      "excessive_contact_probability": {
+        "prediction_max": 1.0,
+        "prediction_min": 1.0,
+        "rmse": 0.0
+      },
+      "retained_lift_probability": {
+        "prediction_max": 1.0,
+        "prediction_min": 0.0785682148285558,
+        "rmse": 0.15200265916825614
+      },
+      "slip_probability": {
+        "prediction_max": 0.0,
+        "prediction_min": 0.0,
+        "rmse": 0.0
+      }
+    },
+    "row_count": 10
+  },
+  "held_out_seeds": [
+    5101,
+    5102
+  ],
+  "model": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_c\\matched_training\\20260828_verified_v2\\candidate_model.json",
+  "model_sha256": "0a6b819ba11296b7034e28658e4bca5c8361118d5fe3de903f4af09870ed356d",
+  "passed": true,
+  "schema_version": 1
+}

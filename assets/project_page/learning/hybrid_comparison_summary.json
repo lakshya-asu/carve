@@ -1,0 +1,538 @@
+{
+  "claim_boundary": "Complete Isaac Sim Scene 2 evidence only. No physical or production validation.",
+  "comparisons": {
+    "a_seed5901_s1_vs_s0": {
+      "cycle_time_delta_s": 0.0,
+      "delivery_success_delta": 0,
+      "intercept_position_improvement_m": -1.2622810196816214e-05,
+      "intercept_timing_improvement_s": -0.00016864200000021867
+    },
+    "a_seed5901_s2_vs_s0": {
+      "cycle_time_delta_s": 0.0,
+      "delivery_success_delta": 0,
+      "intercept_position_improvement_m": 0.011229557202218118,
+      "intercept_timing_improvement_s": 0.0002500149999997703
+    },
+    "a_seed5901_s3_vs_s0": {
+      "cycle_time_delta_s": 0.0,
+      "delivery_success_delta": 0,
+      "intercept_position_improvement_m": 0.011261146575267517,
+      "intercept_timing_improvement_s": -0.00021495599999976633
+    },
+    "b_seed5901_s1_vs_s0": {
+      "cycle_time_delta_s": 0.0,
+      "delivery_success_delta": 0,
+      "intercept_position_improvement_m": -5.793932152673917e-05,
+      "intercept_timing_improvement_s": -0.0003199480000004584
+    },
+    "b_seed5901_s2_vs_s0": {
+      "cycle_time_delta_s": 0.0,
+      "delivery_success_delta": 0,
+      "intercept_position_improvement_m": 0.011231835670555447,
+      "intercept_timing_improvement_s": -0.00019183400000066797
+    },
+    "b_seed5901_s3_vs_s0": {
+      "cycle_time_delta_s": 0.0,
+      "delivery_success_delta": 0,
+      "intercept_position_improvement_m": 0.01123908245337358,
+      "intercept_timing_improvement_s": -0.00027857900000061164
+    }
+  },
+  "experiment_id": "20260828_final_clean",
+  "missing_required_cases": [],
+  "passed": true,
+  "required_case_count": 8,
+  "results": {
+    "a_s0_seed5901_pose_disturbance": {
+      "applied_updates": 0,
+      "artifacts": {
+        "depth": {
+          "bytes": 1228928,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s0_seed5901_pose_disturbance\\overhead_depth_m.npy"
+        },
+        "rgb": {
+          "bytes": 172121,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s0_seed5901_pose_disturbance\\overhead_rgb.png"
+        },
+        "segmentation": {
+          "bytes": 165387,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s0_seed5901_pose_disturbance\\yolo26_segmentation.png"
+        },
+        "trace": {
+          "bytes": 13884,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s0_seed5901_pose_disturbance\\cycle_trace.jsonl"
+        },
+        "trajectory": {
+          "bytes": 490302,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s0_seed5901_pose_disturbance\\robot_joint_trajectory.json"
+        },
+        "usd": {
+          "bytes": 105422,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s0_seed5901_pose_disturbance\\carve_scene2_a.usda"
+        },
+        "video": {
+          "bytes": 4864986,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s0_seed5901_pose_disturbance\\scene2_solution_a_nominal.mp4"
+        }
+      },
+      "artifacts_passed": true,
+      "config_matches": true,
+      "cycle_time_s": 63.75,
+      "delivered": true,
+      "delivery_position_error_m": 0.019261198974478186,
+      "delivery_yaw_error_rad": 0.005124812058795563,
+      "gate_passed": true,
+      "grasp_confirmed": true,
+      "intercept_position_error_m": 0.01645671098126587,
+      "intercept_timing_error_s": 0.0012004489999997148,
+      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s0_seed5901_pose_disturbance\\scene2_integrated_metrics.json",
+      "minimum_precontact_clearance_m": 0.0656075871405738,
+      "model_hashes_match": true,
+      "reactive_exercised": true,
+      "rejected_updates": 0,
+      "retained_lift": true,
+      "safety_passed": true,
+      "simulator_passed": true,
+      "slip_detected": false,
+      "status": "passed"
+    },
+    "a_s1_seed5901_pose_disturbance": {
+      "applied_updates": 0,
+      "artifacts": {
+        "depth": {
+          "bytes": 1228928,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s1_seed5901_pose_disturbance\\overhead_depth_m.npy"
+        },
+        "rgb": {
+          "bytes": 171962,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s1_seed5901_pose_disturbance\\overhead_rgb.png"
+        },
+        "segmentation": {
+          "bytes": 167231,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s1_seed5901_pose_disturbance\\yolo26_segmentation.png"
+        },
+        "trace": {
+          "bytes": 13878,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s1_seed5901_pose_disturbance\\cycle_trace.jsonl"
+        },
+        "trajectory": {
+          "bytes": 490312,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s1_seed5901_pose_disturbance\\robot_joint_trajectory.json"
+        },
+        "usd": {
+          "bytes": 105422,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s1_seed5901_pose_disturbance\\carve_scene2_a.usda"
+        },
+        "video": {
+          "bytes": 4883545,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s1_seed5901_pose_disturbance\\scene2_solution_a_nominal.mp4"
+        }
+      },
+      "artifacts_passed": true,
+      "config_matches": true,
+      "cycle_time_s": 63.75,
+      "delivered": true,
+      "delivery_position_error_m": 0.02182900412745525,
+      "delivery_yaw_error_rad": 0.006855557301175207,
+      "gate_passed": true,
+      "grasp_confirmed": true,
+      "intercept_position_error_m": 0.016469333791462686,
+      "intercept_timing_error_s": 0.0013690909999999334,
+      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s1_seed5901_pose_disturbance\\scene2_integrated_metrics.json",
+      "minimum_precontact_clearance_m": 0.06556256055220255,
+      "model_hashes_match": true,
+      "reactive_exercised": true,
+      "rejected_updates": 0,
+      "retained_lift": true,
+      "safety_passed": true,
+      "simulator_passed": true,
+      "slip_detected": false,
+      "status": "passed"
+    },
+    "a_s2_seed5901_pose_disturbance": {
+      "applied_updates": 1,
+      "artifacts": {
+        "depth": {
+          "bytes": 1228928,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s2_seed5901_pose_disturbance\\overhead_depth_m.npy"
+        },
+        "rgb": {
+          "bytes": 170414,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s2_seed5901_pose_disturbance\\overhead_rgb.png"
+        },
+        "segmentation": {
+          "bytes": 163537,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s2_seed5901_pose_disturbance\\yolo26_segmentation.png"
+        },
+        "trace": {
+          "bytes": 24484,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s2_seed5901_pose_disturbance\\cycle_trace.jsonl"
+        },
+        "trajectory": {
+          "bytes": 495010,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s2_seed5901_pose_disturbance\\robot_joint_trajectory.json"
+        },
+        "usd": {
+          "bytes": 105422,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s2_seed5901_pose_disturbance\\carve_scene2_a.usda"
+        },
+        "video": {
+          "bytes": 4934670,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s2_seed5901_pose_disturbance\\scene2_solution_a_nominal.mp4"
+        }
+      },
+      "artifacts_passed": true,
+      "config_matches": true,
+      "cycle_time_s": 63.75,
+      "delivered": true,
+      "delivery_position_error_m": 0.010591793144616671,
+      "delivery_yaw_error_rad": 0.005836836587231803,
+      "gate_passed": true,
+      "grasp_confirmed": true,
+      "intercept_position_error_m": 0.0052271537790477525,
+      "intercept_timing_error_s": 0.0009504339999999445,
+      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s2_seed5901_pose_disturbance\\scene2_integrated_metrics.json",
+      "minimum_precontact_clearance_m": 0.06433216505695993,
+      "model_hashes_match": true,
+      "reactive_exercised": true,
+      "rejected_updates": 2,
+      "retained_lift": true,
+      "safety_passed": true,
+      "simulator_passed": true,
+      "slip_detected": false,
+      "status": "passed"
+    },
+    "a_s3_seed5901_pose_disturbance": {
+      "applied_updates": 1,
+      "artifacts": {
+        "depth": {
+          "bytes": 1228928,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s3_seed5901_pose_disturbance\\overhead_depth_m.npy"
+        },
+        "rgb": {
+          "bytes": 171374,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s3_seed5901_pose_disturbance\\overhead_rgb.png"
+        },
+        "segmentation": {
+          "bytes": 166391,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s3_seed5901_pose_disturbance\\yolo26_segmentation.png"
+        },
+        "trace": {
+          "bytes": 24424,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s3_seed5901_pose_disturbance\\cycle_trace.jsonl"
+        },
+        "trajectory": {
+          "bytes": 494828,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s3_seed5901_pose_disturbance\\robot_joint_trajectory.json"
+        },
+        "usd": {
+          "bytes": 105422,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s3_seed5901_pose_disturbance\\carve_scene2_a.usda"
+        },
+        "video": {
+          "bytes": 4930803,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s3_seed5901_pose_disturbance\\scene2_solution_a_nominal.mp4"
+        }
+      },
+      "artifacts_passed": true,
+      "config_matches": true,
+      "cycle_time_s": 63.75,
+      "delivered": true,
+      "delivery_position_error_m": 0.010551123843806725,
+      "delivery_yaw_error_rad": 0.002141864062017817,
+      "gate_passed": true,
+      "grasp_confirmed": true,
+      "intercept_position_error_m": 0.005195564405998352,
+      "intercept_timing_error_s": 0.001415404999999481,
+      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s3_seed5901_pose_disturbance\\scene2_integrated_metrics.json",
+      "minimum_precontact_clearance_m": 0.0643659334553357,
+      "model_hashes_match": true,
+      "reactive_exercised": true,
+      "rejected_updates": 2,
+      "retained_lift": true,
+      "safety_passed": true,
+      "simulator_passed": true,
+      "slip_detected": false,
+      "status": "passed"
+    },
+    "a_s4_seed5901_pose_disturbance": {
+      "gate_passed": false,
+      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\a_s4_seed5901_pose_disturbance\\scene2_integrated_metrics.json",
+      "status": "not_run"
+    },
+    "b_s0_seed5901_pose_disturbance": {
+      "applied_updates": 0,
+      "artifacts": {
+        "depth": {
+          "bytes": 1228928,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s0_seed5901_pose_disturbance\\overhead_depth_m.npy"
+        },
+        "rgb": {
+          "bytes": 171528,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s0_seed5901_pose_disturbance\\overhead_rgb.png"
+        },
+        "segmentation": {
+          "bytes": 164917,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s0_seed5901_pose_disturbance\\yolo26_segmentation.png"
+        },
+        "trace": {
+          "bytes": 18809,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s0_seed5901_pose_disturbance\\cycle_trace.jsonl"
+        },
+        "trajectory": {
+          "bytes": 878388,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s0_seed5901_pose_disturbance\\robot_joint_trajectory.json"
+        },
+        "usd": {
+          "bytes": 105422,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s0_seed5901_pose_disturbance\\carve_scene2_b.usda"
+        },
+        "video": {
+          "bytes": 8720139,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s0_seed5901_pose_disturbance\\scene2_solution_b_nominal.mp4"
+        }
+      },
+      "artifacts_passed": true,
+      "config_matches": true,
+      "cycle_time_s": 114.5,
+      "delivered": true,
+      "delivery_position_error_m": 0.020974779704648044,
+      "delivery_yaw_error_rad": 0.0031258167834658417,
+      "gate_passed": true,
+      "grasp_confirmed": true,
+      "intercept_position_error_m": 0.016434257904999944,
+      "intercept_timing_error_s": 0.0012701449999994452,
+      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s0_seed5901_pose_disturbance\\scene2_integrated_metrics.json",
+      "minimum_precontact_clearance_m": 0.06564420252711933,
+      "model_hashes_match": true,
+      "reactive_exercised": true,
+      "rejected_updates": 0,
+      "retained_lift": true,
+      "safety_passed": true,
+      "simulator_passed": true,
+      "slip_detected": true,
+      "status": "passed"
+    },
+    "b_s1_seed5901_pose_disturbance": {
+      "applied_updates": 0,
+      "artifacts": {
+        "depth": {
+          "bytes": 1228928,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s1_seed5901_pose_disturbance\\overhead_depth_m.npy"
+        },
+        "rgb": {
+          "bytes": 171274,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s1_seed5901_pose_disturbance\\overhead_rgb.png"
+        },
+        "segmentation": {
+          "bytes": 166450,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s1_seed5901_pose_disturbance\\yolo26_segmentation.png"
+        },
+        "trace": {
+          "bytes": 18811,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s1_seed5901_pose_disturbance\\cycle_trace.jsonl"
+        },
+        "trajectory": {
+          "bytes": 879157,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s1_seed5901_pose_disturbance\\robot_joint_trajectory.json"
+        },
+        "usd": {
+          "bytes": 105422,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s1_seed5901_pose_disturbance\\carve_scene2_b.usda"
+        },
+        "video": {
+          "bytes": 8718065,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s1_seed5901_pose_disturbance\\scene2_solution_b_nominal.mp4"
+        }
+      },
+      "artifacts_passed": true,
+      "config_matches": true,
+      "cycle_time_s": 114.5,
+      "delivered": true,
+      "delivery_position_error_m": 0.019975319371306637,
+      "delivery_yaw_error_rad": 2.0572899303947922e-05,
+      "gate_passed": true,
+      "grasp_confirmed": true,
+      "intercept_position_error_m": 0.016492197226526683,
+      "intercept_timing_error_s": 0.0015900929999999036,
+      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s1_seed5901_pose_disturbance\\scene2_integrated_metrics.json",
+      "minimum_precontact_clearance_m": 0.06557618720764291,
+      "model_hashes_match": true,
+      "reactive_exercised": true,
+      "rejected_updates": 0,
+      "retained_lift": true,
+      "safety_passed": true,
+      "simulator_passed": true,
+      "slip_detected": true,
+      "status": "passed"
+    },
+    "b_s2_seed5901_pose_disturbance": {
+      "applied_updates": 1,
+      "artifacts": {
+        "depth": {
+          "bytes": 1228928,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s2_seed5901_pose_disturbance\\overhead_depth_m.npy"
+        },
+        "rgb": {
+          "bytes": 171096,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s2_seed5901_pose_disturbance\\overhead_rgb.png"
+        },
+        "segmentation": {
+          "bytes": 164085,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s2_seed5901_pose_disturbance\\yolo26_segmentation.png"
+        },
+        "trace": {
+          "bytes": 29421,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s2_seed5901_pose_disturbance\\cycle_trace.jsonl"
+        },
+        "trajectory": {
+          "bytes": 881427,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s2_seed5901_pose_disturbance\\robot_joint_trajectory.json"
+        },
+        "usd": {
+          "bytes": 105422,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s2_seed5901_pose_disturbance\\carve_scene2_b.usda"
+        },
+        "video": {
+          "bytes": 8782527,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s2_seed5901_pose_disturbance\\scene2_solution_b_nominal.mp4"
+        }
+      },
+      "artifacts_passed": true,
+      "config_matches": true,
+      "cycle_time_s": 114.5,
+      "delivered": true,
+      "delivery_position_error_m": 0.020307322404968815,
+      "delivery_yaw_error_rad": 0.00037164337973639343,
+      "gate_passed": true,
+      "grasp_confirmed": true,
+      "intercept_position_error_m": 0.005202422234444497,
+      "intercept_timing_error_s": 0.0014619790000001132,
+      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s2_seed5901_pose_disturbance\\scene2_integrated_metrics.json",
+      "minimum_precontact_clearance_m": 0.064329439760763,
+      "model_hashes_match": true,
+      "reactive_exercised": true,
+      "rejected_updates": 2,
+      "retained_lift": true,
+      "safety_passed": true,
+      "simulator_passed": true,
+      "slip_detected": true,
+      "status": "passed"
+    },
+    "b_s3_seed5901_pose_disturbance": {
+      "applied_updates": 1,
+      "artifacts": {
+        "depth": {
+          "bytes": 1228928,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s3_seed5901_pose_disturbance\\overhead_depth_m.npy"
+        },
+        "rgb": {
+          "bytes": 173303,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s3_seed5901_pose_disturbance\\overhead_rgb.png"
+        },
+        "segmentation": {
+          "bytes": 168557,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s3_seed5901_pose_disturbance\\yolo26_segmentation.png"
+        },
+        "trace": {
+          "bytes": 29408,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s3_seed5901_pose_disturbance\\cycle_trace.jsonl"
+        },
+        "trajectory": {
+          "bytes": 880887,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s3_seed5901_pose_disturbance\\robot_joint_trajectory.json"
+        },
+        "usd": {
+          "bytes": 105422,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s3_seed5901_pose_disturbance\\carve_scene2_b.usda"
+        },
+        "video": {
+          "bytes": 8792643,
+          "exists": true,
+          "path": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s3_seed5901_pose_disturbance\\scene2_solution_b_nominal.mp4"
+        }
+      },
+      "artifacts_passed": true,
+      "config_matches": true,
+      "cycle_time_s": 114.5,
+      "delivered": true,
+      "delivery_position_error_m": 0.01749370646251073,
+      "delivery_yaw_error_rad": 0.0006719012668223766,
+      "gate_passed": true,
+      "grasp_confirmed": true,
+      "intercept_position_error_m": 0.005195175451626365,
+      "intercept_timing_error_s": 0.0015487240000000568,
+      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s3_seed5901_pose_disturbance\\scene2_integrated_metrics.json",
+      "minimum_precontact_clearance_m": 0.06433537077875306,
+      "model_hashes_match": true,
+      "reactive_exercised": true,
+      "rejected_updates": 2,
+      "retained_lift": true,
+      "safety_passed": true,
+      "simulator_passed": true,
+      "slip_detected": true,
+      "status": "passed"
+    },
+    "b_s4_seed5901_pose_disturbance": {
+      "gate_passed": false,
+      "metrics": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\hybrid_comparison\\20260828_final_clean\\b_s4_seed5901_pose_disturbance\\scene2_integrated_metrics.json",
+      "status": "not_run"
+    }
+  },
+  "schema_version": 1
+}

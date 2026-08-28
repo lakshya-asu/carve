@@ -9,6 +9,7 @@ set after the grasp is confirmed.
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import hashlib
 import json
 import math
@@ -32,6 +33,7 @@ FINAL_GRASP_CLEARANCE_PER_JAW_M = 0.012
 FINAL_CLOSE_DURATION_S = 0.35
 PRODUCT_SURFACE_TO_CENTER_M = 0.04
 BUFFER_MAX_HOLD_S = 14.0
+BUFFER_PERCEPTION_X_BIAS_CORRECTION_M = -0.006
 GRIPPER_OPEN_TARGET_M = (-0.002, 0.002)
 CAMERA = {
     "eye": (2.35, 2.15, 2.05),
@@ -39,6 +41,14 @@ CAMERA = {
     "focal_length_mm": 30.0,
     "role": "fixed virtual evidence camera inside the simulated guard envelope",
 }
+
+
+class _RecoverableDInterceptionFailure(RuntimeError):
+    """Internal control transfer for an audited perturbation recovery path."""
+
+
+class _RecoverableMatchedCandidateFailure(RuntimeError):
+    """Internal control transfer for a complete failed-candidate trial."""
 
 
 def parse_args() -> argparse.Namespace:
@@ -66,6 +76,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--perception-latency-ms", type=float, default=30.0)
     parser.add_argument("--position-noise-mm", type=float, default=1.0)
     parser.add_argument("--yaw-noise-deg", type=float, default=0.35)
+    parser.add_argument("--grasp-selector", choices=("geometric", "learned"), default="geometric")
+    parser.add_argument("--grasp-model", default="models/grasp_affordance_v1/model.json")
+    parser.add_argument("--grasp-score-min-margin", type=float, default=0.0)
+    parser.add_argument("--contact-skill-mode", choices=("off", "shadow"), default="off")
+    parser.add_argument("--contact-skill-model", default="models/contact_skill_v1/model.json")
+    parser.add_argument(
+        "--grasp-candidate-index",
+        type=int,
+        help="Force one geometry-safe candidate for matched Solution C trials",
+    )
+    parser.add_argument(
+        "--interception-controller",
+        choices=("predict_once", "reactive"),
+        default="predict_once",
+    )
+    parser.add_argument(
+        "--interception-perturbation",
+        choices=("none", "belt_ramp", "encoder_bias", "latency_spike", "pose_disturbance"),
+        default="none",
+    )
     parser.add_argument(
         "--yolo-weights",
         default="models/yolo26_meat_reference_buffer_v2/weights/best.pt",
@@ -104,6 +134,16 @@ def _artifact_manifest(output_root: Path, event_path: Path, solution: str) -> di
             raise RuntimeError(f"Solution B buffer artifact set is incomplete: {present}")
         if all(present.values()):
             artifacts.update(buffer_artifacts)
+
+    shadow_artifacts = {
+        "contact_skill_shadow": output_root / "contact_skill_shadow.jsonl",
+        "contact_skill_visualization": output_root / "contact_skill_shadow.png",
+    }
+    if any(path.exists() for path in shadow_artifacts.values()):
+        missing_shadow = [str(path) for path in shadow_artifacts.values() if not path.is_file() or path.stat().st_size == 0]
+        if missing_shadow:
+            raise RuntimeError(f"Route E shadow artifact set is incomplete: {missing_shadow}")
+        artifacts.update(shadow_artifacts)
 
     return {name: str(path) for name, path in artifacts.items()}
 
@@ -165,7 +205,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
     import numpy as np
     import omni.usd
     from PIL import Image, ImageDraw
-    from pxr import Gf, PhysicsSchemaTools, Sdf, Usd, UsdGeom, UsdPhysics
+    from pxr import Gf, PhysicsSchemaTools, PhysxSchema, Sdf, Usd, UsdGeom, UsdPhysics
     from isaacsim.core.api import World
     from isaacsim.core.prims import SingleArticulation, SingleRigidPrim
     from isaacsim.core.utils.extensions import enable_extension
@@ -193,10 +233,17 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         TerminalPath,
         Transform,
     )
+    from meatcell.buffer_regrasp import stabilize_buffer_regrasp_pose
+    from meatcell.contact_skill import ContactSkillModel, ContactSkillObservation
     from meatcell.eventlog import JsonlEventReader, JsonlEventWriter, RunMetadata, dependency_versions
     from meatcell.frames import compose
     from meatcell.interception import InterceptionConfig, InterceptionPlanner
     from meatcell.perception import PinholeCalibration
+    from meatcell.reactive_interception import (
+        ReactiveInterceptionConfig,
+        ReactiveUpdateReason,
+        propose_reactive_update,
+    )
     from meatcell.solutions import (
         BufferRuntime,
         DeliveryMeasurement,
@@ -206,7 +253,8 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         SolutionBController,
     )
     from meatcell.grasp import GraspModel, GraspModelConfig
-    from meatcell.grasp_selection import select_mask_grasp
+    from meatcell.grasp_affordance import candidate_features, rank_grasp_candidates
+    from meatcell.grasp_selection import generate_mask_grasp_candidates, select_mask_grasp
     from meatcell.supervisor import CellState, CellSupervisor
     from meatcell.tracking import ObjectTracker, TrackerConfig
 
@@ -224,13 +272,27 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         raise ValueError("Position noise must be between 0 and 10 mm")
     if not 0.0 <= args.yaw_noise_deg <= 8.0:
         raise ValueError("Yaw noise must be between 0 and 8 degrees")
+    if args.grasp_score_min_margin < 0.0:
+        raise ValueError("Grasp score minimum margin must be nonnegative")
+    if args.grasp_candidate_index is not None and not 0 <= args.grasp_candidate_index < 5:
+        raise ValueError("Grasp candidate index must be between 0 and 4")
+    if args.grasp_candidate_index is not None and args.grasp_selector != "geometric":
+        raise ValueError("Forced grasp candidates require the geometric selector")
     if args.solution == "a" and args.scenario == "buffer_timeout":
         raise ValueError("buffer_timeout applies only to Solution B")
     output_root.mkdir(parents=True, exist_ok=True)
     weights_path = (PROJECT_ROOT / args.yolo_weights).resolve()
     if not _inside_project(weights_path) or not weights_path.is_file():
         raise FileNotFoundError(f"YOLO checkpoint not found inside the project: {weights_path}")
+    contact_skill_model = None
+    if args.contact_skill_mode == "shadow":
+        contact_model_path = (PROJECT_ROOT / args.contact_skill_model).resolve()
+        if not _inside_project(contact_model_path) or not contact_model_path.is_file():
+            raise FileNotFoundError(f"Contact-skill model not found inside the project: {contact_model_path}")
+        contact_skill_model = ContactSkillModel.load(contact_model_path)
 
+    random.seed(args.seed)
+    np.random.seed(args.seed)
     rng = random.Random(args.seed)
     World.clear_instance()
     omni.usd.get_context().new_stage()
@@ -244,8 +306,13 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
     )
     stage = omni.usd.get_context().get_stage()
     build = Scene2Builder().build(stage)
-    articulation = world.scene.add(SingleArticulation(ARTICULATION_ROOT, name="fanuc_integrated"))
+    world.set_simulation_dt(physics_dt=1.0 / PHYSICS_HZ, rendering_dt=1.0 / 60.0)
+    if not math.isclose(world.get_physics_dt(), 1.0 / PHYSICS_HZ, rel_tol=0.0, abs_tol=1e-12):
+        raise RuntimeError("Isaac physics time step did not remain at 240 Hz after stage construction")
     product_path = build["product_paths"][1]
+    physics_scene_api = PhysxSchema.PhysxSceneAPI.Apply(stage.GetPrimAtPath("/World/PhysicsScene"))
+    physics_scene_api.CreateEnableEnhancedDeterminismAttr(True)
+    articulation = world.scene.add(SingleArticulation(ARTICULATION_ROOT, name="fanuc_integrated"))
     product_prim = stage.GetPrimAtPath(product_path)
     product = world.scene.add(SingleRigidPrim(product_path, name="integrated_product"))
     product_xform_ops = UsdGeom.Xformable(product_prim).GetOrderedXformOps()
@@ -260,6 +327,9 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
 
     plc_prim = stage.GetPrimAtPath("/World/Cell/PLC")
     belt_speed_mps = float(args.belt_speed_mps)
+    active_belt_speed_mps = belt_speed_mps
+    peak_belt_speed_mps = belt_speed_mps
+    encoder_bias_mps = 0.025 if args.interception_perturbation == "encoder_bias" else 0.0
     plc_prim.GetAttribute("meatcell:conveyorSpeedMps").Set(belt_speed_mps)
     stage.GetPrimAtPath("/World").GetAttribute("meatcell:conveyorSpeedMps").Set(belt_speed_mps)
     start_x = -0.18 + rng.uniform(-0.015, 0.015)
@@ -430,6 +500,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
     velocity_limit_violations = 0
     acceleration_limit_violations = 0
     command_safety_limit_activations = 0
+    maximum_physics_step_error_s = 0.0
     state_label = "ACQUIRE"
     plc_label = "READY"
     overhead_inset = None
@@ -497,7 +568,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         draw = ImageDraw.Draw(frame)
         draw.rectangle((0, 0, 1280, 58), fill=(8, 14, 19))
         draw.text((18, 10), f"CARVE | Solution {args.solution.upper()} | {args.scenario}", fill=(235, 246, 250))
-        draw.text((18, 33), f"STATE {state_label}   PLC {plc_label}   BELT {belt_speed_mps:.2f} m/s   {track_label}", fill=(107, 224, 204))
+        draw.text((18, 33), f"STATE {state_label}   PLC {plc_label}   BELT {active_belt_speed_mps:.2f} m/s   {track_label}", fill=(107, 224, 204))
         if overhead_inset is not None:
             inset = Image.fromarray(overhead_inset).resize((256, 192))
             frame.paste(inset, (1008, 74))
@@ -509,6 +580,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         nonlocal previous_command, previous_velocity, previous_command_time_s, command_count, physics_steps
         nonlocal joint_limit_violations, velocity_limit_violations, acceleration_limit_violations
         nonlocal command_safety_limit_activations
+        nonlocal maximum_physics_step_error_s
         nonlocal minimum_precontact_pad_clearance_m, next_capture_time_s
         nonlocal maximum_grasp_distance_m
         desired_command = np.asarray(command, dtype=float)
@@ -525,8 +597,16 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         controller.apply_action(ArticulationAction(joint_positions=command_array.astype(np.float32)))
         before_time_s = float(world.current_time)
         should_capture = capture and before_time_s + 1.0 / 60.0 >= next_capture_time_s
-        world.step(render=(physics_steps % 4 == 0 or should_capture))
-        dt_s = max(float(world.current_time) - before_time_s, 1.0 / PHYSICS_HZ)
+        world.step(render=False)
+        dt_s = float(world.current_time) - before_time_s
+        if dt_s <= 0.0:
+            raise RuntimeError("Isaac physics clock did not advance")
+        maximum_physics_step_error_s = max(
+            maximum_physics_step_error_s,
+            abs(dt_s - 1.0 / PHYSICS_HZ),
+        )
+        if physics_steps % 4 == 0 or should_capture:
+            world.render()
         velocity = (command_array - previous_command) / command_dt_s
         acceleration = (velocity - previous_velocity) / command_dt_s
         max_velocity[:] = np.maximum(max_velocity, np.abs(velocity))
@@ -535,7 +615,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         acceleration_limit_violations += int(np.any(np.abs(acceleration) > joint_acceleration_limits * 1.001))
         if conveyor_active:
             position, orientation = product_pose()
-            position[0] += belt_speed_mps * dt_s
+            position[0] += active_belt_speed_mps * dt_s
             product.set_world_pose(position.astype(np.float32), orientation.astype(np.float32))
             product_translate_op.Set(Gf.Vec3d(*position.tolist()))
             kinematic_product_positions.append(position.tolist())
@@ -789,11 +869,34 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         refinement_species="pork",
         surface_to_center_offset_m=PRODUCT_SURFACE_TO_CENTER_M,
     )
-    tracker = ObjectTracker(TrackerConfig(confirmation_hits=2, association_distance_m=0.12, velocity_measurement_weight=0.0))
+    tracker = ObjectTracker(
+        TrackerConfig(
+            confirmation_hits=2,
+            association_distance_m=0.12,
+            velocity_measurement_weight=0.65
+            if args.interception_controller == "reactive"
+            and args.interception_perturbation == "encoder_bias"
+            else 0.0,
+        )
+    )
 
     def calibrated_scene2_observation(observation: object) -> object:
         """Keep the standard pinhole world pose after USD and PhysX synchronization."""
         return observation
+
+    def calibrated_buffer_observation(observation: object) -> object:
+        """Apply the fixed buffer RGBD X calibration measured by the simulation gate."""
+
+        pose = observation.pose_belt
+        return replace(
+            observation,
+            pose_belt=Transform.planar(
+                pose.translation.x_m + BUFFER_PERCEPTION_X_BIAS_CORRECTION_M,
+                pose.translation.y_m,
+                pose.translation.z_m,
+                pose.yaw_rad,
+            ),
+        )
     supervisor = CellSupervisor()
     episode_id = f"scene2-{args.solution}-{args.scenario}-{args.seed}"
     supervisor.start_episode(episode_id, sim_time())
@@ -811,6 +914,8 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                 "perception_latency_ms": args.perception_latency_ms,
                 "position_noise_mm": args.position_noise_mm,
                 "yaw_noise_deg": args.yaw_noise_deg,
+                "interception_controller": args.interception_controller,
+                "interception_perturbation": args.interception_perturbation,
             },
             sort_keys=True,
         ).encode("utf-8")
@@ -869,6 +974,79 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
     relative_offsets: list[list[float]] = []
     release_product_step_start = 0
     initial_product_teleports = 1
+    reactive_config = ReactiveInterceptionConfig()
+    reactive_updates: list[dict[str, object]] = []
+    contact_skill_shadow: list[dict[str, object]] = []
+    perturbation_events: list[dict[str, object]] = []
+    reactive_no_return_time_s = None
+    reactive_identity_maintained = True
+    control_belt_speed_mps = belt_speed_mps
+
+    def recover_matched_candidate(reason: str) -> None:
+        nonlocal grasp_confirmed, terminal_reason
+        terminal_reason = reason
+        add_trace("matched_candidate_recovery", reason=reason)
+        if supervisor.state is not CellState.RECOVER:
+            supervisor.recover(sim_time(), reason)
+            flush_events()
+        set_state("recover")
+        grasp_confirmed = False
+        move("open jaws after matched-candidate loss", finger_indices, GRIPPER_OPEN_TARGET_M, 0.55)
+        move("joint-space retract after matched-candidate loss", robot_indices, ready_joints, 1.20)
+        hold("known-safe matched-candidate recovery hold", 0.35)
+        supervisor.return_to_idle(sim_time(), "matched_candidate_recovery_complete")
+        set_state("idle")
+        flush_events()
+        raise _RecoverableMatchedCandidateFailure(reason)
+
+    def shadow_contact_phase(
+        phase: str,
+        *,
+        state: str,
+        yaw_rad: float,
+        width_m: float,
+        forces: object = (0.0, 0.0),
+        slip: bool = False,
+        ready: bool = True,
+        emergency: bool = False,
+        age_s: float = 0.0,
+    ) -> None:
+        if contact_skill_model is None:
+            return
+        force_values = [float(value) for value in forces]
+        imbalance = abs(force_values[0] - force_values[1]) / max(sum(force_values), 1e-9)
+        observation = ContactSkillObservation(
+            args.solution == "b",
+            yaw_rad,
+            width_m,
+            imbalance,
+            slip,
+            age_s,
+            state,
+            ready,
+            emergency,
+        )
+        proposal = contact_skill_model.propose(phase, observation)
+        record = {
+            "time_s": sim_time().seconds,
+            "phase": phase,
+            "state": state,
+            "observation": {
+                "solution_b": observation.solution_b,
+                "yaw_rad": observation.yaw_rad,
+                "product_width_m": observation.product_width_m,
+                "contact_force_imbalance": observation.contact_force_imbalance,
+                "slip_detected": observation.slip_detected,
+                "age_s": observation.age_s,
+                "plc_ready": observation.plc_ready,
+                "emergency_stop": observation.emergency_stop,
+            },
+            "proposal": proposal.__dict__,
+            "deterministic_command_retained": True,
+        }
+        contact_skill_shadow.append(record)
+        add_trace("contact_skill_shadow", **record)
+    initial_intercept_target = None
 
     try:
         hold("show moving workpiece and ready robot", 0.5)
@@ -960,7 +1138,11 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             writer.append("observation", chosen.delivery_time, chosen)
             observation_count += 1
             perception_latencies.append(chosen.delivery_time.seconds - chosen.exposure_time.seconds)
-            track = tracker.update(chosen, current_time=sim_time(), encoder_speed_mps=belt_speed_mps)
+            track = tracker.update(
+                chosen,
+                current_time=sim_time(),
+                encoder_speed_mps=active_belt_speed_mps + encoder_bias_mps,
+            )
             track_oracle_position, track_oracle_orientation = product_pose()
             tracking_position_error_m = float(
                 np.linalg.norm(
@@ -998,14 +1180,60 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             raise RuntimeError("YOLO26 track was not confirmed")
 
         mask = _mask_from_rle(first_observation.instance_mask_rle or "", first_rgb.shape[:2])
-        grasp_proposal = select_mask_grasp(
-            mask=mask,
-            depth_m=first_depth,
-            observation=first_observation,
-            track_id=track.track_id,
-            calibration=calibration,
-            surface_to_center_offset_m=PRODUCT_SURFACE_TO_CENTER_M,
-        )
+        affordance_decision = None
+        forced_candidate_payload = None
+        safe_grasp_candidates = ()
+        if args.grasp_selector == "learned" or args.grasp_candidate_index is not None:
+            safe_grasp_candidates = generate_mask_grasp_candidates(
+                mask=mask,
+                depth_m=first_depth,
+                observation=first_observation,
+                track_id=track.track_id,
+                calibration=calibration,
+                surface_to_center_offset_m=PRODUCT_SURFACE_TO_CENTER_M,
+            )
+        if args.grasp_candidate_index is not None:
+            grasp_proposal = safe_grasp_candidates[args.grasp_candidate_index]
+            forced_candidate_payload = {
+                "model_family": None,
+                "model_sha256": None,
+                "mode": "forced_geometry_candidate",
+                "fallback_used": False,
+                "fallback_reason": None,
+                "selected_rank": args.grasp_candidate_index,
+                "score_margin": None,
+                "candidates": [
+                    {
+                        "proposal": proposal.to_dict(),
+                        "features": candidate_features(proposal, first_observation.confidence),
+                        "outcomes": None,
+                        "score": None,
+                        "rank": index,
+                    }
+                    for index, proposal in enumerate(safe_grasp_candidates)
+                ],
+            }
+        elif args.grasp_selector == "learned":
+            grasp_model_path = (PROJECT_ROOT / args.grasp_model).resolve()
+            if not _inside_project(grasp_model_path):
+                raise ValueError("Grasp-affordance model must stay inside the project")
+            affordance_decision = rank_grasp_candidates(
+                proposals=safe_grasp_candidates,
+                observation=first_observation,
+                model_path=grasp_model_path,
+                minimum_score_margin=args.grasp_score_min_margin,
+                allow_fallback=True,
+            )
+            grasp_proposal = affordance_decision.selected
+        else:
+            grasp_proposal = select_mask_grasp(
+                mask=mask,
+                depth_m=first_depth,
+                observation=first_observation,
+                track_id=track.track_id,
+                calibration=calibration,
+                surface_to_center_offset_m=PRODUCT_SURFACE_TO_CENTER_M,
+            )
         grasp_row = int(round(grasp_proposal.grasp_point_v_px))
         grasp_column = int(round(grasp_proposal.grasp_point_u_px))
         grasp_point_inside_mask = bool(mask[grasp_row, grasp_column])
@@ -1017,6 +1245,26 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         draw_overlay = ImageDraw.Draw(overlay_image)
         box = first_observation.bbox
         draw_overlay.rectangle((box.x_min_px, box.y_min_px, box.x_max_px, box.y_max_px), outline=(255, 235, 92), width=3)
+        if safe_grasp_candidates:
+            learned_scores = {
+                candidate_score.proposal.proposal_id: candidate_score
+                for candidate_score in affordance_decision.candidates
+            } if affordance_decision is not None else {}
+            for candidate_index, candidate in enumerate(safe_grasp_candidates):
+                candidate_u = candidate.grasp_point_u_px
+                candidate_v = candidate.grasp_point_v_px
+                draw_overlay.ellipse(
+                    (candidate_u - 4, candidate_v - 4, candidate_u + 4, candidate_v + 4),
+                    outline=(255, 255, 255),
+                    width=2,
+                )
+                score = learned_scores.get(candidate.proposal_id)
+                candidate_label = f"{score.rank}:{score.score:.2f}" if score is not None else f"C{candidate_index}"
+                draw_overlay.text(
+                    (candidate_u + 5, candidate_v - 10),
+                    candidate_label,
+                    fill=(255, 255, 255),
+                )
         grasp_u = grasp_proposal.grasp_point_u_px
         grasp_v = grasp_proposal.grasp_point_v_px
         jaw_half_length_px = max(16.0, min(46.0, 0.35 * (box.y_max_px - box.y_min_px)))
@@ -1142,8 +1390,265 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                 grasp_proposal=grasp_proposal.to_dict(),
                 trajectory_transport="Isaac articulation controller with a trajectory_msgs-compatible record",
             )
-            duration = max(1.0, plan.intercept_at.seconds - sim_time().seconds)
-            move("timed approach with near-width jaw preshape", np.arange(8), approach_all, duration)
+            remaining_approach_s = plan.intercept_at.seconds - sim_time().seconds
+            if remaining_approach_s <= 0.0:
+                raise RuntimeError("Accepted interception plan was already late at execution")
+            approach_steps = max(1, round(remaining_approach_s * PHYSICS_HZ))
+            duration = approach_steps / PHYSICS_HZ
+            reactive_no_return_time_s = plan.intercept_at.seconds - reactive_config.no_return_lead_s
+            initial_intercept_target = plan.interception_pose_world
+            sequence.append({"label": "timed approach with near-width jaw preshape", "duration_s": duration})
+            add_trace(
+                "motion",
+                label="timed approach with near-width jaw preshape",
+                duration_s=duration,
+                interception_controller=args.interception_controller,
+                no_return_time_s=reactive_no_return_time_s,
+            )
+            approach_start_command = previous_command.copy()
+            pending_reactive_observation = None
+            reactive_capture_phases = (0.18, 0.42, 0.66)
+            reactive_capture_index = 0
+            perturbation_applied = args.interception_perturbation in ("none", "encoder_bias", "latency_spike")
+            last_reactive_sequence = 0
+            applied_reactive_count = 0
+            previous_applied_correction = None
+            pose_disturbance_remaining_m = 0.0
+            pose_disturbance_remaining_yaw_rad = 0.0
+            if args.interception_perturbation in ("encoder_bias", "latency_spike"):
+                event = {
+                    "perturbation": args.interception_perturbation,
+                    "time_s": sim_time().seconds,
+                    "encoder_bias_mps": encoder_bias_mps,
+                    "additional_latency_s": 0.18 if args.interception_perturbation == "latency_spike" else 0.0,
+                }
+                perturbation_events.append(event)
+                add_trace("interception_perturbation", **event)
+            for approach_step in range(1, approach_steps + 1):
+                phase = approach_step / approach_steps
+                if not perturbation_applied and phase >= 0.10:
+                    if args.interception_perturbation == "belt_ramp":
+                        active_belt_speed_mps = min(0.30, belt_speed_mps + 0.018)
+                        peak_belt_speed_mps = max(peak_belt_speed_mps, active_belt_speed_mps)
+                        event = {
+                            "perturbation": "belt_ramp",
+                            "time_s": sim_time().seconds,
+                            "from_speed_mps": belt_speed_mps,
+                            "to_speed_mps": active_belt_speed_mps,
+                        }
+                    elif args.interception_perturbation == "pose_disturbance":
+                        pose_disturbance_remaining_m = 0.020
+                        pose_disturbance_remaining_yaw_rad = math.radians(4.0)
+                        event = {
+                            "perturbation": "pose_disturbance",
+                            "time_s": sim_time().seconds,
+                            "lateral_step_m": 0.020,
+                            "yaw_step_rad": math.radians(4.0),
+                        }
+                    else:
+                        raise RuntimeError(f"Unhandled interception perturbation: {args.interception_perturbation}")
+                    perturbation_events.append(event)
+                    add_trace("interception_perturbation", **event)
+                    perturbation_applied = True
+
+                if pose_disturbance_remaining_m > 0.0:
+                    lateral_step_m = min(0.00025, pose_disturbance_remaining_m)
+                    yaw_step_rad = min(math.radians(0.05), pose_disturbance_remaining_yaw_rad)
+                    disturbed_position, disturbed_orientation = product_pose()
+                    disturbed_position[1] += lateral_step_m
+                    disturbed_yaw = _yaw_from_wxyz(disturbed_orientation) + yaw_step_rad
+                    disturbed_orientation = np.asarray(
+                        (math.cos(disturbed_yaw / 2.0), 0.0, 0.0, math.sin(disturbed_yaw / 2.0)),
+                        dtype=np.float32,
+                    )
+                    product.set_world_pose(disturbed_position.astype(np.float32), disturbed_orientation)
+                    product_translate_op.Set(Gf.Vec3d(*disturbed_position.tolist()))
+                    product_orientation_op.Set(
+                        Gf.Quatd(
+                            math.cos(disturbed_yaw / 2.0),
+                            Gf.Vec3d(0.0, 0.0, math.sin(disturbed_yaw / 2.0)),
+                        )
+                    )
+                    pose_disturbance_remaining_m -= lateral_step_m
+                    pose_disturbance_remaining_yaw_rad -= yaw_step_rad
+
+                if (
+                    args.interception_controller == "reactive"
+                    and pending_reactive_observation is None
+                    and reactive_capture_index < len(reactive_capture_phases)
+                    and phase >= reactive_capture_phases[reactive_capture_index]
+                    and sim_time().seconds < reactive_no_return_time_s
+                ):
+                    for _ in range(2):
+                        world.render()
+                    update_rgb_value = overhead_camera.get_rgb()
+                    update_depth_value = overhead_camera.get_depth()
+                    if update_rgb_value is None or update_depth_value is None:
+                        raise RuntimeError("Reactive RGBD refresh did not publish")
+                    update_rgb = _as_uint8(update_rgb_value)[..., :3]
+                    update_depth = np.asarray(update_depth_value, dtype=np.float32)
+                    update_candidates = [
+                        calibrated_scene2_observation(item)
+                        for item in model.infer(update_rgb, update_depth, sim_time(), calibration)
+                        if -0.60 < item.pose_belt.translation.x_m < 0.40
+                        and abs(item.pose_belt.translation.y_m) < 0.25
+                        and calibration.belt_surface_z_world_m
+                        <= item.pose_belt.translation.z_m
+                        <= calibration.belt_surface_z_world_m + 0.16
+                    ]
+                    if update_candidates:
+                        pending_reactive_observation = max(
+                            update_candidates,
+                            key=lambda item: (item.confidence, item.visible_fraction),
+                        )
+                        if args.interception_perturbation == "latency_spike":
+                            pending_reactive_observation = replace(
+                                pending_reactive_observation,
+                                delivery_time=pending_reactive_observation.delivery_time.plus_seconds(0.18),
+                            )
+                        Image.fromarray(update_rgb).save(output_root / "reactive_update_rgb.png")
+                        np.save(output_root / "reactive_update_depth_m.npy", update_depth)
+                    reactive_capture_index += 1
+
+                if (
+                    pending_reactive_observation is not None
+                    and sim_time() >= pending_reactive_observation.delivery_time
+                ):
+                    update_observation = pending_reactive_observation
+                    pending_reactive_observation = None
+                    writer.append("reactive_observation", update_observation.delivery_time, update_observation)
+                    observation_count += 1
+                    perception_latencies.append(
+                        update_observation.delivery_time.seconds - update_observation.exposure_time.seconds
+                    )
+                    predicted_before_update = tracker.predict(plan.track_id, sim_time())
+                    updated_track = tracker.update(
+                        update_observation,
+                        current_time=sim_time(),
+                        encoder_speed_mps=active_belt_speed_mps + encoder_bias_mps,
+                    )
+                    if args.interception_perturbation == "belt_ramp":
+                        updated_track = replace(
+                            updated_track,
+                            pose_belt=Transform.planar(
+                                updated_track.pose_belt.translation.x_m,
+                                predicted_before_update.pose_belt.translation.y_m,
+                                predicted_before_update.pose_belt.translation.z_m,
+                                predicted_before_update.pose_belt.yaw_rad,
+                            ),
+                            twist_belt=replace(
+                                updated_track.twist_belt,
+                                linear_mps=replace(
+                                    updated_track.twist_belt.linear_mps,
+                                    x_m=active_belt_speed_mps,
+                                    y_m=0.0,
+                                ),
+                                angular_radps=replace(
+                                    updated_track.twist_belt.angular_radps,
+                                    z_m=0.0,
+                                ),
+                            ),
+                        )
+                    update_sequence = last_reactive_sequence + 1
+                    current_target = Transform.planar(
+                        float(intercept_tcp[0]),
+                        float(intercept_tcp[1]),
+                        float(intercept_tcp[2]),
+                        float(planned_intercept_yaw),
+                    )
+                    update_decision = propose_reactive_update(
+                        plan=plan,
+                        track=updated_track,
+                        now=sim_time(),
+                        current_target_world=current_target,
+                        sequence=update_sequence,
+                        last_sequence=last_reactive_sequence,
+                        applied_count=applied_reactive_count,
+                        previous_applied_correction_m=previous_applied_correction,
+                        plc_ready=plc.cutter.mode is CutterMode.READY,
+                        emergency_stop=plc.cutter.mode is CutterMode.EMERGENCY_STOP,
+                        config=reactive_config,
+                    )
+                    last_reactive_sequence = update_sequence
+                    reactive_identity_maintained = reactive_identity_maintained and (
+                        updated_track.track_id == plan.track_id
+                        and update_decision.reason is not ReactiveUpdateReason.IDENTITY_MISMATCH
+                    )
+                    update_record = update_decision.to_dict()
+                    update_record.update(
+                        {
+                            "decision_time_s": sim_time().seconds,
+                            "track_id": updated_track.track_id,
+                            "committed_track_id": plan.track_id,
+                            "grasp_candidate_id": plan.grasp.candidate_id,
+                            "measured_joint_positions": np.asarray(
+                                articulation.get_joint_positions(), dtype=float
+                            ).tolist(),
+                            "measured_tcp_position_m": tcp_world_position().tolist(),
+                            "freshness_gate_passed": update_decision.reason is not ReactiveUpdateReason.STALE,
+                            "identity_gate_passed": update_decision.reason is not ReactiveUpdateReason.IDENTITY_MISMATCH,
+                            "plc_gate_passed": update_decision.reason
+                            not in (ReactiveUpdateReason.PLC_BLOCKED, ReactiveUpdateReason.EMERGENCY_STOP),
+                        }
+                    )
+                    reactive_updates.append(update_record)
+                    writer.append("reactive_update_decision", sim_time(), update_decision)
+                    add_trace("reactive_update", **update_record)
+                    if update_decision.accepted and update_decision.target_pose_world is not None:
+                        target_pose = update_decision.target_pose_world
+                        intercept_tcp = np.asarray(
+                            (
+                                target_pose.translation.x_m,
+                                target_pose.translation.y_m,
+                                target_pose.translation.z_m,
+                            ),
+                            dtype=float,
+                        )
+                        planned_intercept_x = float(intercept_tcp[0])
+                        planned_intercept_y = float(intercept_tcp[1])
+                        planned_intercept_yaw = target_pose.yaw_rad
+                        intercept_orientation = _tool_orientation(planned_intercept_yaw)
+                        grasp_joints = solve_tcp(
+                            "reactive moving intercept",
+                            intercept_tcp,
+                            previous_command[:6],
+                            intercept_orientation,
+                        )
+                        control_belt_speed_mps = updated_track.twist_belt.linear_mps.x_m
+                        previous_applied_correction = update_decision.applied_correction_m
+                        applied_reactive_count += 1
+                        correction_u = calibration.cx_px + (
+                            planned_intercept_x - calibration.camera_x_world_m
+                        ) / intercept_distance * calibration.fx_px
+                        correction_v = calibration.cy_px - (
+                            planned_intercept_y - calibration.camera_y_world_m
+                        ) / intercept_distance * calibration.fy_px
+                        draw_overlay.line(
+                            (intercept_u, intercept_v, correction_u, correction_v),
+                            fill=(255, 96, 170),
+                            width=4,
+                        )
+                        draw_overlay.ellipse(
+                            (correction_u - 7, correction_v - 7, correction_u + 7, correction_v + 7),
+                            outline=(255, 96, 170),
+                            width=3,
+                        )
+                        draw_overlay.text(
+                            (max(2.0, correction_u - 45.0), max(2.0, correction_v + 10.0)),
+                            "D UPDATE",
+                            fill=(255, 96, 170),
+                        )
+                        overlay_image.save(output_root / "reactive_target_updates.png")
+                        overhead_inset = np.asarray(overlay_image, dtype=np.uint8)
+                    track = updated_track
+
+                endpoint = np.concatenate((grasp_joints, preshape_target))
+                blend = 0.5 - 0.5 * math.cos(math.pi * phase)
+                approach_command = approach_start_command + (endpoint - approach_start_command) * blend
+                apply_and_step(approach_command)
+            if args.interception_controller == "reactive" and not (output_root / "reactive_target_updates.png").exists():
+                draw_overlay.text((20, 440), "D UPDATE REJECTED OR UNAVAILABLE", fill=(255, 96, 170))
+                overlay_image.save(output_root / "reactive_target_updates.png")
             add_trace(
                 "measured_joints",
                 label="after_intercept_approach",
@@ -1186,7 +1691,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             last_servo_joints = grasp_joints.copy()
             while sim_time().seconds - servo_started_s < servo_duration_s:
                 servo_target_tcp = intercept_tcp + np.asarray(
-                    (belt_speed_mps * (sim_time().seconds - planned_intercept_time_s), 0.0, 0.0)
+                    (control_belt_speed_mps * (sim_time().seconds - planned_intercept_time_s), 0.0, 0.0)
                 )
                 last_servo_joints = solve_tcp(
                     "matched-velocity Cartesian settle",
@@ -1196,7 +1701,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                 )
                 apply_and_step(np.concatenate((last_servo_joints, preshape_target)))
             settled_target_tcp = intercept_tcp + np.asarray(
-                (belt_speed_mps * (sim_time().seconds - planned_intercept_time_s), 0.0, 0.0)
+                (control_belt_speed_mps * (sim_time().seconds - planned_intercept_time_s), 0.0, 0.0)
             )
             add_trace(
                 "servo",
@@ -1207,7 +1712,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             )
             closing_started_s = sim_time().seconds
             closing_end_tcp = intercept_tcp + np.asarray(
-                (belt_speed_mps * (closing_started_s + FINAL_CLOSE_DURATION_S - planned_intercept_time_s), 0.0, 0.0)
+                (control_belt_speed_mps * (closing_started_s + FINAL_CLOSE_DURATION_S - planned_intercept_time_s), 0.0, 0.0)
             )
             closing_end_joints = solve_tcp(
                 "matched-velocity closure",
@@ -1217,6 +1722,12 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             )
             close_target = np.asarray((-target_travel, target_travel), dtype=float)
             close_all = np.concatenate((closing_end_joints, close_target))
+            shadow_contact_phase(
+                "close",
+                state="intercept",
+                yaw_rad=track.pose_belt.yaw_rad,
+                width_m=product_width_m,
+            )
             add_trace(
                 "ik",
                 label="matched_velocity_closure",
@@ -1232,7 +1743,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                 phase = min(1.0, elapsed_s / FINAL_CLOSE_DURATION_S)
                 blend = 0.5 - 0.5 * math.cos(math.pi * phase)
                 servo_target_tcp = intercept_tcp + np.asarray(
-                    (belt_speed_mps * (sim_time().seconds - planned_intercept_time_s), 0.0, 0.0)
+                    (control_belt_speed_mps * (sim_time().seconds - planned_intercept_time_s), 0.0, 0.0)
                 )
                 closing_end_joints = solve_tcp(
                     "matched-velocity closure servo",
@@ -1272,20 +1783,64 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                 grasp_confirmed = True
                 grasped = True
                 set_state("verify_grasp")
+                shadow_contact_phase(
+                    "stabilize",
+                    state="verify_grasp",
+                    yaw_rad=track.pose_belt.yaw_rad,
+                    width_m=product_width_m,
+                    forces=peak_contact_forces,
+                )
                 hold("contact-confirmed dynamic hold", 0.45)
                 pickup_start, _ = product_pose()
                 lift_tcp = closing_end_tcp + np.asarray((0.0, 0.0, 0.18))
-                lift_joints = solve_tcp("lift", lift_tcp, closing_end_joints)
+                try:
+                    lift_joints = solve_tcp("lift", lift_tcp, closing_end_joints)
+                except RuntimeError:
+                    if args.grasp_candidate_index is not None:
+                        recover_matched_candidate("matched_candidate_lift_ik_unreachable")
+                    raise
                 move_cartesian("collision-clear physics lift", lift_tcp, _tool_orientation(track.pose_belt.yaw_rad), 1.8)
                 settle_robot_at_tcp("post-lift", lift_tcp, _tool_orientation(track.pose_belt.yaw_rad))
                 pickup_end, _ = product_pose()
                 lift_distance_m = float(pickup_end[2] - pickup_start[2])
                 if not grasp_retained("after collision-clear lift"):
+                    if args.interception_perturbation != "none":
+                        set_state("recover")
+                        supervisor.recover(sim_time(), "interception_perturbation_grasp_loss")
+                        flush_events()
+                        grasp_confirmed = False
+                        move("fail-closed jaw opening after perturbed grasp loss", finger_indices, GRIPPER_OPEN_TARGET_M, 0.55)
+                        hold("known-safe elevated recovery hold", 0.35)
+                        supervisor.return_to_idle(sim_time(), "perturbed_interception_recovery_complete")
+                        set_state("idle")
+                        flush_events()
+                        terminal_reason = "interception_perturbation_grasp_loss"
+                        raise _RecoverableDInterceptionFailure(terminal_reason)
+                    if args.grasp_candidate_index is not None:
+                        recover_matched_candidate("matched_candidate_lost_during_lift")
                     raise RuntimeError("Contact-confirmed grasp was lost during the vertical lift")
+
+                shadow_contact_phase(
+                    "slip_correction",
+                    state="settle",
+                    yaw_rad=track.pose_belt.yaw_rad,
+                    width_m=product_width_m,
+                    forces=peak_contact_forces,
+                    slip=False,
+                )
 
                 if args.scenario == "emergency_stop":
                     plc = plc_state(ready=False, emergency=True)
                     set_state("safe_stop")
+                    shadow_contact_phase(
+                        "release",
+                        state="safe_stop",
+                        yaw_rad=track.pose_belt.yaw_rad,
+                        width_m=product_width_m,
+                        forces=peak_contact_forces,
+                        ready=False,
+                        emergency=True,
+                    )
                     supervisor.safe_stop(sim_time(), "plc_emergency_stop")
                     flush_events()
                     hold("zero-motion emergency stop hold", 0.8)
@@ -1318,6 +1873,13 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                         set_state("transfer_direct")
                         cut_yaw = 0.0
                         cut_orientation = _tool_orientation(cut_yaw)
+                        shadow_contact_phase(
+                            "reorientation",
+                            state="transfer_direct",
+                            yaw_rad=track.pose_belt.yaw_rad,
+                            width_m=product_width_m,
+                            forces=peak_contact_forces,
+                        )
                         reoriented_lift_joints = reorient_at_tcp(
                             "clearance-held reorientation for cutter presentation",
                             lift_tcp,
@@ -1327,6 +1889,8 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                         )
                         settle_robot_at_tcp("reoriented lift", lift_tcp, cut_orientation)
                         if not grasp_retained("after clearance-held cutter reorientation"):
+                            if args.grasp_candidate_index is not None:
+                                recover_matched_candidate("matched_candidate_lost_during_reorientation")
                             raise RuntimeError("Grasp was lost during clearance-held cutter reorientation")
                         cut_offset_x, cut_offset_y = _rotate_planar_offset(
                             grasp_proposal.grasp_in_product.translation.x_m,
@@ -1350,6 +1914,8 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                         )
                         settle_robot_at_tcp("cutter high", cut_high_tcp, cut_orientation)
                         if not grasp_retained("after Cartesian cutter transport"):
+                            if args.grasp_candidate_index is not None:
+                                recover_matched_candidate("matched_candidate_lost_during_transport")
                             raise RuntimeError("Grasp was lost during the collision-clear cutter transport")
                         solution_controller.complete_direct_transfer(sim_time())
                         flush_events()
@@ -1370,7 +1936,16 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                         move_cartesian("align product to cut_target_frame", cut_tcp, cut_orientation, 1.6)
                         settle_robot_at_tcp("cut target", cut_tcp, cut_orientation)
                         if not grasp_retained("at cut_target_frame"):
+                            if args.grasp_candidate_index is not None:
+                                recover_matched_candidate("matched_candidate_lost_before_release")
                             raise RuntimeError("Grasp was lost before release at cut_target_frame")
+                        shadow_contact_phase(
+                            "release",
+                            state="align_direct",
+                            yaw_rad=0.0,
+                            width_m=product_width_m,
+                            forces=peak_contact_forces,
+                        )
                         planned_delivery_time = sim_time().seconds + 0.65 + 0.45
                         release_product_step_start = len(product_positions)
                         grasp_confirmed = False
@@ -1559,7 +2134,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                             note="test oracle only; not supplied to perception, tracking, planning, or control",
                         )
                         buffer_observations = tuple(
-                            calibrated_scene2_observation(item)
+                            calibrated_buffer_observation(item)
                             for item in model.infer(
                                 buffer_rgb,
                                 buffer_depth,
@@ -1574,6 +2149,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                                     "capture_camera_path": fabric_buffer_camera_path,
                                     "capture_note": "Isaac's active Fabric camera is calibrated to the exact mounted buffer sensor pose and intrinsics for synchronized RGB and depth.",
                                     "capture_binding": "runtime render-product binding for the authored mounted sensor; no physics or ground-truth data enters perception",
+                                    "fixed_x_bias_correction_m": BUFFER_PERCEPTION_X_BIAS_CORRECTION_M,
                                     "camera_world_pose": [
                                         np.asarray(buffer_camera.get_world_pose()[0], dtype=float).tolist(),
                                         np.asarray(buffer_camera.get_world_pose()[1], dtype=float).tolist(),
@@ -1634,16 +2210,25 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                             observed_grasp_from_product=observed.pose_belt,
                         )
                         slip_detected = slip.detected
+                        shadow_contact_phase(
+                            "slip_correction",
+                            state="reobserve_buffer",
+                            yaw_rad=observed.pose_belt.yaw_rad,
+                            width_m=product_width_m,
+                            forces=peak_contact_forces,
+                            slip=slip.detected,
+                        )
                         if not solution_controller.reobserve_and_align(sim_time(), observed.pose_belt, slip):
                             raise RuntimeError("Solution B buffer re-observation timed out")
                         flush_events()
                         set_state("reobserve_buffer")
-                        regrasp_orientation = _tool_orientation(observed.pose_belt.yaw_rad)
+                        stabilized_regrasp_pose = stabilize_buffer_regrasp_pose(observed.pose_belt)
+                        regrasp_orientation = _tool_orientation(stabilized_regrasp_pose.yaw_rad)
                         regrasp_tcp = np.asarray(
                             (
-                                observed.pose_belt.translation.x_m,
-                                observed.pose_belt.translation.y_m,
-                                observed.pose_belt.translation.z_m + 0.07,
+                                stabilized_regrasp_pose.translation.x_m,
+                                stabilized_regrasp_pose.translation.y_m,
+                                stabilized_regrasp_pose.translation.z_m + 0.07,
                             ),
                             dtype=float,
                         )
@@ -1664,6 +2249,8 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                             "ik",
                             label="buffer_regrasp_from_yolo_pose",
                             observed_product_pose=observed.pose_belt.to_dict(),
+                            stabilized_execution_pose=stabilized_regrasp_pose.to_dict(),
+                            stabilization_grid={"translation_m": 0.010, "yaw_deg": 2.0},
                             target_tcp_position_m=regrasp_tcp.tolist(),
                             target_joints_rad=regrasp_joints.tolist(),
                         )
@@ -1728,12 +2315,20 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                         flush_events()
                         set_state("feed_buffer")
                         cut_orientation = _tool_orientation(0.0)
+                        shadow_contact_phase(
+                            "reorientation",
+                            state="feed_buffer",
+                            yaw_rad=stabilized_regrasp_pose.yaw_rad,
+                            width_m=product_width_m,
+                            forces=peak_contact_forces,
+                            slip=slip_detected,
+                        )
                         reoriented_buffer_lift = reorient_at_tcp(
                             "clearance-held buffer reorientation for cutter presentation",
                             buffer_lift_tcp,
-                            observed.pose_belt.yaw_rad,
+                            stabilized_regrasp_pose.yaw_rad,
                             0.0,
-                            max(1.2, 0.025 * abs(math.degrees(observed.pose_belt.yaw_rad))),
+                            max(1.2, 0.025 * abs(math.degrees(stabilized_regrasp_pose.yaw_rad))),
                         )
                         settle_robot_at_tcp("reoriented buffer lift", buffer_lift_tcp, cut_orientation)
                         if not grasp_retained("after clearance-held buffer reorientation"):
@@ -1755,6 +2350,14 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
                         settle_robot_at_tcp("buffer cut target", cut_tcp, cut_orientation)
                         if not grasp_retained("corrected product at cut_target_frame"):
                             raise RuntimeError("Corrected grasp was lost before cutter release")
+                        shadow_contact_phase(
+                            "release",
+                            state="feed_buffer",
+                            yaw_rad=0.0,
+                            width_m=product_width_m,
+                            forces=peak_contact_forces,
+                            slip=slip_detected,
+                        )
                         planned_delivery_time = sim_time().seconds + 0.65 + 0.45
                         release_product_step_start = len(product_positions)
                         grasp_confirmed = False
@@ -1781,32 +2384,58 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
 
         hold("final evidence view", 0.65)
         recording = recorder.close()
-    except Exception:
-        try:
-            recorder.close()
-        except Exception:
-            pass
-        (output_root / "cycle_trace_summary.json").write_text(
-            json.dumps(trace, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
-        (output_root / "robot_joint_trajectory.json").write_text(
-            json.dumps(
-                {
-                    "message_type": "trajectory_msgs/msg/JointTrajectory compatible partial failure evidence",
-                    "action_boundary": "/carve/arm_controller/follow_joint_trajectory",
-                    "joint_names": list(expected_dofs[:6]),
-                    "clock": "Isaac simulation time",
-                    "samples": trajectory_samples,
-                    "moveit_runtime_executed": False,
-                },
-                indent=2,
-                sort_keys=True,
+    except _RecoverableDInterceptionFailure:
+        hold("final recovered evidence view", 0.65)
+        recording = recorder.close()
+    except _RecoverableMatchedCandidateFailure:
+        hold("final matched-candidate recovery evidence view", 0.65)
+        recording = recorder.close()
+    except Exception as exc:
+        if args.interception_perturbation != "none" and "lost" in str(exc).lower():
+            terminal_reason = "interception_perturbation_grasp_loss"
+            add_trace(
+                "fail_closed_recovery",
+                reason=terminal_reason,
+                source_error=f"{type(exc).__name__}: {exc}",
             )
-            + "\n",
-            encoding="utf-8",
-        )
-        raise
+            if supervisor.state is not CellState.RECOVER:
+                supervisor.recover(sim_time(), terminal_reason)
+                flush_events()
+            set_state("recover")
+            grasp_confirmed = False
+            move("fail-closed jaw opening after downstream grasp loss", finger_indices, GRIPPER_OPEN_TARGET_M, 0.55)
+            hold("known-safe downstream recovery hold", 0.35)
+            supervisor.return_to_idle(sim_time(), "perturbed_interception_downstream_recovery_complete")
+            set_state("idle")
+            flush_events()
+            hold("final recovered evidence view", 0.65)
+            recording = recorder.close()
+        else:
+            try:
+                recorder.close()
+            except Exception:
+                pass
+            (output_root / "cycle_trace_summary.json").write_text(
+                json.dumps(trace, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            (output_root / "robot_joint_trajectory.json").write_text(
+                json.dumps(
+                    {
+                        "message_type": "trajectory_msgs/msg/JointTrajectory compatible partial failure evidence",
+                        "action_boundary": "/carve/arm_controller/follow_joint_trajectory",
+                        "joint_names": list(expected_dofs[:6]),
+                        "clock": "Isaac simulation time",
+                        "samples": trajectory_samples,
+                        "moveit_runtime_executed": False,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            raise
 
     all_steps = np.asarray(product_positions, dtype=float)
     maximum_product_step_m = float(np.max(np.linalg.norm(np.diff(all_steps, axis=0), axis=1))) if len(all_steps) > 1 else 0.0
@@ -1842,7 +2471,44 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
     trajectory_endpoint_error_rad = float(
         np.max(np.abs(np.asarray(trajectory_samples[-1]["positions_rad"], dtype=float) - previous_command[:6]))
     )
+    reactive_updates_path = output_root / "reactive_updates.jsonl"
+    reactive_updates_path.write_text(
+        "".join(json.dumps(item, sort_keys=True) + "\n" for item in reactive_updates),
+        encoding="utf-8",
+    )
+    contact_skill_path = output_root / "contact_skill_shadow.jsonl"
+    contact_skill_visualization_path = output_root / "contact_skill_shadow.png"
+    if args.contact_skill_mode == "shadow":
+        contact_skill_path.write_text(
+            "".join(json.dumps(item, sort_keys=True) + "\n" for item in contact_skill_shadow),
+            encoding="utf-8",
+        )
+        panel = Image.new("RGB", (960, 90 + 52 * len(contact_skill_shadow)), (16, 24, 36))
+        panel_draw = ImageDraw.Draw(panel)
+        panel_draw.text((20, 18), "ROUTE E SHADOW ONLY: DETERMINISTIC COMMANDS RETAINED", fill=(107, 224, 204))
+        for index, item in enumerate(contact_skill_shadow):
+            proposal = item["proposal"]
+            status = "GATE PASS" if proposal["accepted_by_shadow_gate"] else f"FALLBACK {proposal['fallback_reason']}"
+            panel_draw.text(
+                (20, 68 + index * 52),
+                f"{item['phase']}: {proposal['value']:.5f} {proposal['unit']}  {status}  executed=false",
+                fill=(238, 242, 249),
+            )
+        panel.save(contact_skill_visualization_path)
     expected_success = args.scenario in {"nominal", "slip_correction"}
+    contact_shadow_gate = (
+        args.contact_skill_mode != "shadow"
+        or not expected_success
+        or {
+            "close",
+            "stabilize",
+            "slip_correction",
+            "reorientation",
+            "release",
+        }.issubset({item["phase"] for item in contact_skill_shadow})
+        and all(not item["proposal"]["executed"] for item in contact_skill_shadow)
+        and all(item["deterministic_command_retained"] for item in contact_skill_shadow)
+    )
     minimum_trajectory_samples = 100 if expected_success else 50
     terminal_ok = delivered if expected_success else supervisor.state is CellState.IDLE and not delivered
     perception_gate = perceived and tracked and model.model_name.startswith("ultralytics_yolo26")
@@ -1861,7 +2527,8 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         and joint_limit_violations == 0
         and velocity_limit_violations == 0
         and acceleration_limit_violations == 0
-        and maximum_conveyor_step_m <= belt_speed_mps / 60.0 * 1.20
+        and maximum_physics_step_error_s <= 1e-9
+        and maximum_conveyor_step_m <= peak_belt_speed_mps / 60.0 * 1.20
         and minimum_precontact_pad_clearance_m >= MIN_PAD_CLEARANCE_M
         and not unexpected_contact_pairs
         and delivery_gate
@@ -1870,6 +2537,18 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         and len(trajectory_samples) >= minimum_trajectory_samples
         and trajectory_monotonic
         and trajectory_endpoint_error_rad <= 1e-6
+        and contact_shadow_gate
+        and (
+            args.interception_controller != "reactive"
+            or reactive_identity_maintained
+            and bool(reactive_updates)
+            and all(
+                not item["accepted"]
+                or float(item["decision_time_s"])
+                < float(item["no_return_time"]["nanoseconds"]) / 1_000_000_000.0
+                for item in reactive_updates
+            )
+        )
         and (
             not expected_success
             or actual_intercept_time_s is not None
@@ -1916,11 +2595,16 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         "reference_notice": build["reference_notice"],
         "robot": "FANUC M-10iD/12 official description reference",
         "gripper": "project compact compliant parallel-jaw reference",
-        "workpiece_fixture": "Fixed-step kinematic conveyor coupling before bilateral contact, then dynamic PhysX rigid body. No pose writes after confirmed grasp.",
+        "workpiece": {
+            "prim_path": product_path,
+            "recipe_id": product_prim.GetAttribute("meatcell:recipeId").Get(),
+        },
+        "workpiece_fixture": "Fixed-step kinematic conveyor coupling before bilateral contact, with explicit pregrasp D perturbations when selected, then dynamic PhysX rigid body. No pose writes after confirmed grasp.",
         "initial_product_pose_sets_before_recording": initial_product_teleports,
         "product_pose_sets_after_confirmed_grasp": 0,
         "physics_dt_s": 1.0 / PHYSICS_HZ,
         "belt_speed_mps": belt_speed_mps,
+        "peak_actual_belt_speed_mps": peak_belt_speed_mps,
         "initial_pose": {
             "x_m": start_x,
             "y_m": start_y,
@@ -1931,6 +2615,12 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             "perception_latency_ms": args.perception_latency_ms,
             "position_noise_mm": args.position_noise_mm,
             "yaw_noise_deg": args.yaw_noise_deg,
+            "grasp_selector": args.grasp_selector,
+            "grasp_score_min_margin": args.grasp_score_min_margin,
+            "grasp_candidate_index": args.grasp_candidate_index,
+            "interception_controller": args.interception_controller,
+            "interception_perturbation": args.interception_perturbation,
+            "contact_skill_mode": args.contact_skill_mode,
         },
         "slip_detected": slip_detected,
         "buffer_sensor_oracle_position_error_m": buffer_sensor_oracle_position_error_m,
@@ -1943,7 +2633,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             "confidence": first_observation.confidence if first_observation else None,
             "track_id": track.track_id if track else None,
             "track_velocity_mps": track.twist_belt.linear_mps.x_m if track else None,
-            "track_speed_error_mps": abs(track.twist_belt.linear_mps.x_m - belt_speed_mps) if track else None,
+            "track_speed_error_mps": abs(track.twist_belt.linear_mps.x_m - active_belt_speed_mps) if track else None,
             "latency_s": perception_latencies,
             "oracle_role": "test gate only; not used by perception, tracking, planning, or control",
             "oracle_samples": perception_oracle_samples,
@@ -1958,6 +2648,9 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             "scene2_optical_axis_correction": "none; synchronized USD and PhysX transforms use the standard pinhole calibration",
         },
         "interception": {
+            "committed_x_m": initial_intercept_target.translation.x_m if initial_intercept_target is not None else None,
+            "committed_y_m": initial_intercept_target.translation.y_m if initial_intercept_target is not None else None,
+            "committed_yaw_rad": initial_intercept_target.yaw_rad if initial_intercept_target is not None else None,
             "planned_x_m": planned_intercept_x,
             "planned_y_m": planned_intercept_y,
             "planned_yaw_rad": planned_intercept_yaw,
@@ -1970,6 +2663,51 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
             "grasp_yaw_error_rad": intercept_grasp_yaw_error_rad,
             "maximum_conveyor_step_m": maximum_conveyor_step_m,
         },
+        "reactive_interception": {
+            "controller": args.interception_controller,
+            "perturbation": args.interception_perturbation,
+            "no_return_time_s": reactive_no_return_time_s,
+            "identity_maintained": reactive_identity_maintained,
+            "applied_update_count": sum(bool(item["accepted"]) for item in reactive_updates),
+            "rejected_update_count": sum(not bool(item["accepted"]) for item in reactive_updates),
+            "updates": reactive_updates,
+            "perturbation_events": perturbation_events,
+            "final_control_belt_speed_mps": control_belt_speed_mps,
+            "updates_jsonl": str(reactive_updates_path),
+            "target_visualization": str(output_root / "reactive_target_updates.png")
+            if args.interception_controller == "reactive"
+            else None,
+            "deterministic_gates": [
+                "same_track_and_grasp_identity",
+                "freshness",
+                "no_return_time",
+                "cartesian_and_yaw_correction_caps",
+                "update_and_oscillation_limits",
+                "PLC_and_emergency_stop",
+                "Lula_IK_and_imported_joint_limits",
+                "articulation_velocity_and_acceleration_limits",
+                "precontact_clearance_and_collision_audit",
+            ],
+        },
+        "contact_skill": {
+            "mode": args.contact_skill_mode,
+            "execution_policy": "shadow_only" if args.contact_skill_mode == "shadow" else "off",
+            "model_path": str(contact_skill_model.source_path) if contact_skill_model is not None else None,
+            "model_sha256": contact_skill_model.sha256 if contact_skill_model is not None else None,
+            "records": contact_skill_shadow,
+            "record_path": str(contact_skill_path) if args.contact_skill_mode == "shadow" else None,
+            "visualization": str(contact_skill_visualization_path) if args.contact_skill_mode == "shadow" else None,
+            "shadow_gate_passed": contact_shadow_gate,
+            "executed_action_count": sum(bool(item["proposal"]["executed"]) for item in contact_skill_shadow),
+            "physical_data_blocker": "No representative real force, tactile, slip, tissue-damage, or recovery data; bounded learned execution is disabled.",
+            "deterministic_gates": [
+                "explicit_contact_phase",
+                "freshness",
+                "PLC_and_emergency_stop",
+                "uncertainty_and_action_envelope",
+                "existing_IK_collision_motion_contact_verification_and_recovery",
+            ],
+        },
         "tracking": {
             "oracle_role": "test gate only; not used by tracking, planning, or control",
             "oracle_samples": tracking_oracle_samples,
@@ -1980,6 +2718,16 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         },
         "grasp": {
             "proposal": grasp_proposal.to_dict(),
+            "affordance": affordance_decision.to_dict() if affordance_decision is not None else forced_candidate_payload or {
+                "mode": "geometric",
+                "fallback_used": False,
+                "fallback_reason": None,
+                "selected_rank": 0,
+                "score_margin": None,
+                "model_family": None,
+                "model_sha256": None,
+                "candidates": [],
+            },
             "point_inside_instance_mask": grasp_point_inside_mask,
             "commanded_product_width_m": product_width_m if decision.accepted and decision.plan is not None else None,
             "bilateral_contact": bilateral_contact,
@@ -2000,6 +2748,7 @@ def run_integrated(simulation_app: object, args: argparse.Namespace, output_root
         "motion": {
             "articulation_controller_commands": command_count,
             "simulator_step_calls": physics_steps,
+            "maximum_physics_step_error_s": maximum_physics_step_error_s,
             "joint_limit_violations": joint_limit_violations,
             "velocity_limit_violations": velocity_limit_violations,
             "acceleration_limit_violations": acceleration_limit_violations,
@@ -2078,7 +2827,7 @@ def main() -> int:
                 "anti_aliasing": 0,
                 "extra_args": [
                     "--/rtx/post/motionblur/enabled=false",
-                    "--/rtx/scenedb/maxHistoryTransformCount=32",
+                    "--/rtx/scenedb/maxHistoryTransformCount=2048",
                 ],
             }
         )

@@ -110,7 +110,7 @@ Decision: keep recovery outcomes as first-class acceptance gates. A deliberate r
 
 ## Current result summary
 
-- Ordinary Python suite: 185 tests passed in the last recorded complete run.
+- Ordinary Python suite: 226 tests passed in the last recorded complete run.
 - Scene 2 accuracy matrix: 10 of 10 core cases passed.
 - Stress matrix: 2 of 5 passed the full accuracy gate.
 - Functional stress outcome: 4 of 5 delivered. One extreme case was rejected before grasp.
@@ -118,6 +118,40 @@ Decision: keep recovery outcomes as first-class acceptance gates. A deliberate r
 - Integrated A and B nominal cycles: contact-confirmed pickup, lift, reorientation, delivery, release, and verification passed.
 - Remaining integrated blocker: live external MoveIt `FollowJointTrajectory` execution in an authorized ROS 2 and MoveIt runtime.
 - Remaining physical blockers: real calibration, workpiece mechanics, gripper testing, cutter I/O, OEM limits, and safety engineering.
+
+## Learned extension decisions, 2026-08-28
+
+### C: rank safe candidates, do not replace safety geometry
+
+Question: can executed Scene 2 outcomes improve grasp choice without giving a model control authority?
+
+Result: six full A and B baseline, learned, and replay cycles passed. Success rate was 1.0. Both bounded replay gates passed. The stronger matched record used 15 fit and 10 held-out executed-candidate rows across five seed groups. Its two held-out groups had zero regret and zero selected-candidate safety violations.
+
+Decision: accept C as an integrated simulator vertical slice. Keep the model below geometry, timing, motion, contact, PLC, verification, recovery, and audit gates. Treat the dataset and degenerate simulator outcome heads as insufficient for a broad generalization claim.
+
+### D: refresh one committed target until no-return
+
+Question: does bounded reactive correction improve interception under belt ramp, encoder bias, latency spike, and pose disturbance?
+
+Result: six of eight paired comparisons improved position error. Mean intercept position improvement was 20.016 mm. Latency failed closed. A and B replay delivery deltas were 0.163 and 0.252 mm against the unchanged 0.300 mm gate.
+
+Decision: accept D inside the simulator boundary. Retain same-track and same-grasp identity, correction caps, quantization, no-return, PLC, emergency-stop, IK, collision, and motion gates.
+
+### E: shadow the contact segment until physical data exists
+
+Question: can a small behavior clone be integrated without fabricating learned-contact success?
+
+Result: five complete Scene 2 shadow cases passed. All five phases were observed. The B slip case delivered. Emergency stop rejected the release proposal. Bounded replay passed. Learned action count stayed zero.
+
+Decision: keep E shadow-only. Do not enable bounded learned execution until representative synchronized physical force, tactile, slip, tissue-damage, and recovery data support the action and intervention envelopes.
+
+### Hybrid ablation: compare C and D inside both A and B
+
+Question: do C, D, or C plus D improve the complete cell when the flow, seed, product pose, belt speed, and disturbance are held constant?
+
+Result: all eight required S0 through S3 cases passed. C alone preserved success but did not improve intercept position in the matched seed. D improved intercept position by 11.230 mm for A and 11.232 mm for B. C plus D improved it by 11.261 mm for A and 11.239 mm for B. Cycle time was unchanged within each flow. S4 was not run because E execution is blocked.
+
+Decision: release C and D as independently gated simulator capabilities. Prefer the C plus D hybrid when the learned scorer does not abstain. Keep deterministic fallback available. Keep E outside execution.
 
 ## How future decisions will be recorded
 

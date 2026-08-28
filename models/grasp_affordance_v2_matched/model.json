@@ -1,0 +1,127 @@
+{
+  "feature_names": [
+    "local_x_abs_m",
+    "local_y_abs_m",
+    "boundary_clearance_m",
+    "capture_margin_m",
+    "estimated_width_m",
+    "proposal_quality",
+    "proposal_confidence",
+    "observation_confidence"
+  ],
+  "heads": {
+    "contact_probability": {
+      "bias": 1.0,
+      "weights": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "delivery_probability": {
+      "bias": 0.6170689291636375,
+      "weights": [
+        -0.1935717385434177,
+        -0.021260352697349254,
+        0.189652415131285,
+        0.0,
+        0.05067051611364248,
+        0.10732318753446082,
+        -0.023426923991954764,
+        0.07884568367167676
+      ]
+    },
+    "excessive_contact_probability": {
+      "bias": 1.0,
+      "weights": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "retained_lift_probability": {
+      "bias": 0.48844731534711483,
+      "weights": [
+        -0.312704477259321,
+        -0.02403624110106488,
+        0.04854356282566378,
+        0.0,
+        0.024264018968453184,
+        0.04461968421095514,
+        0.0034819884706651563,
+        0.02084343437672865
+      ]
+    },
+    "slip_probability": {
+      "bias": 0.0,
+      "weights": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "model_family": "carve_grasp_affordance_ridge_v1",
+  "normalization": {
+    "mean": [
+      0.05293828826449722,
+      0.002095222820361488,
+      0.059946798700334855,
+      0.045,
+      0.12339339790948058,
+      0.5542230639050404,
+      0.8712194616713776,
+      0.5761983970801036
+    ],
+    "scale": [
+      0.03226391669336064,
+      0.0017523422892889438,
+      0.0014836514475748035,
+      1e-06,
+      0.0004938727637107249,
+      0.21332873541035793,
+      0.0005888668787011271,
+      0.22193706878895803
+    ]
+  },
+  "outcome_names": [
+    "contact_probability",
+    "retained_lift_probability",
+    "slip_probability",
+    "excessive_contact_probability",
+    "delivery_probability"
+  ],
+  "schema_version": 1,
+  "training": {
+    "claim_boundary": "Simulator outcome model only. Contact force and excessive-contact targets are uncalibrated proxies.",
+    "data_source": "complete Isaac Sim Scene 2 cycles with rendered RGBD, articulation, PhysX contact, PLC, and delivery evidence",
+    "dataset": "C:\\Users\\jainl\\meat-conveyor-robot-simulation\\results\\solution_c\\matched_training\\20260828_verified_v2\\grasp_affordance_dataset.jsonl",
+    "dataset_sha256": "8b02c8cef3ebdc77ae6bbc93448a65050ab8b7f9ec8cd6f0196b1c55eea6df9d",
+    "fit_seeds": [
+      5001,
+      5002,
+      5003
+    ],
+    "held_out_seeds": [
+      5101,
+      5102
+    ],
+    "method": "multi-output L2-regularized linear outcome regression",
+    "regularization": 2.0
+  }
+}
