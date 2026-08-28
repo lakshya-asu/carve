@@ -1,5 +1,13 @@
 # Overnight build report
 
+## 2026-08-28 12:38 America/New_York: validated release published
+
+Commit `b62dd35` was pushed to `feature/moveit-bridge` and fast-forwarded to `main`. GitHub Pages deployment run `33190784537` passed. The public report returned HTTP 200 and contained the 226-test release result and hybrid section. The published hybrid summary returned HTTP 200 with `passed: true` and eight required cases. The published C training summary returned HTTP 200 with dataset SHA-256 `8b02c8cef3ebdc77ae6bbc93448a65050ab8b7f9ec8cd6f0196b1c55eea6df9d` and model SHA-256 `0a6b819ba11296b7034e28658e4bca5c8361118d5fe3de903f4af09870ed356d`.
+
+`PRODUCT_RECIPES.md` remained modified only in the working tree and was not staged or committed. The Pages job reported the existing Node.js 20 deprecation annotation for the official Pages actions, but GitHub ran them on Node.js 24 and deployment passed.
+
+Exact next action: collect representative synchronized physical force, tactile, slip, tissue-damage, and recovery demonstrations before considering bounded learned E execution.
+
 ## 2026-08-28 12:23 America/New_York: final hybrid matrix passed
 
 The final matched A/B control-stack matrix passed all eight required S0 through S3 cases at seed 5901 with a pose disturbance. Aggregate evidence is `results/hybrid_comparison/20260828_final_clean/comparison_summary.json`.

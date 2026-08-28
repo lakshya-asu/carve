@@ -4,6 +4,8 @@
 
 Solutions C and D now pass their dependency-ordered complete-cell gates. Solution E has a passing shadow-only vertical slice. Bounded learned contact execution remains blocked on representative physical force, tactile, slip, tissue-damage, and recovery data.
 
+The validated release was published from commit `b62dd35`. GitHub Pages deployment run `33190784537` passed, and the public report, hybrid summary, and C training summary returned HTTP 200. `PRODUCT_RECIPES.md` was not included in the commit.
+
 T017 is done. Its learned grasp-affordance scorer passed six full A and B baseline, learned, and replay cycles. A stronger matched dataset contains 25 separately executed candidates, split into 15 fit and 10 held-out rows. The two held-out seed groups had zero selection regret and zero selected-candidate safety violations, but several outcome heads remain degenerate simulator proxies. T018 is done. Its eight paired disturbance comparisons improved mean intercept position error by 20.016 mm, with six of eight positive pairs and both frozen replay gates passing. T019 remains blocked for execution, but its five-run integrated shadow matrix passed with zero learned commands and a fail-closed emergency-stop proposal.
 
 Fresh evidence is under `results/solution_c/matched_training/20260828_verified_v2`, `results/solution_c/comparison/20260827_deterministic`, `results/solution_d/comparison/20260827_recovery`, `results/solution_e/comparison/20260828_shadow_v1`, and `results/hybrid_comparison/20260828_final_clean`. The final hybrid matrix passed all eight required A/B S0 through S3 cases. S4 is explicitly not run because E execution is blocked. The final ordinary suite and documented release gate passed 226 tests at `results/full_suite/20260828_122846985`.
