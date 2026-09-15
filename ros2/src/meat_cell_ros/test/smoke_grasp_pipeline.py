@@ -25,8 +25,9 @@ from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 
-from meat_cell_sim.grasp_action import GraspAction, LegPerception
-from meat_cell_sim.grasp_policy import ShankGraspRule
+from applications.pork_leg_alignment.grasping.leg_perception import LegPerception
+from applications.pork_leg_alignment.grasping.shank_grasp_rule import ShankGraspRule
+from robotics.core.grasp_action import GraspAction
 
 
 def straight_leg() -> LegPerception:

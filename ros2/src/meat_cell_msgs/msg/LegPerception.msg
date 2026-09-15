@@ -1,4 +1,4 @@
-# One leg as the camera and encoder saw it (meat_cell_sim.grasp_action.LegPerception).
+# One leg as the camera and encoder saw it (applications.pork_leg_alignment.grasping.leg_perception.LegPerception).
 # header.stamp: exposure time of the frame. header.frame_id: "belt".
 # Belt coordinates: x along the belt minus belt_travel_m, y and z world, metres.
 

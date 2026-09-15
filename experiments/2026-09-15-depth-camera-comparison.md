@@ -2,7 +2,7 @@
 title: Overhead depth camera, Orbbec Gemini 335L against RealSense D455, in simulation
 date: 2026-09-15
 tags: [experiment, meat-cell, perception, depth-camera, simulation]
-status: draft
+status: reviewed
 decision: which RGB-D camera the cell models first and specifies for the bench test on real legs
 ---
 
@@ -34,8 +34,8 @@ ordered for the bench test on real legs, where the simulation's noise model gets
 ## Setup
 
 - Git SHA: filled at run start.
-- Simulator: MuJoCo 3.12.0, `meat_cell_sim`, timestep 2 ms.
-- Cameras, modelled in `src/meat_cell_sim/cameras.py` from datasheet fields:
+- Simulator: MuJoCo 3.12.0, `applications.pork_leg_alignment.sim` (was `meat_cell_sim`), timestep 2 ms.
+- Cameras, modelled in `src/robotics/hardware/cameras.py` from datasheet fields:
   - Orbbec Gemini 335L: depth 1280 x 800, 90 x 65 deg, 30 fps, range 0.17 to 20 m, 95 mm baseline
     ([Orbbec](https://www.orbbec.com/products/stereo-vision-camera/gemini-335l/)).
   - RealSense D455: depth 1280 x 720, 86 x 57 deg, up to 90 fps, range 0.6 to 6 m
@@ -74,7 +74,7 @@ ordered for the bench test on real legs, where the simulation's noise model gets
 
 ## Results
 
-Run 2026-09-15, `scripts/measure_depth_cameras.py`, 20 legs × 9 poses per camera, raw rows in
+Run 2026-09-15, `scripts/measure/depth_cameras.py`, 20 legs × 9 poses per camera, raw rows in
 `data/2026-09-15-depth-cameras.json`. A one-leg smoke run first exposed a placement bug in the
 script (the leg's outline offset was applied along x instead of along the leg), so every leg sat
 160 mm toward the open edge; it was fixed before this run, and the smoke numbers are discarded.
@@ -136,7 +136,10 @@ come from the bench test.
 
 ## Decision taken and why
 
-Not yet taken.
+2026-09-15: Lakshya signed off the Orbbec Gemini 335L, mounted 950 mm above the belt with the image's long
+side across it, "for now". Reasons on record: depth noise within 6 percent of the D455, every leg
+that fits the belt in view with the long side across, IP65 washdown and hardware sync. The choice is
+revisited when a bench test on wet meat measures real noise and dropout.
 
 ## Caveats
 

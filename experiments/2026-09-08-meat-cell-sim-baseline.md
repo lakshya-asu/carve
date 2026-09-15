@@ -58,7 +58,7 @@ and it has no ROS bridge (sim-first note).
 ## Setup
 
 - Git SHA: fill at run start (`git rev-parse HEAD` of this repo and of the sim package).
-- Config: `src/meat_cell_sim/configs/baseline.yaml` (to be created in step 2 below; one file,
+- Config: `src/applications/pork_leg_alignment/configs/baseline.yaml` (to be created in step 2 below; one file,
   every sweep value in it, no constants in code).
 - Dataset and checksum: none consumed. The run produces
   `experiments/runs/2026-09-08-meat-cell-sim-baseline/episodes.csv` plus the initial-condition
@@ -204,7 +204,7 @@ note.
   - cycle time (s), trigger to verification, and its breakdown;
   - wall-clock seconds per simulated second per simulator, because the follow-on experiment
     needs thousands of episodes.
-- Judge: the checker script, `src/meat_cell_sim/eval/checker.py`, written and unit-tested in
+- Judge: the checker script, `src/applications/pork_leg_alignment/eval/checker.py`, written and unit-tested in
   step 6 before any episode runs.
 - Report: k/n per condition with a Wilson 95 percent interval
   ([policy evaluation](../library/topics/policy-evaluation.md)); one table per simulator; one
@@ -212,7 +212,7 @@ note.
 
 ## Build steps
 
-1. Package `src/meat_cell_sim/` per the CLAUDE.md layout (`pyproject.toml`, `tests/`, ruff and
+1. Package `src/meat_cell_sim/` (now `src/robotics/` and `src/applications/pork_leg_alignment/`) per the CLAUDE.md layout (`pyproject.toml`, `tests/`, ruff and
    mypy strict). `TWIN.md` next to the scene with provenance for every number: measured,
    datasheet, vendor file, or assumption (sim-first note, twin procedure).
 2. `configs/baseline.yaml`: every value in the tables above, dataclass-loaded.
@@ -282,7 +282,7 @@ Not yet taken. The pre-registered mapping from outcome to decision:
 Not a result for the hypothesis. This records that the apparatus is calibrated,
 which the experiment protocol requires before any episode is run.
 
-Built: `src/meat_cell_sim/` with `cell.xml` (belt, rails, product, cutter lane,
+Built: `src/meat_cell_sim/` (now `src/robotics/` and `src/applications/pork_leg_alignment/`) with `cell.xml` (belt, rails, product, cutter lane,
 overhead camera), `gripper.xml` (parallel jaw, 140 mm stroke, 60 mm pads), and
 `scene.py`, which attaches the Menagerie UR5e (pin `8161bba`) and the gripper
 with `MjSpec.attach` so the third-party checkout stays unedited. Model compiles

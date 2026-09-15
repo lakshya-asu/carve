@@ -1,0 +1,10 @@
+# The FollowJointTrajectory action is served by meat_cell_ros mujoco_bridge_node in simulation and by
+# the UR driver's scaled_joint_trajectory_controller on the real arm; only this name changes.
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+moveit_simple_controller_manager:
+  controller_names: [ur20_arm_controller]
+  ur20_arm_controller:
+    type: FollowJointTrajectory
+    action_ns: follow_joint_trajectory
+    default: true
+    joints: [shoulder_pan_joint, shoulder_lift_joint, elbow_joint, wrist_1_joint, wrist_2_joint, wrist_3_joint]

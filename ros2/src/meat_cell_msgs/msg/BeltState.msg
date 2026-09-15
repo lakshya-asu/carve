@@ -1,4 +1,4 @@
-# The belt at one instant, fitted from encoder readings (meat_cell_sim.belt_state.BeltState).
+# The belt at one instant, fitted from encoder readings (robotics.core.belt_state.BeltState).
 # header.stamp: time of the newest encoder reading used. header.frame_id: "world".
 # The belt runs along world +x; travel never decreases.
 

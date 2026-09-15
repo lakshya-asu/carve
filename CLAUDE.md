@@ -71,7 +71,8 @@ and do not "fix" what a hook reports about them:
 line you are adding, never rewrite the file, and never revert a line you did not
 write.
 
-The robotics work is everything else: `src/meat_cell_sim/`, `tests/`, `tools/`,
+The robotics work is everything else: `src/robotics/`, `src/applications/` (layout in
+`ARCHITECTURE.md`), `ros2/`, `tests/`, `tools/`,
 `scripts/`, `snippets/`, `experiments/`, `sops/`, `templates/`, `site/`,
 `library/topics/`, `library/hardware/`, `library/tools/`, `library/papers/`,
 `plan/`, `daily/`, `field-notes/`, `Home.md`.

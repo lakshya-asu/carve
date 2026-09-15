@@ -87,14 +87,14 @@ Order set by Lakshya: model the problem completely, then test approaches.
 - Wed: saw running and cutting in sim; both approaches running on several of the 20 legs with
   first numbers (success, cut position error, cycle time); tuning left.
 - Week: both approaches over all 20 legs with trial counts, tool tilt question answered.
-- Current state: scene and leg population done (`src/meat_cell_sim/product.py`); arm IK and
+- Current state: scene and leg population done (`src/applications/pork_leg_alignment/sim/product.py`); arm IK and
   gripper exist; no saw, no alignment behaviour yet. The sim arm is a UR5e, rated for 5 kg; the
   legs weigh 9 to 15.5 kg, so the lift test needs a heavier arm model.
-- [x] Saw modelled and cutting (2026-09-14: `src/meat_cell_sim/saw.py`, video
+- [x] Saw modelled and cutting (2026-09-14: `src/applications/pork_leg_alignment/sim/saw.py`, video
   `~/Videos/meat-cell/saw-cut.mp4`)
 - [x] Cut starts at blade contact, leg drawn whole until then
-- [x] Hold-down belt and blade push-back (`src/meat_cell_sim/holddown.py`,
-  `scripts/measure_hold_down.py`; videos `saw-cut-hold-down.mp4`, `saw-cut-no-hold-down.mp4`)
+- [x] Hold-down belt and blade push-back (`src/applications/pork_leg_alignment/sim/hold_down.py`,
+  `scripts/measure/hold_down.py`; videos `saw-cut-hold-down.mp4`, `saw-cut-no-hold-down.mp4`)
 - [ ] Measure or source the saw's feed resistance and the hold-down press force
 - [ ] Approach A running on one leg
 - [ ] Approach B running on one leg, tilt tested

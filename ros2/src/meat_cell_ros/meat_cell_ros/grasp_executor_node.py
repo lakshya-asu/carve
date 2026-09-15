@@ -6,8 +6,8 @@ tool can lean, motion limits and pick window. For each `grasp/action` message or
 goal:
 
 1. refuse a leaning tool on an arm that cannot lean (a SCARA), before anything moves;
-2. plan the intercept against the newest `belt/state` (`meat_cell_sim.intercept`);
-3. turn it into timed tool waypoints (`meat_cell_sim.grasp_execution`);
+2. plan the intercept against the newest `belt/state` (`robotics.core.intercept`);
+3. turn it into timed tool waypoints (`robotics.core.grasp_execution`);
 4. solve IK for each waypoint with MoveIt's `compute_ik`, seeded from the previous solution;
 5. send one FollowJointTrajectory goal timed to the meeting, open the jaws now and close them at the meeting.
 
@@ -16,6 +16,8 @@ QoS: `belt/state` and `grasp/action` reliable keep-last 10; `joint_states` senso
 """
 
 from __future__ import annotations
+
+import time
 
 import numpy as np
 import rclpy
@@ -30,7 +32,7 @@ from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.action import ActionClient, ActionServer
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.duration import Duration
-from rclpy.executors import MultiThreadedExecutor
+from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, qos_profile_sensor_data
 from rclpy.time import Time
@@ -39,10 +41,10 @@ from tf2_ros import Buffer, TransformException, TransformListener
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 from meat_cell_ros.conversions import belt_state_from_msg, grasp_action_from_msg, quaternion, seconds, stamp
-from meat_cell_sim.belt_state import BeltState
-from meat_cell_sim.grasp_action import GraspAction
-from meat_cell_sim.grasp_execution import ToolWaypoint, grasp_waypoints
-from meat_cell_sim.intercept import ArmMotion, InterceptPlan, NoFeasibleInterceptError, PickWindow, plan_intercept
+from robotics.core.belt_state import BeltState
+from robotics.core.grasp_action import GraspAction
+from robotics.core.grasp_execution import ToolWaypoint, grasp_waypoints
+from robotics.core.intercept import ArmMotion, InterceptPlan, NoFeasibleInterceptError, PickWindow, plan_intercept
 
 # A belt state older than this is not planned against.
 STALE_BELT_S = 0.2
@@ -85,7 +87,8 @@ class GraspExecutorNode(Node):
         self.joints = JointState()
         self.tf = Buffer()
         self.tf_listener = TransformListener(self.tf, self)
-        self.ik = self.create_client(GetPositionIK, "compute_ik", callback_group=callbacks)
+        ik_service = str(parameter("ik_service", "compute_ik", "GetPositionIK service: move_group's, or an arm's own"))
+        self.ik = self.create_client(GetPositionIK, ik_service, callback_group=callbacks)
         self.trajectory = ActionClient(self, FollowJointTrajectory, trajectory_action, callback_group=callbacks)
         self.gripper = ActionClient(self, GripperCommand, gripper_action, callback_group=callbacks)
         reliable = QoSProfile(depth=10)
@@ -167,9 +170,15 @@ class GraspExecutorNode(Node):
     def solve(self, waypoints: list[ToolWaypoint]) -> list[list[float]] | None:
         """Joint positions for each waypoint from `compute_ik`, each seeded from the one before."""
         if not self.ik.wait_for_service(timeout_sec=1.0):
-            self.get_logger().error("compute_ik is not available; is move_group running?")
+            self.get_logger().error("the IK service is not available; is move_group (or the arm's IK node) running?")
             return None
-        seed = RobotState(joint_state=self.joints)
+        # Seed with this arm's joints only: joint_states also carries the belt and gripper, which the
+        # arm's MoveIt model does not have.
+        known = dict(zip(self.joints.name, self.joints.position, strict=False))
+        seed_state = JointState(
+            name=list(self.joint_names), position=[float(known.get(n, 0.0)) for n in self.joint_names]
+        )
+        seed = RobotState(joint_state=seed_state)
         solutions = []
         for waypoint in waypoints:
             pose = PoseStamped()
@@ -195,29 +204,39 @@ class GraspExecutorNode(Node):
         return solutions
 
     def send(self, waypoints: list[ToolWaypoint], positions: list[list[float]], now_s: float, opening_m: float) -> bool:
-        """One trajectory timed from now through the waypoints; jaws open now and close at the meeting."""
+        """Open the jaws, then send one trajectory stamped with the planning time; close the jaws at the meeting.
+
+        The trajectory's header stamp is the planning time, so a controller that starts it later (after
+        the IK calls and transport) still reaches each waypoint at the planned moment, as ros2_control's
+        trajectory controller does.
+        """
         trajectory = JointTrajectory(joint_names=self.joint_names)
+        trajectory.header.stamp = stamp(now_s)
         for waypoint, joints in zip(waypoints, positions, strict=True):
             after = Duration(seconds=max(waypoint.time_s - now_s, 0.0)).to_msg()
             trajectory.points.append(JointTrajectoryPoint(positions=joints, time_from_start=after))
         if not self.trajectory.wait_for_server(timeout_sec=1.0):
             self.get_logger().error("trajectory controller action is not available")
             return False
-        handle = self.trajectory.send_goal(FollowJointTrajectory.Goal(trajectory=trajectory))
-        if handle is None or not handle.accepted:
-            return False
-        if self.gripper.wait_for_server(timeout_sec=0.1):
+        if self.gripper.wait_for_server(timeout_sec=0.5):
             opened = GripperCommand.Goal()
             opened.command.position = opening_m
             self.gripper.send_goal_async(opened)
-            meet_s = next(w.time_s for w in waypoints if w.close_jaws)
-            one_shot: list = []
+        # send_goal (synchronous) would block until the trajectory finishes; wait only for acceptance.
+        accepted = self.trajectory.send_goal_async(FollowJointTrajectory.Goal(trajectory=trajectory))
+        deadline = time.monotonic() + 2.0
+        while not accepted.done() and time.monotonic() < deadline:
+            time.sleep(0.005)
+        if not accepted.done() or not accepted.result().accepted:
+            return False
+        meet_s = next(w.time_s for w in waypoints if w.close_jaws)
+        one_shot: list = []
 
-            def close() -> None:
-                one_shot[0].cancel()
-                self.gripper.send_goal_async(GripperCommand.Goal())
+        def close() -> None:
+            one_shot[0].cancel()
+            self.gripper.send_goal_async(GripperCommand.Goal())
 
-            one_shot.append(self.create_timer(max(meet_s - now_s, 0.001), close))
+        one_shot.append(self.create_timer(max(meet_s - seconds(self.get_clock().now().to_msg()), 0.001), close))
         return True
 
 
@@ -229,6 +248,8 @@ def main() -> None:
     executor.add_node(node)
     try:
         executor.spin()
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass  # Ctrl-C or launch shutdown is a normal stop, not an error to print
     finally:
         node.destroy_node()
         rclpy.try_shutdown()

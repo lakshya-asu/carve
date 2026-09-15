@@ -289,7 +289,7 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
       <text x="870" y="460" class="t2">500 mm</text>
     </svg>
     </div>
-    <figcaption><b>Figure 1.</b> The simulated cell drawn to scale from <code>cell.xml</code>, <code>saw.py</code> and <code>holddown.py</code>. The default leg is 722 mm and 11.0 kg; the population runs 655 to 815 mm and 9.0 to 15.5 kg. The hock at 76 percent of length, the belt speed and the saw position are assumptions until the plant confirms them. The arm is drawn at the far-side mount; arcs are published reach from the base axis.</figcaption>
+    <figcaption><b>Figure 1.</b> The simulated cell drawn to scale from <code>cell.xml</code>, <code>saw.py</code> and <code>hold_down.py</code>. The default leg is 722 mm and 11.0 kg; the population runs 655 to 815 mm and 9.0 to 15.5 kg. The hock at 76 percent of length, the belt speed and the saw position are assumptions until the plant confirms them. The arm is drawn at the far-side mount; arcs are published reach from the base axis.</figcaption>
   </figure>
 
   <p><b>What aligned means, in numbers the saw can judge.</b> The sim does not score alignment by eye. The saw scores it: when the blade surface meets the leg surface the cut starts, the blade pushes back with a feed resistance, and when the leg has travelled its width the cut completes and reports the offset from the hock at entry and exit and the angle off square. The pre-registered pass is within ±10 mm and ±5 degrees, both <span class="unv">† assumed</span>, since no tolerance has come from the customer.</p>
@@ -354,7 +354,7 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
         <circle cx="245" cy="228.1" r="14" class="hit" data-tip="150 N hold-down, 60 N feed: 0.47°, 0.1 mm"/>
         <circle cx="370" cy="44" r="14" class="hit" data-tip="150 N hold-down, 120 N feed: broke, 46.5°, 39 mm"/>
       </svg>
-      <figcaption><b>Figure 2.</b> Leg turn during the cut. <code>scripts/measure_hold_down.py</code>, one run per point, re-run after the trotter weld fix. Blade feed resistance and hold-down press force are both <span class="unv">† unmeasured</span>; a real saw's feed force is the first number to get from the line.</figcaption>
+      <figcaption><b>Figure 2.</b> Leg turn during the cut. <code>scripts/measure/hold_down.py</code>, one run per point, re-run after the trotter weld fix. Blade feed resistance and hold-down press force are both <span class="unv">† unmeasured</span>; a real saw's feed force is the first number to get from the line.</figcaption>
     </figure>
     <figure>
       <svg viewBox="0 -20 460 300" role="img" aria-label="Reachable grid points out of 120 with the tool pointing down, at three heights above the belt. UR20: 120, 120, 120. SR-20iA: 101, 101, 0.">
@@ -390,7 +390,7 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
         <rect x="333" y="30" width="36" height="200" class="hit" data-tip="UR20 at 350 mm: 120 of 120 points"/>
         <rect x="371" y="30" width="36" height="200" class="hit" data-tip="SR-20iA at 350 mm: 0 of 120. Its 300 mm stroke tops out 275 mm above the belt from this mount"/>
       </svg>
-      <figcaption><b>Figure 3.</b> Reach with the tool pointing down over a 120-point grid across the belt (x −0.4 to 1.0 m, y 0.15 to 0.85 m, 100 mm step). <code>scripts/measure_arm_reach.py</code>. The SCARA cannot carry a leg over other legs at clearance height from this mount.</figcaption>
+      <figcaption><b>Figure 3.</b> Reach with the tool pointing down over a 120-point grid across the belt (x −0.4 to 1.0 m, y 0.15 to 0.85 m, 100 mm step). <code>scripts/measure/arm_reach.py</code>. The SCARA cannot carry a leg over other legs at clearance height from this mount.</figcaption>
     </figure>
   </div>
 
@@ -427,7 +427,7 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
 <section class="ch" id="c3">
   <div class="chead"><span class="k">Section 3</span><h2>Skills with contracts, tasks as graphs</h2></div>
   <p class="plain">We break the job into small robot skills: find the leg, grab it, turn it, let go. Every skill states up front what it needs, what it promises to deliver, and every way it can fail. Skills are chained into a task, and for each possible failure the task says what happens next, so the robot never ends up without a plan.</p>
-  <p>We are building an architecture where a skill can be deterministic motion, classical control, optimisation, a learned policy or a perception module, and every skill carries the same contract: inputs, preconditions, outputs, success conditions, failure conditions and recovery. Tasks are graphs of skills, so a new application reuses most of the graph and adds only what is new about it. The library lives in <code>src/skill_library/</code> and imports nothing from the simulator or about pork. Recovery belongs to the task graph, because what to do after a failure depends on the task.</p>
+  <p>We are building an architecture where a skill can be deterministic motion, classical control, optimisation, a learned policy or a perception module, and every skill carries the same contract: inputs, preconditions, outputs, success conditions, failure conditions and recovery. Tasks are graphs of skills, so a new application reuses most of the graph and adds only what is new about it. The library lives in <code>src/robotics/core/skill_library/</code> and imports nothing from the simulator or about pork. Recovery belongs to the task graph, because what to do after a failure depends on the task.</p>
 
   <figure>
     <div class="scroll">
@@ -491,7 +491,7 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
 
   <h3><span class="addr">3.1</span>One contract, as it runs today</h3>
   <p>The runner does not trust the skill. Inputs are type-checked; a failing precondition stops the skill before it moves; a skill may end only in success or a failure it declared; and a claimed success is re-checked, and reported as <code>success_not_verified</code> if the checks disagree. Every check returns the number it decided on, so a failed episode explains itself in values.</p>
-<div class="contract">acquire_shank                                    src/meat_cell_sim/skills/grasp.py
+<div class="contract">acquire_shank                                    src/applications/pork_leg_alignment/skills/shank_grasp.py
   inputs         shank_grasp : ShankGrasp      tool target on the shank, world frame
   preconditions  jaw_spare_m                   jaws open ≥ 40 mm wider than the shank
   outputs        grip_opening_m : float        measured opening after closing
@@ -799,7 +799,7 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
   <div class="scroll"><table>
     <thead><tr><th>Capability</th><th>State</th><th>Where it stands</th></tr></thead>
     <tbody>
-      <tr><td>Skills with enforced contracts; tasks as graphs with every outcome routed</td><td><span class="mk f"></span>exists</td><td><code>src/skill_library/</code>, tests; four grasp skills on the cell</td></tr>
+      <tr><td>Skills with enforced contracts; tasks as graphs with every outcome routed</td><td><span class="mk f"></span>exists</td><td><code>src/robotics/core/skill_library/</code>, tests; four grasp skills on the cell</td></tr>
       <tr><td>A learned skill behind the same contract</td><td><span class="mk"></span>next, Wednesday</td><td>Orient policy, section 6</td></tr>
       <tr><td>One skill on two platforms</td><td><span class="mk"></span>next, Wednesday</td><td>Task-frame actions, per-arm IK; closest evidence UMI, Mirage, RoVi-Aug</td></tr>
       <tr><td>Composing learned skills as distributions</td><td><span class="mk x"></span>research</td><td>Exact products need MCMC at up to 5× cost; composing flow-matching policies has no robot result found</td></tr>
@@ -1430,7 +1430,7 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
   <div class="scroll"><table>
     <thead><tr><th>Gate</th><th>Measured by</th><th>Passes when</th><th>State</th></tr></thead>
     <tbody>
-      <tr><td>Saw scores placement</td><td><code>tests/test_saw.py</code></td><td>square placement reads 0 mm and 0°; offsets read back exactly</td><td><span class="mk f"></span>passed</td></tr>
+      <tr><td>Saw scores placement</td><td><code>tests/applications/pork_leg_alignment/sim/test_saw.py</code></td><td>square placement reads 0 mm and 0°; offsets read back exactly</td><td><span class="mk f"></span>passed</td></tr>
       <tr><td>Arm holds position under a leg</td><td>5 mm proof lift, both arms</td><td>tool within 0.5 mm of command; home held within 0.02 unloaded</td><td><span class="mk"></span>open</td></tr>
       <tr><td>Both approaches end to end</td><td>20 legs per condition</td><td>every episode ends in a declared outcome with numbers; no pass bar on success until the plant gives a tolerance</td><td><span class="mk"></span>open</td></tr>
       <tr class="chg"><td>Hock from depth</td><td>20 legs, modelled degradations</td><td>hock error within 5 mm and yaw within 2° <span class="unv">† assumed until the tolerance is known</span></td><td><span class="mk"></span>open</td></tr>
@@ -1438,6 +1438,11 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
       <tr><td>One skill, two arms</td><td>section 6 protocol</td><td>same checkpoint, same saw metric on both arms, reported against per-arm baselines</td><td><span class="mk"></span>open</td></tr>
     </tbody>
   </table></div></div>
+
+  <div class="box">
+    <span class="label">How the code is organised</span>
+    <p>The code follows the separation we set out: general robotics code that knows nothing about pork, and this cell's code on top of it. <code>src/robotics/core</code> holds the types, the skill contract and task graph, belt state, intercept planning and the grasp action, in plain numpy so it runs anywhere, ROS 2 nodes included. <code>src/robotics/hardware</code> holds arms, grippers and cameras; <code>src/robotics/perception</code> the depth geometry, segmentation and centre of gravity. Everything about this cell, the leg model, the saw, the leg-specific perception, the shank grasp rule and the skills, is in <code>src/applications/pork_leg_alignment</code>. A test fails the build if general code ever imports the application, or if the core stops being plain numpy. ROS 2 packages follow the same split: <code>meat_cell_msgs</code> and <code>meat_cell_ros</code> are robot-agnostic; <code>cell_description</code>, <code>cell_moveit_config</code> and <code>pork_leg_cell_ros</code> are this cell's. The rules and how to add a skill, a robot or a new cell are in <a href="https://github.com/lakshya-asu/carve/blob/main/ARCHITECTURE.md">ARCHITECTURE.md</a>.</p>
+  </div>
 
   <div class="box">
     <span class="label">What we need from the plant</span>
@@ -1641,7 +1646,19 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
   <p><b>The deterministic policy.</b> Grip the shank two thirds of the way from the ham, at the middle of that cross section, jaws square to the leg there, opening the shank's width plus 40 mm. On a simulated leg at two angles, working only from the camera, it lands within 20 mm of the true shank point and within 8 degrees of square to it. The old grasp skills read the simulator's true pose, so this is the first grasp the cell can decide from what it sees.</p>
   <p><b>The learned policy.</b> It reads the same message and writes the same action. It does not start from nothing: it takes the deterministic grasp and learns only how far to move it along and across the leg, how far to turn the jaws, and whether to tilt the tool 0, 15 or 30 degrees. With nothing learned it is exactly the deterministic grasp. It is trained on 100 simulated legs the test never uses, each labelled with the best of a set of grasps tried on a floating gripper, and it runs as plain matrix maths so it fits inside a ROS 2 node without a GPU or torch.</p>
   <p><b>The intercept.</b> From the grasp point and the belt state, the planner finds the moment the arm can arrive exactly where that point will be, using the belt's acceleration so a belt that is speeding up or slowing down does not leave the arm reaching for where the leg used to be (10.1); it waits if the leg is not in reach yet, and says why when the leg would leave before the jaws close. The arm then comes down along its own axis onto the moving point and follows it while the jaws close.</p>
-  <p><b>ROS 2 and MoveIt.</b> The messages are a ROS 2 package, and three nodes carry the chain: belt state, grasp policy (picked by a parameter) and one executor per arm, which asks MoveIt for the joint angles at each waypoint and sends one timed trajectory to the arm's controller. Adding a robot means adding its config file and MoveIt setup; the policy, messages and planner stay as they are. The workspace builds, and a check with no robot attached passes: a published leg comes back as the rule's grasp, the SCARA's executor refuses a tilted grasp before it moves, and an executor with no belt reading refuses to plan. Running it against MoveIt and the simulated arms needs MoveIt's planner and controller packages, an IK solver that handles a four-joint SCARA (pick_ik), and robot descriptions for both arms, which are not installed on this computer yet.</p>
+  <p><b>ROS 2 and MoveIt.</b> The messages are a ROS 2 package, and three nodes carry the chain: belt state, grasp policy (picked by a parameter) and one executor per arm, which asks for the joint angles at each waypoint and sends one timed trajectory to the arm's controller. MoveIt is now installed on this computer, and the arm descriptions it uses are generated from the simulator's own numbers: they match the simulated arms within 0.1 mm, and MoveIt's answers for the UR20 put the tool exactly where asked, tilted or not. A SCARA's tool can only point down, so its joint angles come from a short closed-form solver that answers the same request MoveIt does; the executor cannot tell the difference. Adding a robot means adding its description and config; the policy, messages and planner stay as they are.</p>
+  <p><b>First runs, end to end.</b> The simulated cell now runs as ROS 2 nodes too: the camera's leg goes out as a message, the policy decides, the executor plans and solves, the simulated arm follows the trajectory, and the simulator scores the result against the truth. The first runs found five defects in the chain, all fixed; the worst was stray pixels at the leg's outline that made the leg look twice as long and put every grasp 155 mm off. After the fixes, one leg per run:</p>
+  <div class="tbl"><div class="cap">Table 11.6 · the grasp chain through ROS 2 and MoveIt against the simulated cell, one leg per run, 2026-09-15</div>
+  <div class="scroll"><table>
+    <thead><tr><th>Arm</th><th class="num">Leg angle</th><th class="num">Tool to the true grasp point at the meeting</th><th class="num">Along belt / across / height, mm</th><th class="num">Jaws after closing (shank 101 mm)</th></tr></thead>
+    <tbody>
+      <tr><td>SR-20iA</td><td class="num">0°</td><td class="num">19 mm</td><td class="num">−12 / +11 / +12</td><td class="num">116 mm</td></tr>
+      <tr><td>SR-20iA</td><td class="num">−35°</td><td class="num">17 mm</td><td class="num">−9 / +10 / +11</td><td class="num">110 mm</td></tr>
+      <tr><td>UR20</td><td class="num">+35°</td><td class="num">52 mm</td><td class="num">−16 / −5 / +49</td><td class="num">110 mm</td></tr>
+      <tr><td>UR20</td><td class="num">0°</td><td class="num">476 mm</td><td class="num">+425 / +122 / +178</td><td class="num">20 mm, closed on nothing</td></tr>
+    </tbody>
+  </table></div></div>
+  <p>The chain works on both arms from the camera to the gripper, and the SCARA refuses a tilted grasp through ROS exactly as designed. The SCARA reaches the grasp point within 17 to 19 mm. The UR20 is not there yet: on one run MoveIt's solver chose an arm configuration far from where the arm stood, and the arm could not swing there in the two seconds it had. And no run gripped the leg: the jaws stopped 9 to 15 mm wider than the shank. Those are the next things to fix, before the A/B test is worth running.</p>
   <div class="tbl"><div class="cap">Table 11.5 · the A/B test, written down before it runs (<code>experiments/2026-09-15-intercept-grasp.md</code>)</div>
   <div class="scroll"><table>
     <thead><tr><th>Question</th><th>Conditions</th><th>Decided by</th></tr></thead>
@@ -1651,7 +1668,7 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
       <tr><td>SCARA or six-axis</td><td>SR-20iA vertical against UR20</td><td>if tilt is not needed and the SCARA holds within 2 legs of 20 of the UR20, it stays in on cost and speed; otherwise we propose the six-axis arm</td></tr>
     </tbody>
   </table></div></div>
-  <p class="chg"><b>Before the first run:</b> the simulated arms still sag under a leg (a commanded 5 mm lift rises 1.6 mm on the UR20 and 2.6 mm on the SCARA), so the lift check cannot be trusted yet; the simulated arms have to follow a timed trajectory on the belt instead of ramping to fixed targets; and the MoveIt packages above need installing, which is a decision for us to make.</p>
+  <p class="chg"><b>Before the A/B test runs:</b> the jaws have to close on the shank (grasp height and jaw timing are the first suspects); the executor has to refuse IK answers far from the arm's current configuration; the simulated arms still sag under a leg (a commanded 5 mm lift rises 1.6 mm on the UR20 and 2.6 mm on the SCARA), so the lift check cannot be trusted yet; and after its first grasp the executor received more grasp actions with an impossible belt prediction, not yet explained.</p>
 </section>
 
 <!-- 11 VIDEOS -->
@@ -1665,7 +1682,7 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
 </main>
 
 <div id="tip" hidden></div>
-<footer>Built 2026-09-15 from the robot-learning-lab repository: <code>src/meat_cell_sim/</code>, <code>src/skill_library/</code>, <code>experiments/</code> and <code>library/</code>. Values marked † are assumptions or unmeasured.</footer>
+<footer>Built 2026-09-15 from the robot-learning-lab repository: <code>src/robotics/</code>, <code>src/applications/pork_leg_alignment/</code>, <code>src/robotics/core/skill_library/</code>, <code>experiments/</code> and <code>library/</code>. Values marked † are assumptions or unmeasured.</footer>
 
 <script>
 (function(){

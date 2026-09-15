@@ -34,9 +34,9 @@ IoU at least 0.93, centroid within 3 mm, no refusals on single legs.
 ## Setup
 
 - Git SHA: filled at run start.
-- Simulator: MuJoCo 3.12.0, `meat_cell_sim`, timestep 2 ms, belt 0.30 m/s.
+- Simulator: MuJoCo 3.12.0, `applications.pork_leg_alignment.sim` (was `meat_cell_sim`), timestep 2 ms, belt 0.30 m/s.
 - Arm: UR20 at the far-side mount with the jaw gripper, at home, as in the alignment experiment.
-- Camera: Orbbec Gemini 335L model (`src/meat_cell_sim/cameras.py`), 950 mm above the belt, long
+- Camera: Orbbec Gemini 335L model (`src/robotics/hardware/cameras.py`), 950 mm above the belt, long
   image side across the belt (mount yaw 90 degrees), the choice proposed in
   `2026-09-15-depth-camera-comparison.md`. Depth noise from the datasheet model, no glare term.
 - Empty-belt reference: the mean of 10 noisy frames of the belt with the leg out of view.
@@ -48,7 +48,7 @@ IoU at least 0.93, centroid within 3 mm, no refusals on single legs.
 
 ## Method under test
 
-`src/meat_cell_sim/leg_segmentation.py`: height above the empty-belt reference; keep pixels
+`src/applications/pork_leg_alignment/perception/leg_segmentation.py`: height above the empty-belt reference; keep pixels
 between 10 mm and 300 mm (the far rail stands 90 mm but lies outside the belt region; the arm
 stands taller than 300 mm when over the belt); keep only the belt region, which runs from 150 mm
 past the open edge (the overhanging trotter) to 10 mm short of the far rail; close gaps; keep the
@@ -65,7 +65,7 @@ per frame, ms. Reported per yaw and per placement, medians and worst case over 1
 Added 2026-09-15 before any training, at Lakshya's request that every step compares a geometric
 and a learned method, including what the learned one costs to run.
 
-- Model: a small U-Net (`src/meat_cell_sim/learned_segmentation.py`), input colour plus depth at
+- Model: a small U-Net (`src/applications/pork_leg_alignment/perception/learned_leg_segmentation.py`), input colour plus depth at
   320 × 200, output a leg probability per pixel, thresholded at 0.5 and upsampled; the same
   post-processing as the geometric method (largest piece, refuse on empty or border).
 - Training data: `leg_population(100, seed=1)`, a different population from the 20 test legs
@@ -81,7 +81,7 @@ and a learned method, including what the learned one costs to run.
 
 ## Results
 
-Three runs of `scripts/measure_leg_segmentation.py`, each on the full 180 frames. Two exposed
+Three runs of `scripts/measure/leg_segmentation.py`, each on the full 180 frames. Two exposed
 defects in the segmenter; the third is the result.
 
 **Run 1** (raw rows `data/2026-09-15-leg-segmentation-run1.json`). All 180 accepted, precision
@@ -126,7 +126,7 @@ true height at the silhouette boundary is at least 28.5 mm (5th percentile 50.7 
 
 **Run 4, with edge effects** (raw rows `data/2026-09-15-leg-segmentation-edges.json`). Run 3
 was exact because the renderer's depth edge is sharp, so the camera model gained the three edge
-artefacts in `EdgeEffects` (`src/meat_cell_sim/cameras.py`): about 1 px of sideways jitter near
+artefacts in `EdgeEffects` (`src/robotics/hardware/cameras.py`): about 1 px of sideways jitter near
 outlines (a D435 below 0.7 m, Halmetschlager-Funek et al., IEEE RAM 2019, Table 2), a ±2 px band
 where half the pixels report the near depth, the far depth or a blend (assumed), and no return
 past 75 degrees incidence (the end of Fankhauser et al.'s ICAR 2015 fit; the cut-off assumed).
@@ -151,7 +151,7 @@ threads while other jobs ran. Validation IoU 0.966 after epoch 1, 0.991 after 4,
 best and last checkpoint `legunet-simlegs100-8f953aa-930.pt`. A duplicate of this training ran for
 its first half and was stopped; it wrote the same file names from the same data and seeds.
 
-**Learned segmenter against geometry** (`scripts/compare_leg_segmenters.py`, raw rows
+**Learned segmenter against geometry** (`scripts/measure/compare_leg_segmenters.py`, raw rows
 `data/2026-09-15-leg-segmenter-comparison-legunet-simlegs100-8f953aa-930[-edges].json`). Same 180
 frames and noise seed; U-Net on 6 CPU threads while another training job ran.
 
@@ -222,7 +222,7 @@ the depth-height segmenter cannot run.
 - Frames: 21, one every 2 s (IMG_1005: 8, IMG_1008: 13), 720 × 1280 portrait.
 - Deterministic: a Lab colour rule sampled on two of the frames (meat a* 135 to 157, b* 144 to
   157; belt, shadow, steel and gloves outside it), opened and closed, one instance per connected
-  piece (`scripts/segment_real_footage.py`).
+  piece (`scripts/measure/segment_real_footage.py`).
 - Learned proposals, deterministic decision: Segment Anything ViT-B (Kirillov et al. 2023,
   arXiv 2304.02643) automatic masks, 16 × 16 prompt points; a region is kept when at least 60
   percent of it passes the same colour rule, and a region mostly inside a kept one is dropped.

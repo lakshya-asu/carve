@@ -1,5 +1,5 @@
 # Where and how to take hold of a leg, from any policy, for any arm
-# (meat_cell_sim.grasp_action.GraspAction). No joint values: each arm's executor turns this into
+# (robotics.core.grasp_action.GraspAction). No joint values: each arm's executor turns this into
 # motion with its own IK, or refuses.
 # header.stamp: exposure time of the perception it was decided from. header.frame_id: "belt".
 

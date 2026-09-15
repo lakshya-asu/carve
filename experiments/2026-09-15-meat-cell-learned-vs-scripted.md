@@ -41,8 +41,8 @@ does not get robot time.
 
 ## Setup
 
-- Git SHA: fill at run start; separately for this repo, `meat_cell_sim`, and the LeRobot commit.
-- Config: `src/meat_cell_sim/configs/learned_vs_scripted.yaml` (demo generation, splits, training,
+- Git SHA: fill at run start; separately for this repo (`src/robotics`, `src/applications`) and the LeRobot commit.
+- Config: `src/applications/pork_leg_alignment/configs/learned_vs_scripted.yaml` (demo generation, splits, training,
   evaluation, all in one file).
 - Dataset and checksum: `datasets/meat-cell-sim-expert-v1/` generated in step 2 below, with
   `DATASET.md` per the [data collection protocol](../sops/data-collection-protocol.md); SHA-256

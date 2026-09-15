@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypenamespace="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>pork_leg_cell_ros</name>
+  <version>0.1.0</version>
+  <description>ROS 2 adapters specific to the pork leg alignment cell: the MuJoCo simulated cell as ROS 2 interfaces, closed-form IK for the SR-20iA as mounted in this cell, the whole-chain simulation launch and the MoveIt IK check. Application layer: imports applications.pork_leg_alignment and the simulator.</description>
+  <maintainer email="jainlakshya04@gmail.com">Lakshya Jain</maintainer>
+  <license>Proprietary</license>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>meat_cell_msgs</exec_depend>
+  <exec_depend>meat_cell_ros</exec_depend>
+  <exec_depend>cell_description</exec_depend>
+  <exec_depend>cell_moveit_config</exec_depend>
+  <exec_depend>control_msgs</exec_depend>
+  <exec_depend>moveit_msgs</exec_depend>
+  <exec_depend>rosgraph_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>

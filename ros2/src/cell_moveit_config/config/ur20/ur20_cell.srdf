@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<robot name="ur20_cell">
+  <group name="ur_manipulator">
+    <chain base_link="base_link" tip_link="tcp"/>
+  </group>
+  <group_state name="home" group="ur_manipulator">
+    <joint name="shoulder_pan_joint" value="-1.5708"/>
+    <joint name="shoulder_lift_joint" value="-1.5708"/>
+    <joint name="elbow_joint" value="1.5708"/>
+    <joint name="wrist_1_joint" value="-1.5708"/>
+    <joint name="wrist_2_joint" value="-1.5708"/>
+    <joint name="wrist_3_joint" value="0"/>
+  </group_state>
+</robot>

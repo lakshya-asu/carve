@@ -1,7 +1,7 @@
 [project]
-name = "meat-cell-sim"
+name = "robot-learning-lab"
 version = "0.1.0"
-description = "Simulation of the meat cell: belt, arm, gripper, product."
+description = "Layered robotics code (core, hardware, perception) and the pork-leg alignment cell built on it."
 requires-python = ">=3.10"
 dependencies = ["mujoco==3.12.0", "numpy>=1.24", "opencv-python-headless>=4.10", "imageio[ffmpeg]>=2.34"]
 
@@ -10,6 +10,12 @@ dev = ["pytest>=8", "ruff>=0.5", "mypy>=1.10"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["robotics*", "applications*"]
+
+# MuJoCo XML the builders load at run time: grippers in hardware, the cell itself in the application.
+[tool.setuptools.package-data]
+"robotics.hardware" = ["assets/*.xml"]
+"applications.pork_leg_alignment.sim" = ["assets/*.xml"]
 
 [tool.ruff]
 line-length = 120

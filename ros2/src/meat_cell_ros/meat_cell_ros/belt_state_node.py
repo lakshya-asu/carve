@@ -13,12 +13,13 @@ from __future__ import annotations
 import rclpy
 from meat_cell_msgs.msg import BeltState
 from rcl_interfaces.msg import ParameterDescriptor
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, qos_profile_sensor_data
 from sensor_msgs.msg import JointState
 
 from meat_cell_ros.conversions import belt_state_to_msg, seconds
-from meat_cell_sim.belt_state import BeltStateEstimator
+from robotics.core.belt_state import BeltStateEstimator
 
 
 class BeltStateNode(Node):
@@ -59,6 +60,8 @@ def main() -> None:
     node = BeltStateNode()
     try:
         rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass  # Ctrl-C or launch shutdown is a normal stop, not an error to print
     finally:
         node.destroy_node()
         rclpy.try_shutdown()

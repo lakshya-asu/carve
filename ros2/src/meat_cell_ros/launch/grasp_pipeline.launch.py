@@ -4,7 +4,7 @@
 
 Expects, from elsewhere: `joint_states` carrying the arm joints and the belt joint, `leg/perception`
 from the perception side, MoveIt's move_group (for `compute_ik`) and the arm's trajectory
-controller. `meat_cell_sim` must be importable (PYTHONPATH to the lab repo's src).
+controller. `robotics` and `applications` must be importable (PYTHONPATH to the lab repo's src).
 """
 
 from launch import LaunchDescription

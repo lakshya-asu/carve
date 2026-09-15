@@ -1,0 +1,3 @@
+# No MoveIt IK plugin for the SCARA: a four-joint arm cannot satisfy KDL's six-number pose goals.
+# IK is served by meat_cell_ros scara_ik_node (closed form) on scara/compute_ik.
+{}

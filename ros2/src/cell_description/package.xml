@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypenamespace="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>cell_description</name>
+  <version>0.1.0</version>
+  <description>URDF kinematic descriptions of the UR20 and FANUC SR-20iA as mounted in the pork leg cell, with the jaw gripper's tool centre point. Generated from the simulator's arm constants by applications.pork_leg_alignment.sim.robot_description; checked against MuJoCo in tests/test_robot_description.py. Regenerate, do not edit.</description>
+  <maintainer email="jainlakshya04@gmail.com">Lakshya Jain</maintainer>
+  <license>Proprietary</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

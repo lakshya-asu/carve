@@ -42,6 +42,10 @@ a learned correction comes first. Proposed gate, for Lakshya to set: 5 mm median
 the belt plane (assumed; the plant has not given a tolerance, and no measurement yet ties a
 centre-of-gravity error to a failed turn).
 
+Gate set by Lakshya on 2026-09-15, after the results: 10 mm worst on the belt plane. The column
+centroid alone misses it (15.7 mm worst); the column centroid with the learned offset meets it
+(4.6 mm worst, 4.2 with edge effects).
+
 ## Setup
 
 - Git SHA: filled at run start.
@@ -55,7 +59,7 @@ centre-of-gravity error to a failed turn).
 
 ## Methods under test
 
-`src/meat_cell_sim/centre_of_gravity.py`, both taking a mask, a depth frame and the belt plane from
+`src/robotics/perception/centre_of_gravity.py`, both taking a mask, a depth frame and the belt plane from
 the empty-belt reference:
 
 - `silhouette_centroid`: footprint-weighted mean of the leg pixels dropped onto the belt plane.
@@ -82,8 +86,8 @@ making the worst frame worse, on the same 180 frames, with its time per frame re
 geometric method's.
 
 Design details fixed on 2026-09-15 after the geometric result and before any training
-(`src/meat_cell_sim/learned_centre_of_gravity.py`, `scripts/train_centre_correction.py`,
-`scripts/compare_centre_correction.py`):
+(`src/robotics/perception/learned_centre_of_gravity.py`, `scripts/train/centre_correction.py`,
+`scripts/measure/compare_centre_correction.py`):
 
 - Input: the seen surface resampled onto 96 × 96 cells of 10 mm on the belt, centred on the column
   centroid, plus the column centroid's position relative to the camera. The second input is added
@@ -131,7 +135,7 @@ noise-only frames is the true silhouette to 2 pixels (leg-segmentation run 3).
 
 ### Learned correction
 
-Trained 2026-09-15 by `scripts/train_centre_correction.py` (log
+Trained 2026-09-15 by `scripts/train/centre_correction.py` (log
 `outputs/checkpoints/centrenet-simlegs100-84636eb.json`, not committed). 1,000 frames were rendered
 from `leg_population(100, seed=1)`; the geometric segmenter refused 64 (legs running off the image
 at the random poses), leaving 846 training and 90 validation frames. The offset to learn had a
@@ -141,7 +145,7 @@ checkpoint tested, step 1566). The checkpoint's name carries commit 84636eb beca
 the commit after rendering and a commit landed in between; the training and model code are those
 of commit 6adf1c4 and did not change in 84636eb.
 
-Comparison on the 180 test frames (`scripts/compare_centre_correction.py`, raw rows
+Comparison on the 180 test frames (`scripts/measure/compare_centre_correction.py`, raw rows
 `data/2026-09-15-centre-correction-centrenet-simlegs100-84636eb-1566.json`), segmenter's mask,
 model on 4 CPU threads:
 

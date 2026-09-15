@@ -33,7 +33,7 @@ never run, and replaces its ground-truth input with perception.
 
 ## Inputs and outputs of any grasp policy
 
-Input, `LegPerception` (`meat_cell_sim/grasp_action.py`, ROS 2 `meat_cell_msgs/LegPerception`):
+Input, `LegPerception` (`src/applications/pork_leg_alignment/grasping/leg_perception.py`, ROS 2 `meat_cell_msgs/LegPerception`):
 exposure stamp and encoder travel; belt surface height; column centre of gravity (3,); outline
 centre (2,); axis yaw from ham to trotter; length; volume; 40 cross sections along the axis, each
 with its distance from the ham end, centreline point, width and top height. Belt state alongside:
@@ -50,7 +50,7 @@ Grip the shank at 0.66 of the perceived length from the ham end (the existing sk
 at the local centreline, jaws across the local direction of the centreline, opening the local width
 plus 40 mm, grasp height the top minus half the width, tool vertical unless a tilt is configured.
 Checked on one leg at two yaws in simulation: within 20 mm of the true shank point and 8 degrees of
-square to it (`tests/test_grasp_policy.py`).
+square to it (`tests/applications/pork_leg_alignment/grasping/test_shank_grasp_rule.py`).
 
 ## Policy B: learned
 
@@ -62,7 +62,7 @@ Same input and output types. Specified now, trained only after policy A has run 
   acceleration. Only what `LegPerception` carries, so the ROS 2 message is enough to run it.
 - Output: grasp offset along and across the axis from the deterministic grasp, jaw-line turn, and
   a tilt class of 0, 15 or 30 degrees, ignored on an arm that cannot tilt. A zero output is the
-  deterministic grasp exactly (`tests/test_learned_grasp_policy.py`).
+  deterministic grasp exactly (`tests/applications/pork_leg_alignment/grasping/test_learned_grasp_policy.py`).
 - Model: a small multilayer perceptron trained in torch and exported to numpy, because the ROS 2
   Python has no torch (`LearnedGraspPolicy` loads the exported weights).
 - Labels: for each training state (100 legs of `leg_population(100, seed=1)`, random poses and belt
@@ -108,13 +108,54 @@ Same input and output types. Specified now, trained only after policy A has run 
   followed on the simulation clock.
 - Tilted shank grasps have no IK path yet in the simulator skills (`arm.solve_ik_rotation` exists
   and is used by the trotter grasp).
-- ROS 2 and MoveIt: the messages build and the nodes are written; running them needs
-  `ros-humble-moveit`, `ros-humble-pick-ik`, robot descriptions and MoveIt configs for both arms, and
-  MuJoCo in the Humble Python or `mujoco_ros2_control`. Installing is Lakshya's call.
+- The grip itself: in the first four end-to-end runs (below) the jaws never closed on the shank.
+- UR20 IK through MoveIt's KDL plugin can return a solution on a different arm configuration from
+  the seed; the executor has to reject solutions far from the current joints before timing them.
 
 ## Results
 
-Not run.
+The protocol above has not run. What has run, 2026-09-15, is a shakedown of the chain through
+ROS 2 and MoveIt against the simulated cell, one leg per run, to find what breaks before the
+protocol is worth running.
+
+Setup: MoveIt 2.5.9 in the RoboStack conda env `ros_moveit` (installed without sudo); robot
+descriptions generated from the simulator's arm constants (`applications/pork_leg_alignment/sim/
+robot_description.py`), checked against MuJoCo's tool site within 0.1 mm at random joints; MoveIt's
+`compute_ik` for the UR20 checked on three tool poses, one tilted 30 degrees, all within 0.001 mm;
+the SR-20iA's IK in closed form on the same `GetPositionIK` interface. `ros2 launch
+pork_leg_cell_ros sim_grasp.launch.py`: the MuJoCo bridge publishes the camera's leg (edge effects
+on), `grasp_policy_node` runs the shank rule, `grasp_executor_node` plans the intercept, solves IK
+and sends one timed trajectory; the bridge scores the tool against the true shank point at the
+meeting time and reads the jaw opening 0.3 s after the jaws should have closed. Default leg, belt
+0.30 m/s, outline centre 450 mm across the belt.
+
+Fixes found on the way, each a defect in the chain rather than the arms: the camera renderer's EGL
+context was used from another thread; move_group aborts (not refuses) when the IK seed names a joint
+its model lacks (the belt joint in `joint_states`); rclpy's synchronous `send_goal` waits for the
+whole trajectory, so the jaws were opened only after arrival; trajectories are now stamped with the
+planning time; and edge-effect pixels made the perceived leg 1.52 m long, putting the grasp 155 mm
+off on both arms (fixed in `perceive_leg`, now tested with edge effects).
+
+Runs after those fixes:
+
+| Arm | Leg yaw | Tool to true shank point at the meeting, mm | along belt / across / height | Joint tracking error, max | Jaw opening after closing, mm (shank 101) |
+|---|---|---|---|---|---|
+| SR-20iA | 0 | 19.4 | -11.5 / +10.5 / +11.6 | 0.02 rad | 115.7 |
+| SR-20iA | -35 | 16.9 | -8.5 / +10.0 / +10.6 | 0.02 rad | 110.5 |
+| UR20 | +35 | 52.1 | -15.9 / -4.6 / +49.4 | 0.05 rad | 110.1 |
+| UR20 | 0 | 476.5 | +424.9 / +121.9 / +177.7 | 2.41 rad | 19.9 |
+
+- The chain works end to end on both arms from the camera: perception, policy, intercept, IK
+  through MoveIt or the closed form, timed trajectory, gripper.
+- The SR-20iA meets the true grasp point within 17 to 19 mm, with a consistent 10 to 12 mm too
+  high; its tilt refusal also works through ROS (15 degrees asked, refused before planning).
+- UR20 at yaw 0: KDL's answer put the arm on a configuration up to 2.4 rad from where it stood, and
+  the arm could not get there in the 2.1 s planned. At yaw +35 the tool was 49 mm too high.
+- No run gripped the shank: the jaws stopped 9 to 15 mm wider than it (and on the failed UR20 run,
+  closed on nothing). Not yet diagnosed: grasp height, jaw timing, or contact with a wider section.
+- In the first SR-20iA run the executor then received further grasp actions and refused them with a
+  predicted closing position of 16 m, which points at the belt state after the bridge's first
+  trajectory; not yet diagnosed.
 
 ## Decision taken and why
 

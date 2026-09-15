@@ -39,9 +39,9 @@ round a shank lying on the belt without its pads striking the belt.
 ## Setup
 
 - Git SHA: filled at run start.
-- Simulator: MuJoCo 3.12.0, `meat_cell_sim` in this repo, timestep 2 ms, implicitfast, elliptic
+- Simulator: MuJoCo 3.12.0, `applications.pork_leg_alignment.sim` in this repo (was `meat_cell_sim`), timestep 2 ms, implicitfast, elliptic
   cone, 3 no-slip iterations (cell.xml).
-- Legs: `leg_population(20, seed=0)` from `src/meat_cell_sim/product.py`: 655 to 815 mm, 9.0 to
+- Legs: `leg_population(20, seed=0)` from `src/applications/pork_leg_alignment/sim/product.py`: 655 to 815 mm, 9.0 to
   15.5 kg, both hands, bend up to about 60 mm. Hock at 76 percent of length (assumed).
 - Arrival: leg centre of gravity at x = -0.30 m, y uniform in 0.40 to 0.60 m, yaw uniform in
   plus or minus 35 degrees about square to the belt with the trotter toward the open edge, drawn
@@ -49,10 +49,10 @@ round a shank lying on the belt without its pads striking the belt.
 - Belt: 0.30 m/s (assumed; not measured on the line).
 - Saw: `SawConfig()` defaults, blade plane 30 mm outside the open edge at x = 1.10 m, feed
   resistance 60 N. Hold-down belt: `HoldDownConfig()` defaults, 150 N.
-- Arms: UR20 and FANUC SR-20iA (`src/meat_cell_sim/arms.py`), mounted behind the far rail at
+- Arms: UR20 and FANUC SR-20iA (`src/robotics/hardware/arms.py`), mounted behind the far rail at
   x = 0, y = 1.10 m.
 - Grippers: Zimmer GEH6180IL-sized jaw (1800 N) and OnRobot 3FG25-sized three-finger (450 N)
-  (`src/meat_cell_sim/assets/`). Pad friction 0.5 (assumed).
+  (`src/robotics/hardware/assets/`). Pad friction 0.5 (assumed).
 - Perception: ground-truth leg pose for this experiment, stated as such. The perception question
   is a separate record; this one isolates the manipulation.
 
@@ -72,7 +72,7 @@ round a shank lying on the belt without its pads striking the belt.
 Amended 2026-09-14, before any approach ran, after the grasp check (task 4): a three-finger
 gripper closing round a vertical axis cannot straddle a shank lying on the belt (it failed its
 jaw-fit precondition on both arms), so Lakshya gave it an end-on grasp at the trotter on the UR20
-(`src/meat_cell_sim/skills/trotter_grasp.py`). That grasp needs a tool that tilts, so the SR-20iA
+(`src/applications/pork_leg_alignment/skills/trotter_grasp.py`). That grasp needs a tool that tilts, so the SR-20iA
 with the three-finger gripper is dropped, and it needs the trotter to overhang the open edge by
 the fingers' open radius, so legs that arrive with the trotter on the belt end in
 `precondition_failed` and count as failures for that condition.
@@ -119,7 +119,7 @@ Not yet taken.
   not against the simulation failing.
 - MuJoCo's flat-box contact against a cylinder holds only 0.60 to 0.70 of the friction rating under
   a steady pull along the cylinder, while the same jaw on a capsule holds to 1.0 (measured
-  2026-09-14, `tests/test_grippers.py`). The leg is a convex mesh hull, which goes through the same
+  2026-09-14, `tests/robotics/hardware/test_grippers.py`). The leg is a convex mesh hull, which goes through the same
   general convex collision, so the jaw's hold on a leg may read about 30 percent weak. That
   penalises approach A on the jaw; a grip failure on A with the jaw is reported with this caveat
   and re-run with a rounded-pad jaw before it counts against A.

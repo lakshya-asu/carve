@@ -3,7 +3,7 @@
 <package format="3">
   <name>meat_cell_ros</name>
   <version>0.1.0</version>
-  <description>ROS 2 nodes for the pork leg cell's grasp pipeline: belt state from the encoder, a swappable grasp policy, and an arm-agnostic executor that uses MoveIt IK and a ros2_control trajectory controller. The cell logic is the numpy-only part of meat_cell_sim.</description>
+  <description>ROS 2 nodes for the pork leg cell's grasp pipeline: belt state from the encoder, a swappable grasp policy, and an arm-agnostic executor that uses MoveIt IK and a ros2_control trajectory controller. The cell logic is the numpy-only part of the lab repo's src: robotics.core and applications.pork_leg_alignment.grasping.</description>
   <maintainer email="jainlakshya04@gmail.com">Lakshya Jain</maintainer>
   <license>Proprietary</license>
 

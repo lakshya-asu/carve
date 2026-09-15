@@ -1,8 +1,8 @@
 """Between meat_cell_msgs messages and the numpy-only cell types they carry.
 
-The cell logic lives in `meat_cell_sim` (belt state, intercept, grasp policies), so the nodes stay
-thin: convert in, call the library, convert out. Kept free of rclpy so it is testable without a
-running ROS graph.
+The cell logic lives in `robotics.core` (belt state, intercept) and in
+`applications.pork_leg_alignment.grasping` (grasp policies), so the nodes stay thin: convert in,
+call the library, convert out. Kept free of rclpy so it is testable without a running ROS graph.
 """
 
 from __future__ import annotations
@@ -16,8 +16,9 @@ from meat_cell_msgs.msg import BeltState as BeltStateMsg
 from meat_cell_msgs.msg import GraspAction as GraspActionMsg
 from meat_cell_msgs.msg import LegPerception as LegPerceptionMsg
 
-from meat_cell_sim.belt_state import BeltState
-from meat_cell_sim.grasp_action import GraspAction, LegPerception
+from applications.pork_leg_alignment.grasping.leg_perception import LegPerception
+from robotics.core.belt_state import BeltState
+from robotics.core.grasp_action import GraspAction
 
 
 def seconds(stamp: Time) -> float:

@@ -38,7 +38,7 @@ customer's cutter infeed window replaces it once known.
 
 ## Method
 
-`scripts/measure_perception.py`. For each belt speed, 15 products are spawned at
+`scripts/measure/perception.py`. For each belt speed, 15 products are spawned at
 the upstream end of the belt with uniformly random heading and a 80 mm spread in
 cross-belt position. Each product is observed at 30 frames per second through the
 overhead camera at 1280 x 960 with a 4 ms exposure rendered as three sub-frames.

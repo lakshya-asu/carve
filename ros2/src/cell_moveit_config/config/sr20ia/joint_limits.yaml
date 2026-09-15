@@ -1,0 +1,8 @@
+# Velocities from the SR-20iA datasheet as used by the simulator (arms.py); accelerations assumed.
+default_velocity_scaling_factor: 0.5
+default_acceleration_scaling_factor: 0.5
+joint_limits:
+  j1: {has_velocity_limits: true, max_velocity: 7.6794, has_acceleration_limits: true, max_acceleration: 10.0}
+  j2: {has_velocity_limits: true, max_velocity: 8.7266, has_acceleration_limits: true, max_acceleration: 10.0}
+  j3: {has_velocity_limits: true, max_velocity: 2.8, has_acceleration_limits: true, max_acceleration: 5.0}
+  j4: {has_velocity_limits: true, max_velocity: 29.6706, has_acceleration_limits: true, max_acceleration: 20.0}

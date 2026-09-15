@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypenamespace="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>cell_moveit_config</name>
+  <version>0.1.0</version>
+  <description>MoveIt 2 configuration for the pork leg cell's arms: UR20 with KDL IK and OMPL, SR-20iA for planning with its closed-form IK served separately (meat_cell_ros scara_ik_node).</description>
+  <maintainer email="jainlakshya04@gmail.com">Lakshya Jain</maintainer>
+  <license>Proprietary</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>cell_description</exec_depend>
+  <exec_depend>moveit_ros_move_group</exec_depend>
+  <exec_depend>moveit_kinematics</exec_depend>
+  <exec_depend>moveit_planners_ompl</exec_depend>
+  <exec_depend>moveit_simple_controller_manager</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

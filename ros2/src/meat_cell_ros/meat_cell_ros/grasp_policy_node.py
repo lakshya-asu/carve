@@ -2,7 +2,7 @@
 
 Subscribes to `leg/perception` and publishes `grasp/action`, both reliable with keep-last 10: each
 message is a decision about one leg, and none may be dropped silently. The policy is chosen by the
-`policy` parameter; every policy implements `meat_cell_sim.grasp_policy.GraspPolicy`, so adding the
+`policy` parameter; every policy implements `robotics.core.grasp_policy.GraspPolicy`, so adding the
 learned one does not change this node's interface or any executor.
 """
 
@@ -13,11 +13,14 @@ import math
 import rclpy
 from meat_cell_msgs.msg import GraspAction, LegPerception
 from rcl_interfaces.msg import ParameterDescriptor
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
 
+from applications.pork_leg_alignment.grasping.leg_perception import LegPerception as PerceivedLeg
+from applications.pork_leg_alignment.grasping.shank_grasp_rule import ShankGraspRule
 from meat_cell_ros.conversions import grasp_action_to_msg, leg_perception_from_msg
-from meat_cell_sim.grasp_policy import GraspPolicy, GraspRefusedError, ShankGraspRule
+from robotics.core.grasp_policy import GraspPolicy, GraspRefusedError
 
 
 class GraspPolicyNode(Node):
@@ -34,7 +37,7 @@ class GraspPolicyNode(Node):
         if name != ShankGraspRule.name:
             raise ValueError(f"unknown policy {name!r}; the learned policy is not wired into ROS yet")
         max_opening_m = float(parameter("max_opening_m", 0.0, "Gripper's widest opening, m; 0 to skip the check"))
-        self.policy: GraspPolicy = ShankGraspRule(
+        self.policy: GraspPolicy[PerceivedLeg] = ShankGraspRule(
             fraction=float(parameter("shank_fraction", 0.66, "Grasp station as a fraction of length from the ham")),
             spare_opening_m=float(parameter("spare_opening_m", 0.040, "Opening beyond the shank width, m")),
             max_opening_m=max_opening_m or None,
@@ -64,6 +67,8 @@ def main() -> None:
     node = GraspPolicyNode()
     try:
         rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass  # Ctrl-C or launch shutdown is a normal stop, not an error to print
     finally:
         node.destroy_node()
         rclpy.try_shutdown()
