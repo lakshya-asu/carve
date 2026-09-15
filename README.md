@@ -75,6 +75,12 @@ env -u PYTHONPATH PYTHONPATH=src MUJOCO_GL=egl python -m pytest -q     # 184 tes
 | `scripts/train_leg_segmenter.py [--edge-effects]` | Render simulated frames and train the U-Net leg segmenter on CPU |
 | `scripts/compare_leg_segmenters.py --checkpoint <pt> [--edge-effects]` | Geometry, U-Net and both combined on the same 180 frames, with time per frame |
 | `scripts/segment_real_footage.py --frames <dir> --checkpoint <sam.pth> --out <dir>` | Real plant frames: colour rule against Segment Anything plus the colour rule |
+| `scripts/measure_centre_of_gravity.py` | Outline centre against column centroid on 20 legs × 9 poses, both masks, with and without edge effects |
+| `scripts/view_centre_of_gravity.py --leg 15` | Picture of the true centre of mass, outline centre and column centroid on one leg |
+| `scripts/record_centre_of_gravity.py` | Video of the centre-of-gravity estimates as legs ride the belt |
+| `scripts/train_centre_correction.py` | Train the learned offset on top of the column centroid |
+| `scripts/compare_centre_correction.py --checkpoint <pt>` | Column centroid against column centroid plus the learned offset |
+| `ros2/` (colcon workspace) | `meat_cell_msgs` and `meat_cell_ros`: grasp pipeline over ROS 2 with MoveIt IK; see `ros2/src/meat_cell_ros/README.md` |
 
 Prefix each with `env -u PYTHONPATH PYTHONPATH=src MUJOCO_GL=egl`. Experiment records, written
 before each run, are in `experiments/`; raw results in `experiments/data/`.

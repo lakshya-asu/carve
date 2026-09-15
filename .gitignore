@@ -33,6 +33,11 @@ third_party/
 .obsidian/cache
 .trash/
 
+# colcon output for the ROS 2 workspace
+ros2/build/
+ros2/install/
+ros2/log/
+
 # kept out of the public repo: personal assistant memory and raw customer messages
 memory/
 field-notes/customer/meat-men/

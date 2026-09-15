@@ -1,0 +1,17 @@
+# UR20 executor. Joint names follow the UR ROS 2 description; the MoveIt config for a UR20 is not
+# installed yet (see README). Motion limits and window are assumptions, not measured: replace the
+# window with the reach map from scripts/measure_arm_reach.py once it is exported in world metres.
+grasp_executor:
+  ros__parameters:
+    arm_id: ur20
+    planning_group: ur_manipulator
+    tip_link: tool0
+    joint_names: [shoulder_pan_joint, shoulder_lift_joint, elbow_joint, wrist_1_joint, wrist_2_joint, wrist_3_joint]
+    tool_tilts: true
+    max_tool_speed_mps: 1.0          # assumed; UR's safety defaults are higher
+    max_tool_acceleration_mps2: 2.0  # assumed
+    command_latency_s: 0.05          # assumed until measured on the controller
+    pick_window_m: [-0.4, 0.6, 0.15, 0.85]
+    descend_s: 0.4
+    trajectory_action: scaled_joint_trajectory_controller/follow_joint_trajectory
+    gripper_action: gripper_controller/gripper_cmd

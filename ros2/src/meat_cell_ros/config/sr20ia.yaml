@@ -1,0 +1,18 @@
+# FANUC SR-20iA SCARA executor. No MoveIt config or URDF exists for this arm yet (see README).
+# tool_tilts is false: every joint axis is vertical, so any grasp with a tilt is refused before
+# motion. IK for a 4-joint arm cannot satisfy a full 6-DOF pose; the MoveIt config should use
+# pick_ik with position and yaw weighted, which the executor's vertical-tool poses already satisfy.
+grasp_executor:
+  ros__parameters:
+    arm_id: sr20ia
+    planning_group: scara
+    tip_link: flange
+    joint_names: [j1, j2, j3, j4]
+    tool_tilts: false
+    max_tool_speed_mps: 1.0          # assumed
+    max_tool_acceleration_mps2: 2.0  # assumed
+    command_latency_s: 0.05          # assumed
+    pick_window_m: [-0.4, 0.6, 0.15, 0.85]
+    descend_s: 0.4
+    trajectory_action: joint_trajectory_controller/follow_joint_trajectory
+    gripper_action: gripper_controller/gripper_cmd

@@ -114,8 +114,14 @@ class FilmedCell(Cell):
 
 def film_reach(arm: ArmModel, path: Path) -> None:
     """Move the tool to belt corners and centre at shank height and at clearance height."""
-    with FilmedCell(CellConfig(belt_speed_mps=0.0, arm=arm)) as cell:
+    leg = LegConfig()
+    with FilmedCell(CellConfig(belt_speed_mps=0.0, leg=leg, arm=arm)) as cell:
         cell.reset()
+        # A leg lies upstream of every test point so the scale of the cell is visible; it is not part of the test.
+        heading = -math.pi / 2
+        cell.place_product(
+            -1.15 - leg.outline_centre_m * math.cos(heading), 0.42 - leg.outline_centre_m * math.sin(heading), heading
+        )
         film = Film(cell.model, path, _camera([0.3, 0.6, 1.0], 3.2, 215.0, -30.0))
         cell.film = film
         points = [(-0.4, 0.25), (1.0, 0.25), (1.0, 0.75), (-0.4, 0.75), (0.3, 0.50)]
@@ -123,7 +129,7 @@ def film_reach(arm: ArmModel, path: Path) -> None:
             for index, (x, y) in enumerate(points):
                 film.caption = [
                     f"TEST: can the {arm.value} put its tool over the belt, pointing down?",
-                    "PASS for a point = a joint solution exists and the arm gets there",
+                    "PASS for a point = a joint solution exists and the arm gets there (the leg upstream is for scale)",
                     f"{label}: point {index + 1} of {len(points)}, x {x:+.2f} m, y {y:.2f} m",
                 ]
                 try:

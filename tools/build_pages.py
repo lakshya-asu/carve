@@ -46,6 +46,11 @@ def main() -> None:
             missing.append(reference)
     if missing:
         raise SystemExit(f"referenced by the page but not found: {', '.join(missing)}")
+    # Media the page no longer references would stay published and in the repo; remove it.
+    referenced = {Path(reference).name for reference in re.findall(r'src="(videos/[^"]+)"', html)}
+    for stale in (DOCS / "videos").iterdir():
+        if stale.name not in referenced:
+            stale.unlink()
 
     document = f"{DOCUMENT_HEAD}{head.strip()}\n</head>\n<body>\n{BODY_START}{body.rstrip()}\n</body>\n</html>\n"
     (DOCS / "index.html").write_text(document, encoding="utf-8")

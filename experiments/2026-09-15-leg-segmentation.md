@@ -2,7 +2,7 @@
 title: Segmenting a whole pork leg from the overhead depth camera on a moving belt
 date: 2026-09-15
 tags: [experiment, meat-cell, perception, segmentation, depth-camera, simulation]
-status: draft
+status: reviewed
 decision: whether depth-height segmentation is accurate enough to feed the centre-of-gravity, grasp-point and intercept steps, or a learned or appearance-based stage is needed
 ---
 
@@ -182,6 +182,36 @@ All 180 frames accepted by every method. Accepted all round, the learned model i
   models retrained on corrected labels.
 - Both methods are over the 33 ms a 30 fps camera allows on this CPU; neither is optimised.
 
+**Retrained on corrected labels** (both models from commit fd5ecb5, 15 epochs each on 6 CPU
+threads, trained side by side: validation IoU 0.9982 in 3,130 s without edge effects, 0.9978 in
+3,368 s with them; raw rows
+`data/2026-09-15-leg-segmenter-comparison-legunet-simlegs100[edges]-fd5ecb5-930[-edges].json`):
+
+| Camera model | Training frames | Method | IoU median (worst) | Precision | Recall | Centroid mm median (worst) | ms median |
+|---|---|---|---|---|---|---|---|
+| noise | noise | geometry | 1.000 (1.000) | 1.000 | 1.000 | 0.00 (0.01) | 95 |
+| noise | noise | U-Net | 0.984 (0.976) | 0.991 | 0.994 | 0.58 (2.42) | 132 |
+| noise | noise | both, AND | 0.994 (0.990) | 1.000 | 0.994 | 0.31 (0.88) | sum |
+| noise + edges | noise | geometry | 0.967 (0.955) | 0.967 | 1.000 | 1.08 (2.38) | 93 |
+| noise + edges | noise | U-Net | 0.984 (0.976) | 0.991 | 0.994 | 0.63 (2.98) | 132 |
+| noise + edges | noise | both, AND | 0.985 (0.978) | 0.991 | 0.994 | 0.29 (1.48) | sum |
+| noise + edges | noise + edges | U-Net | 0.984 (0.976) | 0.991 | 0.994 | 0.64 (2.71) | 129 |
+| noise + edges | noise + edges | both, AND | 0.985 (0.978) | 0.991 | 0.994 | 0.32 (1.62) | sum |
+
+All 180 frames accepted by every method.
+
+- The label fix removed the constant offset: centroid error 3.02 mm before, 0.58 mm after, on the
+  same frames.
+- Decision by the pre-registered rule on the idealised camera: not kept; geometry is exact there.
+- Decision by the rule on the camera with edge effects: kept. The U-Net beats geometry by 0.017 IoU
+  median (0.984 against 0.967) with no extra refusals. The AND combination is best on the centre,
+  0.3 mm, so the cell uses the U-Net's mask checked by geometry, with geometry running every frame.
+- Training on edge-effect frames changed nothing measurable (0.984 IoU either way).
+- The edge effects are a model with assumed band width and cut-off; the decision is re-taken on the
+  real camera.
+- Cost on this CPU under load: geometry 93 to 105 ms, U-Net about 130 ms, both about 230 ms,
+  against 33 ms at 30 fps. Speed is the next piece of work on this step.
+
 ## Addition: real plant footage
 
 Added 2026-09-15 at Lakshya's request to test segmentation on the real line, where a learned
@@ -229,7 +259,11 @@ either way.
 
 ## Decision taken and why
 
-Not yet taken.
+On the camera model with edge effects, the U-Net retrained on corrected labels passes the
+pre-registered rule (0.984 against 0.967 IoU median, no extra refusals) and is kept, its mask
+checked by the geometric one (0.985 IoU, 0.3 mm centroid), with geometry running every frame as
+the monitor. On the idealised camera geometry is exact and would stay. Both are re-decided on the
+real camera, whose edge behaviour the model only assumes.
 
 ## Caveats
 

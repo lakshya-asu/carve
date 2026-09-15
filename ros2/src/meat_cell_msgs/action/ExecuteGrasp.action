@@ -1,0 +1,16 @@
+# Ask one arm's executor to intercept and grasp. The same goal works for every arm.
+
+# Goal
+GraspAction grasp
+---
+# Result
+# One of: closed, no_feasible_intercept, tool_cannot_tilt, ik_failed, trajectory_rejected, aborted.
+string outcome
+string detail
+# When and where the tool met the grasp point, world frame.
+builtin_interfaces/Time meet_time
+geometry_msgs/Point meet_point
+---
+# Feedback
+# One of: planning, approaching, following, closing.
+string phase

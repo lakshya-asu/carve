@@ -36,7 +36,7 @@ from meat_cell_sim.arms import UR5E_SPEC, ArmSpec
 from meat_cell_sim.cameras import intrinsics_from_model
 from meat_cell_sim.contracts import Frame, Observation, Pose2D, wrap_axis_angle
 from meat_cell_sim.frames import CameraPose, Intrinsics
-from meat_cell_sim.product import product_geom_ids
+from meat_cell_sim.product import PRODUCT_BODY, TROTTER_BODY, product_geom_ids
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +108,8 @@ class GroundTruth:
         mask_touches_border: Whether the silhouette runs off the image edge. A
             clipped mask still produces a confident centroid, and that centroid
             is wrong by centimetres.
+        centre_of_mass_m: (3,) world, the product's centre of mass over all its
+            bodies (a leg's ham and trotter), or None when not computed.
     """
 
     stamp_s: float
@@ -116,6 +118,7 @@ class GroundTruth:
     piece_top_z_m: float
     piece_mask: np.ndarray | None = None
     mask_touches_border: bool = False
+    centre_of_mass_m: np.ndarray | None = None
 
 
 def _mask_touches_border(mask: np.ndarray) -> bool:
@@ -154,6 +157,9 @@ class Sensors:
         )
         self._piece_qadr = model.jnt_qposadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "slab_free")]
         self._piece_dadr = model.jnt_dofadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "slab_free")]
+        # A leg's trotter is its own welded body, so the centre of mass spans both.
+        body_ids = (mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, name) for name in (PRODUCT_BODY, TROTTER_BODY))
+        self._piece_bodies = np.array([body for body in body_ids if body >= 0])
         self._sensor_adr = {
             mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_SENSOR, i): int(model.sensor_adr[i])
             for i in range(model.nsensor)
@@ -392,4 +398,10 @@ class Sensors:
             piece_top_z_m=self._piece_top_z(data),
             piece_mask=mask,
             mask_touches_border=border,
+            centre_of_mass_m=self._centre_of_mass(data),
         )
+
+    def _centre_of_mass(self, data: mujoco.MjData) -> np.ndarray:
+        """Mass-weighted mean of the product bodies' centres of mass, (3,) world."""
+        masses = self._model.body_mass[self._piece_bodies]
+        return np.asarray(data.xipos[self._piece_bodies].T @ masses / masses.sum())

@@ -20,6 +20,14 @@ Or watch it live in a window, which needs a display:
     env -u PYTHONPATH PYTHONPATH=src MUJOCO_GL=egl DISPLAY=:0 \
         python scripts/view_perception.py --live --seconds 120
 
+With `--leg` the product is a whole pork leg seen by the Gemini 335L depth camera, the arm is the
+UR20 with the jaw gripper, and legs arrive across the belt as in the current experiments. The pose
+estimator drawn in amber was built for the rigid slab: on a leg its centroid is pulled along the
+hock and its axis follows the outline, tens of millimetres and degrees off (NEXT.md), so in leg
+mode the video labels it as such and does not print an error against the leg's body origin, which
+sits inside the ham and is not the thing the estimator aims at. The belt tracker's prediction is
+shape-independent and is shown as is.
+
 Live mode paces itself to real time and quits on q or escape. Rendering the
 overhead camera at full resolution costs more than the simulation does, so a
 slow machine will fall behind real time rather than skip: the clock in the
@@ -39,9 +47,12 @@ import imageio
 import mujoco
 import numpy as np
 
+from meat_cell_sim.arms import ArmModel
+from meat_cell_sim.cameras import GEMINI_335L
 from meat_cell_sim.cell import Cell
 from meat_cell_sim.contracts import axis_error_rad
 from meat_cell_sim.frames import CameraPose, Intrinsics, world_to_pixel
+from meat_cell_sim.gripper import GripperModel
 from meat_cell_sim.perception import PerceptionRejectedError, estimate_from_depth, grip_axis_rad
 from meat_cell_sim.product import LegConfig
 from meat_cell_sim.scene import CellConfig
@@ -70,10 +81,10 @@ REJECT = (90, 90, 245)  # red
 PANEL = (24, 24, 24)
 DISPLAY_GAIN = 1.0
 DISPLAY_LIFT = 0
-PANE_W, PANE_H = 800, 600
-# ffmpeg wants both dimensions divisible by 16, so the readout strip is sized to
-# make the composed frame land on it exactly rather than be silently resized.
+PANE_W = 800
 STRIP_H = 120
+# Legs arrive across the belt, trotter toward the open edge, as in the experiments.
+LEG_CENTRE_Y_M = 0.42
 TEXT = (235, 235, 235)
 FONT = cv2.FONT_HERSHEY_DUPLEX
 
@@ -154,13 +165,15 @@ def _label(image: np.ndarray, text: str) -> None:
 SPAWN_YAW_LIMIT_RAD = math.radians(35.0)
 
 
-def _spawn(cell: Cell, rng: np.random.Generator, outline_offset_m: float) -> None:
+def _spawn(cell: Cell, rng: np.random.Generator, outline_offset_m: float, leg: bool) -> None:
     """Put a fresh product at the top of the belt, positioned by its outline."""
     yaw = rng.uniform(-SPAWN_YAW_LIMIT_RAD, SPAWN_YAW_LIMIT_RAD)
+    heading = yaw - math.pi / 2 if leg else yaw
+    centre_y = (LEG_CENTRE_Y_M if leg else 0.50) + rng.uniform(-0.05, 0.05)
     cell.place_product(
-        SPAWN_X_M - outline_offset_m * math.cos(yaw),
-        0.50 + rng.uniform(-0.05, 0.05) - outline_offset_m * math.sin(yaw),
-        yaw,
+        SPAWN_X_M - outline_offset_m * math.cos(heading),
+        centre_y - outline_offset_m * math.sin(heading),
+        heading,
     )
 
 
@@ -189,13 +202,34 @@ def _require_gui() -> None:
 
 def run(out: Path | None, seconds: float, belt_speed_mps: float, seed: int, live: bool, leg: bool) -> int:
     """Record or show the overhead camera with the perception and tracking overlay."""
-    config = CellConfig(belt_speed_mps=belt_speed_mps, leg=LegConfig() if leg else None)
+    if leg:
+        config = CellConfig(
+            belt_speed_mps=belt_speed_mps,
+            leg=LegConfig(),
+            arm=ArmModel.UR20,
+            gripper=GripperModel.JAW_GEH6180,
+            depth_cameras=(GEMINI_335L,),
+            depth_camera_yaw_deg=90.0,
+        )
+        spec = CameraSpec(GEMINI_335L.name, GEMINI_335L.width_px, GEMINI_335L.height_px, exposure_s=0.004)
+        camera_label = f"{GEMINI_335L.label}, {GEMINI_335L.width_px} x {GEMINI_335L.height_px}"
+    else:
+        config = CellConfig(belt_speed_mps=belt_speed_mps)
+        spec = CameraSpec(CAMERA, 1280, 960, exposure_s=0.004)
+        camera_label = "overhead camera, 1280 x 960"
+    camera = spec.name
+    pane_h = round(PANE_W * spec.height_px / spec.width_px / 2) * 2
     rng = np.random.default_rng(seed)
     # A leg's body origin sits in the ham, so spawning "at x" would leave its
     # trotter half a metre downstream. Spawn by the outline instead.
     outline_offset = config.leg.outline_centre_m if config.leg is not None else 0.0
 
-    writer = None if out is None else imageio.get_writer(out, fps=int(FRAME_RATE_HZ), macro_block_size=None)
+    # H.264 in yuv420p so the file plays in a browser; the plan page embeds these videos.
+    writer = (
+        None
+        if out is None
+        else imageio.get_writer(out, fps=int(FRAME_RATE_HZ), codec="libx264", pixelformat="yuv420p", macro_block_size=1)
+    )
     window = "meat cell perception"
     if live:
         _require_gui()
@@ -206,24 +240,24 @@ def run(out: Path | None, seconds: float, belt_speed_mps: float, seed: int, live
     next_due = time.monotonic()
 
     scene_renderer = None
-    with Cell(config, {CAMERA: CameraSpec(CAMERA, 1280, 960, exposure_s=0.004)}) as cell:
+    with Cell(config, {camera: spec}) as cell:
         cell.reset()
-        _spawn(cell, rng, outline_offset)
+        _spawn(cell, rng, outline_offset, leg)
         model, data = cell.model, cell.data
-        intr = cell.sensors.intrinsics(CAMERA)
+        intr = cell.sensors.intrinsics(camera)
         steps_per_frame = max(1, round(1.0 / (FRAME_RATE_HZ * model.opt.timestep)))
         tracker = BeltTracker()
 
-        scene_renderer = mujoco.Renderer(model, PANE_H, PANE_W)
+        scene_renderer = mujoco.Renderer(model, pane_h, PANE_W)
         scene_camera = mujoco.MjvCamera()
         mujoco.mjv_defaultFreeCamera(model, scene_camera)
         scene_camera.lookat[:] = [-0.25, 0.35, 0.95]
         scene_camera.distance, scene_camera.azimuth, scene_camera.elevation = 2.0, 145, -26
 
         for _ in range(int(seconds * FRAME_RATE_HZ)):
-            observation, frame = cell.observe(CAMERA)
+            observation, frame = cell.observe(camera)
             assert frame is not None
-            truth = cell.ground_truth(CAMERA, stamp_s=frame.stamp_s)
+            truth = cell.ground_truth(camera, stamp_s=frame.stamp_s)
             image = _brighten(cv2.cvtColor(frame.rgb, cv2.COLOR_RGB2BGR))
             top_z = truth.piece_top_z_m
             lines: list[tuple[str, str, Colour]] = [
@@ -237,7 +271,8 @@ def run(out: Path | None, seconds: float, belt_speed_mps: float, seed: int, live
                     truth.piece_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
                 )
                 cv2.drawContours(image, contours, -1, TRUTH, 2, cv2.LINE_AA)
-                _draw_cross(image, _to_pixel(intr, frame.camera, truth.piece_pose.xy_m, top_z), TRUTH, 12)
+                if not leg:  # a leg's body origin sits inside the ham; there is no true "centre" to draw here
+                    _draw_cross(image, _to_pixel(intr, frame.camera, truth.piece_pose.xy_m, top_z), TRUTH, 12)
 
             rejected_reason = ""
             estimate = None
@@ -266,15 +301,17 @@ def run(out: Path | None, seconds: float, belt_speed_mps: float, seed: int, live
                 )
                 _draw_cross(image, _to_pixel(intr, frame.camera, pose.xy_m, top_z), ESTIMATE, 18)
 
-                error_mm = 1000 * math.hypot(pose.x_m - truth.piece_pose.x_m, pose.y_m - truth.piece_pose.y_m)
-                axis_deg = math.degrees(axis_error_rad(pose.yaw_rad, truth.piece_pose.yaw_rad))
                 lines += [
                     ("position", f"{pose.x_m:+.3f} {pose.y_m:+.3f} m", ESTIMATE),
                     ("heading", f"{math.degrees(pose.yaw_rad):+6.1f} deg", ESTIMATE),
                     ("confidence", f"{estimate.confidence:6.3f}", ESTIMATE),
-                    ("error", f"{error_mm:6.3f} mm", TEXT),
-                    ("axis error", f"{axis_deg:6.3f} deg", TEXT),
                 ]
+                if leg:
+                    lines += [("estimator", "slab-era, not adapted to legs", REJECT)]
+                else:
+                    error_mm = 1000 * math.hypot(pose.x_m - truth.piece_pose.x_m, pose.y_m - truth.piece_pose.y_m)
+                    axis_deg = math.degrees(axis_error_rad(pose.yaw_rad, truth.piece_pose.yaw_rad))
+                    lines += [("error", f"{error_mm:6.3f} mm", TEXT), ("axis error", f"{axis_deg:6.3f} deg", TEXT)]
 
                 state = tracker.state
                 if state.samples >= 4:
@@ -297,12 +334,12 @@ def run(out: Path | None, seconds: float, belt_speed_mps: float, seed: int, live
                         ("frames", f"{state.samples:6d}", TEXT),
                     ]
 
-            camera_pane = cv2.resize(image, (PANE_W, PANE_H), interpolation=cv2.INTER_AREA)
-            _label(camera_pane, "overhead camera, 1280 x 960")
+            camera_pane = cv2.resize(image, (PANE_W, pane_h), interpolation=cv2.INTER_AREA)
+            _label(camera_pane, camera_label)
             if rejected_reason:
-                cv2.rectangle(camera_pane, (0, 0), (PANE_W - 1, PANE_H - 1), REJECT, 3)
+                cv2.rectangle(camera_pane, (0, 0), (PANE_W - 1, pane_h - 1), REJECT, 3)
                 cv2.putText(
-                    camera_pane, f"REJECTED  {rejected_reason}", (16, PANE_H - 18), FONT, 0.5, REJECT, 1, cv2.LINE_AA
+                    camera_pane, f"REJECTED  {rejected_reason}", (16, pane_h - 18), FONT, 0.5, REJECT, 1, cv2.LINE_AA
                 )
 
             scene_renderer.update_scene(data, scene_camera)
@@ -310,7 +347,10 @@ def run(out: Path | None, seconds: float, belt_speed_mps: float, seed: int, live
             _label(scene_pane, "the cell")
 
             legend = (
-                "white truth    amber estimated centroid and long axis    "
+                "white true outline    amber slab-era centroid and long axis (off on legs)    "
+                "cyan finger axis    green predicted position in 0.5 s"
+                if leg
+                else "white truth    amber estimated centroid and long axis    "
                 "cyan finger axis    green predicted position in 0.5 s"
             )
             strip = _readout(lines, PANE_W * 2, STRIP_H)
@@ -328,7 +368,7 @@ def run(out: Path | None, seconds: float, belt_speed_mps: float, seed: int, live
 
             cell.step(steps_per_frame)
             if cell.product_x_m > RECYCLE_PAST_X_M:
-                _spawn(cell, rng, outline_offset)
+                _spawn(cell, rng, outline_offset, leg)
                 tracker.reset()
 
     if scene_renderer is not None:
