@@ -46,6 +46,7 @@ from applications.pork_leg_alignment.skills import (
     EstimateLegFromCamera,
     EstimateLegFromGroundTruth,
     LegEstimate,
+    PickAndPlace,
     RotateOnBelt,
     SelectShankGrasp,
 )
@@ -213,6 +214,10 @@ class Episode:
     re_estimate: str = ""
     grasp_shift_mm: float = math.nan
     orient: str = ""
+    flange_load_n: float = math.nan
+    moment_about_tool_nm: float = math.nan
+    inertia_about_tool_kgm2: float = math.nan
+    airborne: float = math.nan
     meet_error_mm: float = math.nan
     opening_mm: float = math.nan
     tool_rise_mm: float = math.nan
@@ -265,14 +270,15 @@ def run_episode(
     arrival: Arrival,
     pose_source: str = "truth",
     checkpoint: Path | None = None,
+    approach: str = "B",
     cell_class: type[Cell] = Cell,
     on_cell: Callable[[Cell, Episode], None] | None = None,
 ) -> Episode:
     """One leg through approach B: estimate the leg, grasp, rotate on the belt, release, saw."""
     started = time.perf_counter()
     row = Episode(
-        condition=f"B-{arm.value}-{gripper.value}-tilt{math.degrees(tilt_rad):.0f}-{pose_source}",
-        approach="B",
+        condition=f"{approach}-{arm.value}-{gripper.value}-tilt{math.degrees(tilt_rad):.0f}-{pose_source}",
+        approach=approach,
         pose_source=pose_source,
         arm=arm.value,
         gripper=gripper.value,
@@ -345,9 +351,14 @@ def run_episode(
                 row.grasp_shift_mm = 1000 * float(
                     np.linalg.norm((before.point_at(HOCK_FRACTION) + carried - truth_now.point_at(HOCK_FRACTION))[:2])
                 )
+                orient_skill = PickAndPlace() if approach == "A" else RotateOnBelt()
                 oriented = run_skill(
-                    RotateOnBelt(), cell, {"leg_estimate": planning, **selected.outputs, **acquired.outputs}
+                    orient_skill, cell, {"leg_estimate": planning, **selected.outputs, **acquired.outputs}
                 )
+                row.flange_load_n = _evidence(oriented, "flange_load_n")
+                row.moment_about_tool_nm = _evidence(oriented, "moment_about_tool_nm")
+                row.inertia_about_tool_kgm2 = _evidence(oriented, "inertia_about_tool_kgm2")
+                row.airborne = _evidence(oriented, "airborne")
                 row.orient = oriented.outcome
                 row.turn_deg = math.degrees(_evidence(oriented, "turn_rad"))
                 row.slip_mm = _evidence(oriented, "slip_m", 1000)
@@ -449,7 +460,7 @@ def write_rows(path: Path, rows: list[Episode]) -> None:
 def main() -> None:
     """Run the requested conditions and print the summary table."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--approach", choices=["B"], default="B")
+    parser.add_argument("--approach", choices=["A", "B"], default="B", help="A carries the leg; B turns it on the belt")
     parser.add_argument("--arm", type=ArmModel, choices=list(ArmModel), required=True)
     parser.add_argument("--gripper", type=GripperModel, default=GripperModel.JAW_GEH6180)
     parser.add_argument("--tilt-deg", type=float, nargs="+", default=[0.0])
@@ -487,6 +498,7 @@ def main() -> None:
                 draws[index],
                 pose_source=args.pose_source,
                 checkpoint=args.cog_checkpoint,
+                approach=args.approach,
             )
             rows.append(row)
             print(

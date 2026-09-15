@@ -144,28 +144,31 @@ def _verdict(row: Episode) -> str:
     if row.orient:
         return f"released at x = {row.released_at_x_m:.2f} m, hock {row.hock_offset_mm:+.1f} mm from the blade plane; riding to the saw"
     if row.acquire:
-        return f"grip {row.acquire}; turning the leg on the belt about its centre of gravity"
+        return f"grip {row.acquire}; moving the leg to the aligned pose"
     if row.select:
         return "intercepting the shank on the moving belt and closing the jaws"
     return "reading the leg's pose"
 
 
-def _caption(row: Episode, arm: ArmModel, tilt_deg: float, index: int) -> list[str]:
+def _caption(row: Episode, arm: ArmModel, tilt_deg: float, index: int, approach: str = "B") -> list[str]:
     tilt = "tool vertical" if tilt_deg == 0.0 else f"tool leaned {tilt_deg:.0f} deg"
+    what = "grasp and rotate on the belt" if approach == "B" else "pick up, carry, place"
     return [
-        f"APPROACH B, grasp and rotate on the belt: {arm.value}, jaw on the shank, {tilt}, belt {BELT_SPEED_MPS:.2f} m/s",
+        f"APPROACH {approach}, {what}: {arm.value}, jaw on the shank, {tilt}, belt {BELT_SPEED_MPS:.2f} m/s",
         f"leg {index + 1} of {LEG_COUNT}: {row.length_mm:.0f} mm, {row.mass_kg:.1f} kg, arrives {row.arrival_heading_deg:+.0f} deg off square "
         f"(drawn within +/-{math.degrees(ARRIVAL_YAW_RANGE_RAD):.0f})",
         f"PASS = the saw cuts within 10 mm of the hock and 5 deg of square | {_verdict(row)}",
     ]
 
 
-def film_condition(arm: ArmModel, tilt_deg: float, out_dir: Path, close_up: bool) -> list[Episode]:
+def film_condition(
+    arm: ArmModel, tilt_deg: float, out_dir: Path, close_up: bool, approach: str = "B"
+) -> list[Episode]:
     """All 20 legs (or the close-up legs) of one condition into one video."""
     legs = leg_population(LEG_COUNT, seed=LEG_SEED)
     draws = arrivals(LEG_COUNT)
     indices = CLOSE_UP_LEGS if close_up else tuple(range(LEG_COUNT))
-    name = f"approach-b-{'closeup-' if close_up else ''}{arm.value}-tilt{tilt_deg:.0f}.mp4"
+    name = f"approach-{approach.lower()}-{'closeup-' if close_up else ''}{arm.value}-tilt{tilt_deg:.0f}.mp4"
     film: Film | None = None
     rows: list[Episode] = []
     for index in indices:
@@ -182,7 +185,7 @@ def film_condition(arm: ArmModel, tilt_deg: float, out_dir: Path, close_up: bool
             filmed = cell
             assert isinstance(filmed, FilmedCell)
             filmed.film = film
-            filmed.caption_fn = lambda: _caption(row, arm, tilt_deg, index)
+            filmed.caption_fn = lambda: _caption(row, arm, tilt_deg, index, approach)
             if close_up:
                 body = cell.model.body("slab").id
 
@@ -199,6 +202,7 @@ def film_condition(arm: ArmModel, tilt_deg: float, out_dir: Path, close_up: bool
             index,
             legs[index],
             draws[index],
+            approach=approach,
             cell_class=FilmedCell,
             on_cell=attach,
         )
@@ -216,6 +220,7 @@ def main() -> None:
     parser.add_argument("--only", choices=["full", "closeup"], default=None)
     parser.add_argument("--arm", type=ArmModel, choices=list(ArmModel), default=None, help="one arm only")
     parser.add_argument("--tilt-deg", type=float, default=None, help="one tilt only")
+    parser.add_argument("--approach", choices=["A", "B"], default="B", help="A carries the leg; B turns it on the belt")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
     for name in ("applications.pork_leg_alignment.sim.scene", "applications.pork_leg_alignment.sim.product"):
@@ -227,7 +232,7 @@ def main() -> None:
         for close_up in (False, True):
             if (args.only == "full" and close_up) or (args.only == "closeup" and not close_up):
                 continue
-            rows = film_condition(arm, tilt_deg, args.out_dir, close_up)
+            rows = film_condition(arm, tilt_deg, args.out_dir, close_up, args.approach)
             print(
                 f"{arm.value} tilt {tilt_deg:.0f} {'close-up' if close_up else 'full'}: {sum(r.success for r in rows)} / {len(rows)}"
             )

@@ -10,7 +10,7 @@ from applications.pork_leg_alignment.skills.leg_estimate import (
     EstimateLegFromGroundTruth,
     LegEstimate,
 )
-from applications.pork_leg_alignment.skills.rotate_on_belt import Alignment, RotateOnBelt
+from applications.pork_leg_alignment.skills.rotate_on_belt import Alignment, PickAndPlace, RotateOnBelt
 from applications.pork_leg_alignment.skills.shank_grasp import AcquireShank, SelectShankGrasp, ShankGrasp
 from applications.pork_leg_alignment.skills.trotter_grasp import AcquireTrotterEnd, SelectTrotterEndGrasp, TrotterGrasp
 
@@ -21,6 +21,7 @@ __all__ = [
     "EstimateLegFromCamera",
     "EstimateLegFromGroundTruth",
     "LegEstimate",
+    "PickAndPlace",
     "RotateOnBelt",
     "SelectShankGrasp",
     "SelectTrotterEndGrasp",

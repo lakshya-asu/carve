@@ -2,7 +2,7 @@
 title: Pork-leg alignment, grasp-and-rotate against pick-and-place, on a SCARA and a six-axis arm
 date: 2026-09-15
 tags: [experiment, meat-cell, alignment, scara, six-axis, gripper, saw, simulation]
-status: draft
+status: decided
 decision: which approach and which arm class the Wednesday plan proposes for aligning legs to the trotter saw, and whether the tool must tilt
 ---
 
@@ -146,6 +146,30 @@ angle" are the blade's first contact relative to the hock, over the cut legs.
 | B, UR20, jaw, tilt 0 | 12 / 20 | 2.2, 12.6 | 1.6, 9.4 | 3.85 | set down 10 to 14 mm inboard x2; cut out of tolerance x5; pad brushed the belt x1 | 12 / 20 |
 | B, UR20, jaw, tilt 15 | 17 / 20 | 1.7, 10.4 | 0.9, 8.8 | 3.85 | cut out of tolerance x3 | 16 / 20 |
 | B, UR20, jaw, tilt 30 | 15 / 20 | 1.4, 6.2 | 1.1, 9.8 | 3.85 | grasp slipped on the proof lift x2 (legs 7 and 15); cut angle 9 to 13 deg x3 | 16 / 20 |
+| A, SR-20iA, jaw, tilt 0 | 12 / 20 | 4.3, 12.4 | 2.4, 13.0 | 3.65 | unreachable x2 (legs 10 and 19); slipped in the carry x1; cut angle 5 to 9 deg x4; cut offset 12 mm x1 | not run |
+| A, UR20, jaw, tilt 0 | 16 / 20 | 2.9, 10.3 | 1.2, 8.7 | 3.85 | cut offset 10 to 12 mm x2; cut angle 8.5 deg x1; arm collision x1 | not run |
+
+Approach A (`PickAndPlace` in `skills/rotate_on_belt.py`) is the same skill and path as B with the
+shank carried 100 mm up instead of 20 mm, plus a check at carry height that no part of the leg
+touches the belt (it did not on any leg gripped, both arms). Loads reported at carry height, 18
+legs per arm: flange 88 to 147 N; moment about the jaw line 18 to 42 N m; inertia about the
+tool's vertical axis 0.49 to 1.47 kg m^2, over the SR-20iA J4 rating of 0.45 kg m^2 on every leg.
+The simulated arms have no torque limits (Caveats), so the SR-20iA carried every leg regardless.
+
+Paired by leg, tool vertical: UR20, A won 5 legs (4, 12, 14, 15, 18) and lost 1 (9), 16 against
+12; SR-20iA, A won 0 and lost 1 (leg 1), 12 against 13. Hock at release, median: UR20 A 2.2 mm,
+B 1.3 mm; SR-20iA A 2.4 mm, B 2.3 mm. So the arms set the leg down equally well either way and
+the UR20's extra successes when carrying come after release, at the hold-down.
+
+Not run: the three-finger end-on conditions (the trotter grasp does not yet track a moving belt).
+
+What B is in this simulation. The `airborne` check run at B's 20 mm carry height on legs 0, 8 and
+15 on both arms found no part of the leg touching the belt on any of them: the rigid jaw holds the
+rigid leg's pitch, so the ham does not stay down and pivot. B as run is a carry at 20 mm and A a
+carry at 100 mm, which is why their per-leg slips agree to within a millimetre. H1's premise (B
+never carries the leg's weight) does not hold for a rigid leg; a real ham hanging 350 mm from the
+grip would droop and stay on the belt. Testing a true turn needs a leg model that bends at the
+grip or the shank, which is the first item under caveats.
 
 Between the runs one grasp detail was tried and reverted: taking the jaw line from the
 centreline's local direction at the shank instead of the leg's overall heading dropped the
@@ -183,8 +207,19 @@ ground truth with a second estimate after the grasp the same three legs score 2 
 
 ## Decision taken and why
 
-Not yet taken: approach A has not run, and the three-finger and camera conditions are partial.
-What the B results already say:
+By the rule written before the runs: the SCARA stayed in only if grasp-and-rotate won and tilt
+gained at most 2 legs of 20. Grasp-and-rotate did not win on the UR20 (12 against 16 carrying, tool
+vertical), tilt gained 5 legs (17 against 12), and carrying exceeds the SR-20iA's wrist rating on
+every leg. The decision the rule gives is the six-axis arm for the pilot cell. H1 is not supported, and
+could not be on a rigid leg (see "What B is in this simulation" above); H2 is not supported; H3
+holds for the SCARA (every carried leg over the J4 rating, in both approaches) and does not bind
+the UR20 (every leg inside its payload curve).
+
+Caveat that goes with the decision: the largest single cause of failure on every condition is the
+rigid hold-down model turning aligned legs on entry, which is the same for both arms and both
+approaches, so the margins between conditions (1 to 5 legs) are inside what a compliant top belt
+could move. The six-axis conditions were not filmed or run with the three-finger gripper. What the
+results also say:
 
 - The grasp moves the leg. Closing the jaws on the tapered shank drives the leg about 20 to
   25 mm toward its thin end (ground truth, every leg tried). Whatever is planned after the grasp

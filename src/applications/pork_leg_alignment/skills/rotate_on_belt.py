@@ -181,9 +181,16 @@ DROPPED = FailureMode("dropped", "the leg was not on the belt after release")
 
 
 class RotateOnBelt:
-    """Swing the held shank until the hock is on the blade plane and the leg square, then release."""
+    """Swing the held shank until the hock is on the blade plane and the leg square, then release.
+
+    `carry_lift_m` is how high the shank is carried while the leg moves. Low,
+    the ham stays on the belt and pivots (approach B); high enough, the whole
+    leg leaves the belt and the arm carries its weight (approach A, in
+    `PickAndPlace`). The path is the same either way.
+    """
 
     name = "rotate_on_belt"
+    carry_lift_m = TURN_LIFT_M
     contract = Contract(
         inputs=(
             Port("leg_estimate", LegEstimate, "the leg the grasp was planned on"),
@@ -201,6 +208,16 @@ class RotateOnBelt:
         ),
         failures=(UNREACHABLE, SLIPPED, MISALIGNED, RELEASED_LATE, DROPPED),
     )
+
+    def _after_lift(self, cell: Cell, evidence: dict[str, float]) -> str | None:
+        """A failure to return once the shank is at carry height, or None to carry on.
+
+        Records whether the leg still touches the belt at carry height: on the
+        belt is what this skill intends, and the number says whether the jaws'
+        hold on the leg's pitch let the ham stay down.
+        """
+        evidence["airborne"] = 0.0 if leg_touches_belt(cell) else 1.0
+        return None
 
     def execute(self, world: Any, args: Mapping[str, Any]) -> tuple[str, dict[str, Any], dict[str, float]]:  # noqa: ANN401
         """Turn, set down, open and retreat, reporting where the leg ended."""
@@ -259,7 +276,7 @@ class RotateOnBelt:
         # the set-down returns it exactly there, so the tool never presses the
         # shank into the belt.
         rise_so_far = float(cell.tool_position_m[2]) - proof.tool_z_m
-        extra_lift = TURN_LIFT_M - rise_so_far
+        extra_lift = self.carry_lift_m - rise_so_far
         lift_start_s = cell.time_s
 
         def lift(t_s: float) -> tuple[np.ndarray, np.ndarray]:
@@ -276,7 +293,7 @@ class RotateOnBelt:
         def lower(t_s: float) -> tuple[np.ndarray, np.ndarray]:
             fraction = smoothstep((t_s - lower_start_s) / LOWER_S)
             position = target_position + belt_shift(t_s)
-            position[2] += extra_lift - fraction * TURN_LIFT_M
+            position[2] += extra_lift - fraction * self.carry_lift_m
             return tool_for_leg(position, target_rotation)
 
         def retreat(t_s: float) -> tuple[np.ndarray, np.ndarray]:
@@ -292,6 +309,10 @@ class RotateOnBelt:
 
         try:
             cell.follow_tool(lift, LIFT_S)
+            lifted = self._after_lift(cell, evidence)
+            if lifted is not None:
+                cell.open_gripper(cell.gripper_geometry.max_opening_m)
+                return lifted, {}, evidence
             turn_start_s = cell.time_s
             cell.follow_tool(turn, turn_s)
             # Slip: where the leg's true centre of gravity and heading are against
@@ -331,3 +352,69 @@ class RotateOnBelt:
             slipped = evidence["slip_m"] > HOCK_TOLERANCE_M / 2 or abs(evidence["slip_rad"]) > HEADING_TOLERANCE_RAD / 2
             return (SLIPPED if slipped else MISALIGNED).name, {}, evidence
         return SUCCESS, {"alignment": alignment}, evidence
+
+
+# Approach A carries the whole leg. The shank rises enough that a leg the jaws
+# hold rigidly clears the belt by its full drop; a grip that yields in pitch
+# leaves the ham dragging, which is the failure the airborne check names.
+CARRY_LIFT_M = 0.10
+NOT_LIFTED = FailureMode(
+    "not_lifted", "the leg still touched the belt at carry height: the grip did not hold its pitch"
+)
+GRAVITY_MPS2 = 9.81
+
+
+class PickAndPlace(RotateOnBelt):
+    """Approach A: lift the leg clear of the belt, carry it to the aligned pose, set it down, release.
+
+    Same target and same path as the turn on the belt, with the shank carried
+    high enough that the ham leaves the belt, so the arm bears the leg's weight
+    and the moment of its centre of gravity about the tool. Both are reported
+    as evidence against each arm's rating: the load on the flange, the moment
+    about the jaw line, and the leg's inertia about the tool's vertical axis,
+    which is what a SCARA's wrist carries when it turns the leg.
+    """
+
+    name = "pick_and_place"
+    carry_lift_m = CARRY_LIFT_M
+    contract = Contract(
+        inputs=RotateOnBelt.contract.inputs,
+        preconditions=RotateOnBelt.contract.preconditions,
+        outputs=RotateOnBelt.contract.outputs,
+        success=RotateOnBelt.contract.success,
+        failures=(*RotateOnBelt.contract.failures, NOT_LIFTED),
+    )
+
+    def _after_lift(self, cell: Cell, evidence: dict[str, float]) -> str | None:
+        """Report the load the arm carries and refuse to carry a leg that is still on the belt."""
+        truth = cell.ground_truth()
+        assert truth.centre_of_mass_m is not None
+        leg_bodies = [cell.model.body("slab").id, cell.model.body("trotter").id]
+        mass = float(sum(cell.model.body_mass[b] for b in leg_bodies))
+        tool = cell.tool_position_m
+        lever = truth.centre_of_mass_m[:2] - tool[:2]
+        # Inertia about the tool's vertical axis: each body's own zz inertia
+        # plus its mass at its distance from the tool axis.
+        inertia = 0.0
+        for b in leg_bodies:
+            offset = np.asarray(cell.data.xipos[b])[:2] - tool[:2]
+            inertia += float(cell.model.body_inertia[b][2]) + float(cell.model.body_mass[b]) * float(offset @ offset)
+        evidence["flange_load_n"] = mass * GRAVITY_MPS2
+        evidence["moment_about_tool_nm"] = mass * GRAVITY_MPS2 * float(np.linalg.norm(lever))
+        evidence["inertia_about_tool_kgm2"] = inertia
+        touching = leg_touches_belt(cell)
+        evidence["airborne"] = 0.0 if touching else 1.0
+        return NOT_LIFTED.name if touching else None
+
+
+def leg_touches_belt(cell: Cell) -> bool:
+    """Whether any part of the leg is in contact with the belt surface now."""
+    belt = cell.model.geom("belt_surface").id
+    leg_bodies = {cell.model.body("slab").id, cell.model.body("trotter").id}
+    for i in range(cell.data.ncon):
+        contact = cell.data.contact[i]
+        geoms = (int(contact.geom1), int(contact.geom2))
+        bodies = {int(cell.model.geom_bodyid[geoms[0]]), int(cell.model.geom_bodyid[geoms[1]])}
+        if belt in geoms and bodies & leg_bodies:
+            return True
+    return False
