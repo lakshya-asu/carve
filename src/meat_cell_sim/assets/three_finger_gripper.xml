@@ -1,0 +1,100 @@
+<mujoco model="three_finger_gripper">
+  <!--
+    Three-finger centric gripper sized to the OnRobot 3FG25
+    (library/hardware/arm-models-for-sim.md): external grip diameter 18 to 155 mm,
+    50 to 450 N grip force, 1.6 kg. The datasheet does not say whether 450 N is
+    per finger or a total; it is modelled as a total, the conservative reading.
+
+    Fingers stand at 90, 210 and 330 degrees about the tool axis and slide
+    radially. The first finger is actuated and the other two are coupled to it,
+    so the actuator force is shared between three fingers. The real fingers
+    pivot on a linkage; these slide, which keeps the grasp centred on the tool
+    axis the way the real mechanism does.
+
+    Finger 1 is named so gripper.py finds it: its joint, pad and site carry the
+    "_left" names of the two-jaw grippers. Frame: +z points along the approach.
+  -->
+  <compiler angle="radian" autolimits="true"/>
+
+  <default>
+    <default class="finger">
+      <geom condim="4" friction="0.5 0.05 0.001" solref="0.004 1" solimp="0.95 0.99 0.001"
+            rgba="0.25 0.27 0.30 1"/>
+      <joint type="slide" damping="60" armature="0.05" range="0 0.0685"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <body name="gripper_base" childclass="finger">
+      <inertial pos="0 0 0.04" mass="1.3" diaginertia="0.004 0.004 0.003"/>
+      <geom name="coupler" type="cylinder" size="0.040 0.012" pos="0 0 0.012"/>
+      <geom name="body_block" type="cylinder" size="0.080 0.035" pos="0 0 0.059"/>
+
+      <site name="tcp" pos="0 0 0.160" size="0.005" rgba="0.9 0.3 0.3 0.9"/>
+      <site name="grasp_axis" pos="0 0 0.160" size="0.004" rgba="0.3 0.9 0.3 0.6"/>
+
+      <!-- Each finger body sits on its radial direction with the pad face 9 mm
+           from the axis at joint zero: an 18 mm grip diameter. -->
+      <body name="finger_left" pos="0 0.019 0.094" quat="0.7071 0 0 0.7071">
+        <inertial pos="0 0 0.05" mass="0.1" diaginertia="0.0002 0.0002 0.00005"/>
+        <joint name="finger_left_joint" axis="1 0 0"/>
+        <geom name="finger_left_arm" type="box" size="0.008 0.012 0.040" pos="0.004 0 0.030"/>
+        <geom name="finger_left_pad" type="box" size="0.005 0.015 0.020" pos="-0.005 0 0.066"
+              rgba="0.12 0.13 0.15 1"/>
+        <site name="pad_left" pos="-0.010 0 0.066" size="0.003" rgba="0.9 0.6 0.2 0.6"/>
+      </body>
+
+      <body name="finger_2" pos="-0.016454 -0.0095 0.094" quat="-0.2588190 0 0 0.9659258">
+        <inertial pos="0 0 0.05" mass="0.1" diaginertia="0.0002 0.0002 0.00005"/>
+        <joint name="finger_2_joint" axis="1 0 0"/>
+        <geom name="finger_2_arm" type="box" size="0.008 0.012 0.040" pos="0.004 0 0.030"/>
+        <geom name="finger_2_pad" type="box" size="0.005 0.015 0.020" pos="-0.005 0 0.066"
+              rgba="0.12 0.13 0.15 1"/>
+        <site name="pad_2" pos="-0.010 0 0.066" size="0.003" rgba="0.9 0.6 0.2 0.6"/>
+      </body>
+
+      <body name="finger_3" pos="0.016454 -0.0095 0.094" quat="0.9659258 0 0 -0.2588190">
+        <inertial pos="0 0 0.05" mass="0.1" diaginertia="0.0002 0.0002 0.00005"/>
+        <joint name="finger_3_joint" axis="1 0 0"/>
+        <geom name="finger_3_arm" type="box" size="0.008 0.012 0.040" pos="0.004 0 0.030"/>
+        <geom name="finger_3_pad" type="box" size="0.005 0.015 0.020" pos="-0.005 0 0.066"
+              rgba="0.12 0.13 0.15 1"/>
+        <site name="pad_3" pos="-0.010 0 0.066" size="0.003" rgba="0.9 0.6 0.2 0.6"/>
+      </body>
+
+      <camera name="wrist" pos="0 -0.12 0.06" quat="0.9239 0.3827 0 0" fovy="58"/>
+    </body>
+  </worldbody>
+
+  <!-- MuJoCo skips parent-child contacts only when the parent moves. Bolted to
+       a fixed mount, the base touched its own finger arms and jammed them. -->
+  <contact>
+    <exclude body1="gripper_base" body2="finger_left"/>
+    <exclude body1="gripper_base" body2="finger_2"/>
+    <exclude body1="gripper_base" body2="finger_3"/>
+    <exclude body1="finger_left" body2="finger_2"/>
+    <exclude body1="finger_left" body2="finger_3"/>
+    <exclude body1="finger_2" body2="finger_3"/>
+  </contact>
+
+  <equality>
+    <!-- Stiff: at the default softness the couplings stretched under the grip
+         force and the fingers closed out of step. -->
+    <joint name="finger_2_coupling" joint1="finger_2_joint" joint2="finger_left_joint" polycoef="0 1 0 0 0"
+           solref="0.004 1" solimp="0.99 0.999 0.0001"/>
+    <joint name="finger_3_coupling" joint1="finger_3_joint" joint2="finger_left_joint" polycoef="0 1 0 0 0"
+           solref="0.004 1" solimp="0.99 0.999 0.0001"/>
+  </equality>
+
+  <actuator>
+    <!-- Stiff enough that the 450 N limit, not the servo gain, sets the force on
+         anything wider than about 30 mm, as an electric gripper's force mode does. -->
+    <position name="grip" joint="finger_left_joint" kp="40000" kv="400"
+              ctrlrange="0 0.0685" forcerange="-450 450"/>
+  </actuator>
+
+  <sensor>
+    <jointpos name="grip_pos" joint="finger_left_joint"/>
+    <force name="pad_left_force" site="pad_left"/>
+  </sensor>
+</mujoco>

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Regenerate AGENTS.md (and GEMINI.md via symlink) from CLAUDE.md. Run after editing CLAUDE.md.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+{
+  echo "# Agent instructions (mirror of CLAUDE.md; edit CLAUDE.md and run bin/sync-rules)"
+  echo
+  echo "Read IDENTITY.md first, then memory/MEMORY.md."
+  echo
+  tail -n +2 CLAUDE.md
+} > AGENTS.md
+[ -L GEMINI.md ] || ln -sf AGENTS.md GEMINI.md
+echo "synced AGENTS.md and GEMINI.md from CLAUDE.md"

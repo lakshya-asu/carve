@@ -1,0 +1,3 @@
+WARNING Tue Sep  8 21:05:38 2026: Attach conflict when attaching 'ur5e' to 'probe', policy is 'warning'
+integrator: parent has 0 (default), child has 3, keeping parent value
+

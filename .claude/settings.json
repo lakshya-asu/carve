@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Bash(ros2 topic pub:*)",
+      "Bash(ros2 service call:*)",
+      "Bash(ros2 action send_goal:*)",
+      "Bash(ros2 param set:*)",
+      "Bash(ros2 param load:*)",
+      "Bash(ros2 lifecycle set:*)",
+      "Bash(ros2 daemon stop:*)",
+      "Bash(rosservice:*)",
+      "Bash(rostopic pub:*)",
+      "Bash(sudo:*)",
+      "Bash(shutdown:*)",
+      "Bash(reboot:*)",
+      "Bash(mkfs:*)",
+      "Bash(dd:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -fdx:*)",
+      "Write(/opt/ros/**)",
+      "Edit(/opt/ros/**)",
+      "Write(/etc/**)",
+      "Edit(/etc/**)"
+    ],
+    "ask": [
+      "Bash(ros2 launch:*)",
+      "Bash(ros2 run:*)",
+      "Bash(ros2 bag record:*)",
+      "Bash(ros2 control switch_controllers:*)",
+      "Bash(ros2 control set_controller_state:*)",
+      "Bash(git push:*)",
+      "Bash(pip install:*)",
+      "Bash(conda install:*)",
+      "Bash(apt:*)"
+    ],
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git ls-files:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "Bash(sed -n:*)",
+      "Bash(jq:*)",
+      "Bash(ros2 topic list:*)",
+      "Bash(ros2 topic info:*)",
+      "Bash(ros2 node list:*)",
+      "Bash(ros2 node info:*)",
+      "Bash(ros2 interface show:*)",
+      "Bash(ros2 bag info:*)",
+      "Bash(ros2 doctor:*)",
+      "Bash(/home/flux/miniconda3/envs/rll/bin/ruff:*)",
+      "Bash(/home/flux/miniconda3/envs/rll/bin/mypy:*)",
+      "Bash(/home/flux/miniconda3/envs/rll/bin/pytest:*)",
+      "Bash(env -u PYTHONPATH /home/flux/miniconda3/envs/rll/bin/pytest:*)",
+      "Bash(env -u PYTHONPATH /home/flux/miniconda3/envs/rll/bin/python tools/build_site.py:*)",
+      "Bash(bin/boot:*)",
+      "Bash(bin/sync-rules:*)",
+      "mcp__ros2"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/tools/quality_hook.py\"",
+            "timeout": 30,
+            "statusMessage": "Linting and checking front matter"
+          }
+        ]
+      }
+    ]
+  },
+  "enableAllProjectMcpServers": true
+}

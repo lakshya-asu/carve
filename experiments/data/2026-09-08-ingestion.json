@@ -1,0 +1,239 @@
+[
+  {
+    "belt_speed_mps": 0.15,
+    "products": 15,
+    "frames": 1682,
+    "table": [
+      {
+        "metric": "perception centroid",
+        "unit": "mm",
+        "n": 1682,
+        "mean": 0.1006,
+        "p95": 0.2424,
+        "max": 0.3127,
+        "gate": 2.0,
+        "pass": true
+      },
+      {
+        "metric": "perception axis",
+        "unit": "deg",
+        "n": 1682,
+        "mean": 0.0072,
+        "p95": 0.0237,
+        "max": 0.1171,
+        "gate": 2.0,
+        "pass": true
+      },
+      {
+        "metric": "monocular centroid",
+        "unit": "mm",
+        "n": 1682,
+        "mean": 2.0083,
+        "p95": 5.0976,
+        "max": 6.4711
+      },
+      {
+        "metric": "sensing stamp skew",
+        "unit": "ms",
+        "n": 1682,
+        "mean": 0.0,
+        "p95": 0.0,
+        "max": 0.0,
+        "gate": 1.0,
+        "pass": true
+      },
+      {
+        "metric": "tracking prediction",
+        "unit": "mm",
+        "n": 15,
+        "mean": 0.5423,
+        "p95": 0.5839,
+        "max": 0.5839,
+        "gate": 2.0,
+        "pass": true
+      },
+      {
+        "metric": "belt-frame fit residual",
+        "unit": "mm",
+        "n": 15,
+        "mean": 0.0044,
+        "p95": 0.0361,
+        "max": 0.0361
+      },
+      {
+        "metric": "encoder speed error",
+        "unit": "m/s",
+        "n": 15,
+        "mean": 0.0,
+        "p95": 0.0,
+        "max": 0.0
+      },
+      {
+        "metric": "vision finite-difference speed error",
+        "unit": "m/s",
+        "n": 15,
+        "mean": 0.0001,
+        "p95": 0.0001,
+        "max": 0.0001
+      }
+    ]
+  },
+  {
+    "belt_speed_mps": 0.3,
+    "products": 15,
+    "frames": 840,
+    "table": [
+      {
+        "metric": "perception centroid",
+        "unit": "mm",
+        "n": 840,
+        "mean": 0.1003,
+        "p95": 0.2425,
+        "max": 0.3078,
+        "gate": 2.0,
+        "pass": true
+      },
+      {
+        "metric": "perception axis",
+        "unit": "deg",
+        "n": 840,
+        "mean": 0.0072,
+        "p95": 0.0249,
+        "max": 0.1459,
+        "gate": 2.0,
+        "pass": true
+      },
+      {
+        "metric": "monocular centroid",
+        "unit": "mm",
+        "n": 840,
+        "mean": 2.0022,
+        "p95": 5.108,
+        "max": 6.5643
+      },
+      {
+        "metric": "sensing stamp skew",
+        "unit": "ms",
+        "n": 840,
+        "mean": 0.0,
+        "p95": 0.0,
+        "max": 0.0,
+        "gate": 1.0,
+        "pass": true
+      },
+      {
+        "metric": "tracking prediction",
+        "unit": "mm",
+        "n": 15,
+        "mean": 0.9041,
+        "p95": 0.9637,
+        "max": 0.9637,
+        "gate": 2.0,
+        "pass": true
+      },
+      {
+        "metric": "belt-frame fit residual",
+        "unit": "mm",
+        "n": 15,
+        "mean": 0.0048,
+        "p95": 0.0248,
+        "max": 0.0248
+      },
+      {
+        "metric": "encoder speed error",
+        "unit": "m/s",
+        "n": 15,
+        "mean": 0.0,
+        "p95": 0.0,
+        "max": 0.0
+      },
+      {
+        "metric": "vision finite-difference speed error",
+        "unit": "m/s",
+        "n": 15,
+        "mean": 0.0002,
+        "p95": 0.0002,
+        "max": 0.0002
+      }
+    ]
+  },
+  {
+    "belt_speed_mps": 0.5,
+    "products": 15,
+    "frames": 485,
+    "table": [
+      {
+        "metric": "perception centroid",
+        "unit": "mm",
+        "n": 485,
+        "mean": 0.0949,
+        "p95": 0.2278,
+        "max": 0.283,
+        "gate": 2.0,
+        "pass": true
+      },
+      {
+        "metric": "perception axis",
+        "unit": "deg",
+        "n": 485,
+        "mean": 0.0084,
+        "p95": 0.0348,
+        "max": 0.1257,
+        "gate": 2.0,
+        "pass": true
+      },
+      {
+        "metric": "monocular centroid",
+        "unit": "mm",
+        "n": 485,
+        "mean": 1.8823,
+        "p95": 4.7494,
+        "max": 6.4397
+      },
+      {
+        "metric": "sensing stamp skew",
+        "unit": "ms",
+        "n": 485,
+        "mean": 0.0,
+        "p95": 0.0,
+        "max": 0.0,
+        "gate": 1.0,
+        "pass": true
+      },
+      {
+        "metric": "tracking prediction",
+        "unit": "mm",
+        "n": 15,
+        "mean": 1.3769,
+        "p95": 1.4361,
+        "max": 1.4361,
+        "gate": 2.0,
+        "pass": true
+      },
+      {
+        "metric": "belt-frame fit residual",
+        "unit": "mm",
+        "n": 15,
+        "mean": 0.0093,
+        "p95": 0.0319,
+        "max": 0.0319
+      },
+      {
+        "metric": "encoder speed error",
+        "unit": "m/s",
+        "n": 15,
+        "mean": 0.0,
+        "p95": 0.0,
+        "max": 0.0
+      },
+      {
+        "metric": "vision finite-difference speed error",
+        "unit": "m/s",
+        "n": 15,
+        "mean": 0.0004,
+        "p95": 0.0004,
+        "max": 0.0004
+      }
+    ]
+  }
+]

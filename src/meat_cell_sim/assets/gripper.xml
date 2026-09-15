@@ -1,0 +1,69 @@
+<mujoco model="pinch_gripper">
+  <!--
+    Parallel-jaw gripper sized to the experiment record: 140 mm stroke, 60 mm
+    pads. This is a functional stand-in for a Robotiq 2F-140, not a model of it.
+    The real 2F-140 fingers travel on a four-bar linkage and the pads pitch as
+    they close; these fingers slide. For a pick-and-place baseline that measures
+    the tracking chain the difference does not matter, and the simpler model
+    keeps the CPU step fast. Revisit before any grasp-force claim.
+
+    Frame: the gripper mounts on the UR5e attachment site with +z pointing away
+    from the wrist along the approach direction. Fingers open along y.
+  -->
+  <compiler angle="radian" autolimits="true"/>
+
+  <default>
+    <default class="pinch">
+      <geom condim="4" friction="1.0 0.05 0.001" solref="0.008 1" solimp="0.95 0.99 0.001"
+            rgba="0.25 0.27 0.30 1"/>
+      <joint type="slide" axis="0 1 0" damping="8" armature="0.02"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <body name="gripper_base" childclass="pinch">
+      <inertial pos="0 0 0.035" mass="0.9" diaginertia="0.0018 0.0018 0.0012"/>
+      <geom name="coupler" type="cylinder" size="0.037 0.014" pos="0 0 0.014"/>
+      <geom name="body_block" type="box" size="0.040 0.032 0.030" pos="0 0 0.058"/>
+
+      <!-- Tool centre point: midway between the closed pads. -->
+      <site name="tcp" pos="0 0 0.175" size="0.005" rgba="0.9 0.3 0.3 0.9"/>
+      <site name="grasp_axis" pos="0 0 0.175" size="0.004" rgba="0.3 0.9 0.3 0.6"/>
+
+      <body name="finger_left" pos="0 0.035 0.088">
+        <joint name="finger_left_joint" range="0 0.070"/>
+        <geom name="finger_left_arm" type="box" size="0.010 0.008 0.030" pos="0 0 0.030"/>
+        <geom name="finger_left_pad" type="box" size="0.010 0.005 0.030" pos="0 -0.013 0.075"
+              rgba="0.12 0.13 0.15 1"/>
+        <site name="pad_left" pos="0 -0.018 0.075" size="0.003" rgba="0.9 0.6 0.2 0.6"/>
+      </body>
+
+      <body name="finger_right" pos="0 -0.035 0.088">
+        <joint name="finger_right_joint" range="-0.070 0"/>
+        <geom name="finger_right_arm" type="box" size="0.010 0.008 0.030" pos="0 0 0.030"/>
+        <geom name="finger_right_pad" type="box" size="0.010 0.005 0.030" pos="0 0.013 0.075"
+              rgba="0.12 0.13 0.15 1"/>
+        <site name="pad_right" pos="0 0.018 0.075" size="0.003" rgba="0.9 0.6 0.2 0.6"/>
+      </body>
+
+      <camera name="wrist" pos="0 -0.075 0.060" quat="0.9239 0.3827 0 0" fovy="58"/>
+    </body>
+  </worldbody>
+
+  <!-- One command opens and closes both fingers symmetrically. -->
+  <equality>
+    <joint name="finger_coupling" joint1="finger_left_joint" joint2="finger_right_joint"
+           polycoef="0 -1 0 0 0"/>
+  </equality>
+
+  <actuator>
+    <position name="grip" joint="finger_left_joint" kp="600" kv="20"
+              ctrlrange="0 0.070" forcerange="-140 140"/>
+  </actuator>
+
+  <sensor>
+    <jointpos name="grip_pos" joint="finger_left_joint"/>
+    <force name="pad_left_force" site="pad_left"/>
+    <force name="pad_right_force" site="pad_right"/>
+  </sensor>
+</mujoco>

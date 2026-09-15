@@ -1,0 +1,86 @@
+<mujoco model="jaw_gripper">
+  <!--
+    Electric parallel-jaw gripper sized to the Zimmer GEH6180IL-03-B
+    (library/hardware/arm-models-for-sim.md): 80 mm stroke per jaw, 1800 N grip
+    force as the arithmetic total over both jaws (900 N each), 2.6 kg, fingers up
+    to 160 mm long. Pads are 120 mm long along the tool x axis so a grasp across
+    a shank has a long contact line to resist the moment of a hanging leg; the
+    pad length is a design choice, not a Zimmer part.
+
+    Same names as gripper.xml, so gripper.py measures it the same way. Frame: +z
+    points away from the wrist along the approach, fingers open along y.
+
+    One actuator drives the left jaw and an equality couples the right one, so
+    the actuator force is shared between the two jaws: a 1800 N force limit
+    gives 900 N per jaw. Pad friction 0.5 on wet meat is an assumption.
+  -->
+  <compiler angle="radian" autolimits="true"/>
+
+  <default>
+    <default class="jaw">
+      <geom condim="4" friction="0.5 0.05 0.001" solref="0.004 1" solimp="0.95 0.99 0.001"
+            rgba="0.25 0.27 0.30 1"/>
+      <joint type="slide" axis="0 1 0" damping="200" armature="0.2"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <body name="gripper_base" childclass="jaw">
+      <inertial pos="0 0 0.06" mass="2.1" diaginertia="0.012 0.012 0.008"/>
+      <geom name="coupler" type="cylinder" size="0.045 0.012" pos="0 0 0.012"/>
+      <geom name="body_block" type="box" size="0.060 0.110 0.045" pos="0 0 0.069"/>
+
+      <!-- Tool centre point: midway between the closed pads, at pad mid height. -->
+      <site name="tcp" pos="0 0 0.234" size="0.005" rgba="0.9 0.3 0.3 0.9"/>
+      <site name="grasp_axis" pos="0 0 0.234" size="0.004" rgba="0.3 0.9 0.3 0.6"/>
+
+      <body name="finger_left" pos="0 0.020 0.114">
+        <inertial pos="0 0 0.07" mass="0.25" diaginertia="0.0012 0.0012 0.0002"/>
+        <joint name="finger_left_joint" range="0 0.080"/>
+        <geom name="finger_left_arm" type="box" size="0.015 0.008 0.060" pos="0 0.004 0.060"/>
+        <geom name="finger_left_pad" type="box" size="0.060 0.005 0.030" pos="0 -0.005 0.120"
+              rgba="0.12 0.13 0.15 1"/>
+        <site name="pad_left" pos="0 -0.010 0.120" size="0.003" rgba="0.9 0.6 0.2 0.6"/>
+      </body>
+
+      <body name="finger_right" pos="0 -0.020 0.114">
+        <inertial pos="0 0 0.07" mass="0.25" diaginertia="0.0012 0.0012 0.0002"/>
+        <joint name="finger_right_joint" range="-0.080 0"/>
+        <geom name="finger_right_arm" type="box" size="0.015 0.008 0.060" pos="0 -0.004 0.060"/>
+        <geom name="finger_right_pad" type="box" size="0.060 0.005 0.030" pos="0 0.005 0.120"
+              rgba="0.12 0.13 0.15 1"/>
+        <site name="pad_right" pos="0 0.010 0.120" size="0.003" rgba="0.9 0.6 0.2 0.6"/>
+      </body>
+
+      <camera name="wrist" pos="0 -0.12 0.07" quat="0.9239 0.3827 0 0" fovy="58"/>
+    </body>
+  </worldbody>
+
+  <!-- MuJoCo skips parent-child contacts only when the parent moves. Bolted to
+       a fixed mount, the base touched its own finger arms and jammed them. -->
+  <contact>
+    <exclude body1="gripper_base" body2="finger_left"/>
+    <exclude body1="gripper_base" body2="finger_right"/>
+    <exclude body1="finger_left" body2="finger_right"/>
+  </contact>
+
+  <equality>
+    <!-- Stiff: at the default softness the 1800 N actuator stretched the coupling
+         and the jaws closed 48 mm out of step. -->
+    <joint name="finger_coupling" joint1="finger_left_joint" joint2="finger_right_joint"
+           polycoef="0 -1 0 0 0" solref="0.004 1" solimp="0.99 0.999 0.0001"/>
+  </equality>
+
+  <actuator>
+    <!-- Stiff enough that the 1800 N limit, not the servo gain, sets the force on
+         anything wider than about 40 mm, as an electric gripper's force mode does. -->
+    <position name="grip" joint="finger_left_joint" kp="100000" kv="1000"
+              ctrlrange="0 0.080" forcerange="-1800 1800"/>
+  </actuator>
+
+  <sensor>
+    <jointpos name="grip_pos" joint="finger_left_joint"/>
+    <force name="pad_left_force" site="pad_left"/>
+    <force name="pad_right_force" site="pad_right"/>
+  </sensor>
+</mujoco>

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Reject a commit that adds slop to any staged Markdown file. Works in every harness.
+set -u
+root="$(git rev-parse --show-toplevel)"
+fail=0
+for f in $(git diff --cached --name-only --diff-filter=ACM -- '*.md'); do
+  out=$(printf '{"tool_input":{"file_path":"%s/%s"}}' "$root" "$f" | python3 "$root/tools/slop_check.py" 2>&1) || { echo "$out"; fail=1; }
+done
+exit $fail

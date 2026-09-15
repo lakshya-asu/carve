@@ -1,0 +1,20 @@
+{
+  "userIgnoreFilters": [
+    "src/",
+    "tests/",
+    "tools/",
+    "scripts/",
+    "bin/",
+    "site/",
+    "third_party/",
+    "templates/python-package/",
+    "library/gemstone/",
+    "memory/project-gemstone.md",
+    "memory/browser-use-playwright-mcp.md",
+    "field-notes/customer/meat-men/raw-extract.json"
+  ],
+  "newFileLocation": "folder",
+  "newFileFolderPath": "daily",
+  "attachmentFolderPath": "field-notes/attachments",
+  "alwaysUpdateLinks": true
+}

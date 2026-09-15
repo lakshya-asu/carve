@@ -1,0 +1,38 @@
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bag
+*.mcap
+*.db3
+datasets/
+outputs/
+wandb/
+.env
+*.log
+*.egg-info/
+# impeccable: keep the Claude Code skill text, not the engine binary or other-harness copies
+.claude/skills/impeccable/scripts/bin/
+.agent/
+.agents/
+.codex/
+.gemini/
+.impeccable/review/
+.impeccable/mocks/
+site/
+third_party/
+# obsidian: keep vault settings, not per-machine window state
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+.trash/
+# kept out of the public repo: personal assistant memory and raw customer messages
+memory/
+field-notes/customer/meat-men/
+field-notes/customer/neil-requirements.md

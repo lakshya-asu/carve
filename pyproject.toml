@@ -1,0 +1,44 @@
+[project]
+name = "meat-cell-sim"
+version = "0.1.0"
+description = "Simulation of the meat cell: belt, arm, gripper, product."
+requires-python = ">=3.10"
+dependencies = ["mujoco==3.12.0", "numpy>=1.24", "opencv-python-headless>=4.10", "imageio[ffmpeg]>=2.34"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5", "mypy>=1.10"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "D", "ANN", "RUF"]
+ignore = ["D203", "D213", "D105", "E501"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D", "ANN"]
+# Single-capital names are the standard notation for matrices in state
+# estimation and kinematics. Renaming F, G, Q and K would make these files
+# harder to check line by line against the sources they implement, which is the
+# whole point of a snippet.
+"snippets/*" = ["N802", "N803", "N806", "N817"]
+
+[tool.mypy]
+strict = true
+python_version = "3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = ["slow: physics integration tests"]
+
+[[tool.mypy.overrides]]
+module = "mujoco.*"
+ignore_missing_imports = true

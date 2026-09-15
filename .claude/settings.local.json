@@ -1,0 +1,48 @@
+{
+  "description": "Impeccable design detector: immediate-tier checks after Edit/Write on UI files, full-rule deep pass on Stop. Permissions for unattended simulation runs approved by Lakshya on 2026-09-14 (plan/overnight-2026-09-14.md): the rll env running tests, lint, types and repo scripts, and edits inside this repo. No network, no installs, no push.",
+  "permissions": {
+    "allow": [
+      "Bash(env -u PYTHONPATH PYTHONPATH=src MUJOCO_GL=egl /home/flux/miniconda3/envs/rll/bin/python -m pytest:*)",
+      "Bash(env -u PYTHONPATH PYTHONPATH=src MUJOCO_GL=egl /home/flux/miniconda3/envs/rll/bin/python scripts/:*)",
+      "Bash(env -u PYTHONPATH /home/flux/miniconda3/envs/rll/bin/python -m ruff:*)",
+      "Bash(env -u PYTHONPATH MYPYPATH=src /home/flux/miniconda3/envs/rll/bin/python -m mypy:*)",
+      "Edit(//home/flux/robot-learning-lab/**)",
+      "Write(//home/flux/robot-learning-lab/**)"
+    ],
+    "deny": [
+      "Edit(//home/flux/robot-learning-lab/library/gemstone/**)",
+      "Write(//home/flux/robot-learning-lab/library/gemstone/**)",
+      "Edit(//home/flux/robot-learning-lab/memory/project-gemstone.md)",
+      "Write(//home/flux/robot-learning-lab/memory/project-gemstone.md)",
+      "Edit(//home/flux/robot-learning-lab/memory/browser-use-playwright-mcp.md)",
+      "Write(//home/flux/robot-learning-lab/memory/browser-use-playwright-mcp.md)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+            "timeout": 5,
+            "statusMessage": "Checking UI changes"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+            "timeout": 30,
+            "statusMessage": "Design deep pass"
+          }
+        ]
+      }
+    ]
+  }
+}

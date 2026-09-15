@@ -1,0 +1,524 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-05T22:10:46Z",
+  "title": "Design System: Robot Learning Lab",
+  "source": {
+    "artifact": "site/index.html",
+    "generator": "tools/build_site.py",
+    "build": "2026-09-05"
+  },
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#F6F5F1",
+        "cssVar": "--paper",
+        "darkValue": "#161616",
+        "darkCanonical": "oklch(20.0% 0.000 90)",
+        "lightOklch": "oklch(97.0% 0.005 95)",
+        "tonalRamp": [
+          "oklch(15.0% 0.005 95)",
+          "oklch(26.0% 0.005 95)",
+          "oklch(38.0% 0.005 95)",
+          "oklch(50.0% 0.005 95)",
+          "oklch(62.0% 0.005 95)",
+          "oklch(74.0% 0.005 95)",
+          "oklch(86.0% 0.005 95)",
+          "oklch(95.0% 0.005 95)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#161616",
+        "cssVar": "--ink",
+        "darkValue": "#E5E4E0",
+        "darkCanonical": "oklch(91.9% 0.005 95)",
+        "lightOklch": "oklch(20.0% 0.000 90)",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 90)",
+          "oklch(26.0% 0.000 90)",
+          "oklch(38.0% 0.000 90)",
+          "oklch(50.0% 0.000 90)",
+          "oklch(62.0% 0.000 90)",
+          "oklch(74.0% 0.000 90)",
+          "oklch(86.0% 0.000 90)",
+          "oklch(95.0% 0.000 90)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "canonical": "#4A4A47",
+        "cssVar": "--ink-2",
+        "darkValue": "#B3B2AC",
+        "darkCanonical": "oklch(76.3% 0.008 99)",
+        "lightOklch": "oklch(40.8% 0.005 107)",
+        "tonalRamp": [
+          "oklch(15.0% 0.005 107)",
+          "oklch(26.0% 0.005 107)",
+          "oklch(38.0% 0.005 107)",
+          "oklch(50.0% 0.005 107)",
+          "oklch(62.0% 0.005 107)",
+          "oklch(74.0% 0.005 107)",
+          "oklch(86.0% 0.005 107)",
+          "oklch(95.0% 0.005 107)"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3",
+        "canonical": "#65645F",
+        "cssVar": "--ink-3",
+        "darkValue": "#84837D",
+        "darkCanonical": "oklch(60.9% 0.009 99)",
+        "lightOklch": "oklch(50.3% 0.008 97)",
+        "tonalRamp": [
+          "oklch(15.0% 0.008 97)",
+          "oklch(26.0% 0.008 97)",
+          "oklch(38.0% 0.008 97)",
+          "oklch(50.0% 0.008 97)",
+          "oklch(62.0% 0.008 97)",
+          "oklch(74.0% 0.008 97)",
+          "oklch(86.0% 0.008 97)",
+          "oklch(95.0% 0.008 97)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#9C9B95",
+        "cssVar": "--rule",
+        "darkValue": "#5D5C58",
+        "darkCanonical": "oklch(47.4% 0.006 95)",
+        "lightOklch": "oklch(68.9% 0.009 99)",
+        "tonalRamp": [
+          "oklch(15.0% 0.009 99)",
+          "oklch(26.0% 0.009 99)",
+          "oklch(38.0% 0.009 99)",
+          "oklch(50.0% 0.009 99)",
+          "oklch(62.0% 0.009 99)",
+          "oklch(74.0% 0.009 99)",
+          "oklch(86.0% 0.009 99)",
+          "oklch(95.0% 0.009 99)"
+        ]
+      },
+      "rule-2": {
+        "role": "neutral",
+        "displayName": "Rule 2",
+        "canonical": "#D3D2CB",
+        "cssVar": "--rule-2",
+        "darkValue": "#333330",
+        "darkCanonical": "oklch(32.0% 0.005 107)",
+        "lightOklch": "oklch(86.3% 0.010 100)",
+        "tonalRamp": [
+          "oklch(15.0% 0.010 100)",
+          "oklch(26.0% 0.010 100)",
+          "oklch(38.0% 0.010 100)",
+          "oklch(50.0% 0.010 100)",
+          "oklch(62.0% 0.010 100)",
+          "oklch(74.0% 0.010 100)",
+          "oklch(86.0% 0.010 100)",
+          "oklch(95.0% 0.010 100)"
+        ]
+      },
+      "blue": {
+        "role": "primary",
+        "displayName": "Blueprint Blue",
+        "canonical": "#1D4CA0",
+        "cssVar": "--blue",
+        "darkValue": "#8FB0EC",
+        "darkCanonical": "oklch(75.5% 0.094 262)",
+        "lightOklch": "oklch(43.6% 0.146 261)",
+        "tonalRamp": [
+          "oklch(15.0% 0.146 261)",
+          "oklch(26.0% 0.146 261)",
+          "oklch(38.0% 0.146 261)",
+          "oklch(50.0% 0.146 261)",
+          "oklch(62.0% 0.146 261)",
+          "oklch(74.0% 0.146 261)",
+          "oklch(86.0% 0.146 261)",
+          "oklch(95.0% 0.146 261)"
+        ]
+      },
+      "blue-soft": {
+        "role": "primary",
+        "displayName": "Blueprint Wash",
+        "canonical": "#DCE4F4",
+        "cssVar": "--blue-soft",
+        "darkValue": "#1C2740",
+        "darkCanonical": "oklch(27.6% 0.049 265)",
+        "lightOklch": "oklch(91.8% 0.023 264)",
+        "tonalRamp": [
+          "oklch(15.0% 0.023 264)",
+          "oklch(26.0% 0.023 264)",
+          "oklch(38.0% 0.023 264)",
+          "oklch(50.0% 0.023 264)",
+          "oklch(62.0% 0.023 264)",
+          "oklch(74.0% 0.023 264)",
+          "oklch(86.0% 0.023 264)",
+          "oklch(95.0% 0.023 264)"
+        ]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Field",
+        "canonical": "#FCFBF9",
+        "cssVar": "--field",
+        "darkValue": "#1D1D1C",
+        "darkCanonical": "oklch(23.0% 0.002 107)",
+        "lightOklch": "oklch(98.8% 0.003 85)",
+        "tonalRamp": [
+          "oklch(15.0% 0.003 85)",
+          "oklch(26.0% 0.003 85)",
+          "oklch(38.0% 0.003 85)",
+          "oklch(50.0% 0.003 85)",
+          "oklch(62.0% 0.003 85)",
+          "oklch(74.0% 0.003 85)",
+          "oklch(86.0% 0.003 85)",
+          "oklch(95.0% 0.003 85)"
+        ]
+      },
+      "code": {
+        "role": "neutral",
+        "displayName": "Code",
+        "canonical": "#EBEAE4",
+        "cssVar": "--code",
+        "darkValue": "#232322",
+        "darkCanonical": "oklch(25.6% 0.002 107)",
+        "lightOklch": "oklch(93.6% 0.008 99)",
+        "tonalRamp": [
+          "oklch(15.0% 0.008 99)",
+          "oklch(26.0% 0.008 99)",
+          "oklch(38.0% 0.008 99)",
+          "oklch(50.0% 0.008 99)",
+          "oklch(62.0% 0.008 99)",
+          "oklch(74.0% 0.008 99)",
+          "oklch(86.0% 0.008 99)",
+          "oklch(95.0% 0.008 99)"
+        ]
+      },
+      "sel": {
+        "role": "neutral",
+        "displayName": "Selection",
+        "canonical": "#C9D6F0",
+        "cssVar": "--sel",
+        "darkValue": "#2C3D62",
+        "darkCanonical": "oklch(36.4% 0.068 265)",
+        "lightOklch": "oklch(87.4% 0.039 264)",
+        "tonalRamp": [
+          "oklch(15.0% 0.039 264)",
+          "oklch(26.0% 0.039 264)",
+          "oklch(38.0% 0.039 264)",
+          "oklch(50.0% 0.039 264)",
+          "oklch(62.0% 0.039 264)",
+          "oklch(74.0% 0.039 264)",
+          "oklch(86.0% 0.039 264)",
+          "oklch(95.0% 0.039 264)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prose, lists, and box text on a 70ch measure."
+      },
+      "entry-title": {
+        "displayName": "Entry title",
+        "purpose": "The note title in the entry header, after its mono address; 19px under 920px."
+      },
+      "chapter-title": {
+        "displayName": "Chapter title",
+        "purpose": "Uppercase chapter label after the CHAPTER N kicker, on a 2px ink rule."
+      },
+      "paragraph-heading": {
+        "displayName": "Paragraph heading",
+        "purpose": "Every ## in a note; uppercase at body size with address N-M.k."
+      },
+      "sub-heading": {
+        "displayName": "Sub-heading",
+        "purpose": "Every ### in a note; mixed case at body size with address N-M.k<letter>."
+      },
+      "address": {
+        "displayName": "Address",
+        "purpose": "The pnum span before every numbered heading; min-width 3.2em (3.6em on sub-headings)."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Contents chapter headings, box labels, the contents toggle, and the header sub-line."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Status, revision, source and unverified counts, and file path under each entry title."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "TABLE N-M-t above tables and FIGURE N-M-f below diagrams."
+      },
+      "table": {
+        "displayName": "Table",
+        "purpose": "Table cells with tabular figures; headers at 700."
+      },
+      "contents": {
+        "displayName": "Contents",
+        "purpose": "Contents column entries; paragraph links 12.5px in ink-2; active entry 700."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "Inline code at 13px; code blocks at 12.5px / 1.5."
+      }
+    },
+    "themeContract": {
+      "light": "bare :root, color-scheme: light",
+      "darkSystem": "@media (prefers-color-scheme: dark) { :root:not([data-theme=\"light\"]) }",
+      "darkStamp": ":root[data-theme=\"dark\"]",
+      "note": "Both dark blocks carry identical values; every token has its light definition on bare :root."
+    },
+    "shadows": [],
+    "elevation": "None. No box-shadow anywhere; separation is 1px rules (rule, rule-2, ink), 2px for chapter titles, 3px change bars.",
+    "motion": [
+      {
+        "name": "arrive",
+        "value": "text-decoration-color 2.4s cubic-bezier(.16,1,.3,1) forwards; solid ink for 60%, then to transparent",
+        "purpose": "Underline under the address of a :target heading, fading after arrival. Off under prefers-reduced-motion."
+      },
+      {
+        "name": "scroll",
+        "value": "scroll-behavior: smooth; scroll-padding-top: 4.5rem (7rem under 920px)",
+        "purpose": "Anchor jumps land below the sticky header. Instant under prefers-reduced-motion."
+      },
+      {
+        "name": "rowbar-relayout",
+        "value": "150ms resize debounce; also on document.fonts.ready and every search input",
+        "purpose": "Table-row change bars are measured and re-drawn from the figure."
+      },
+      {
+        "name": "last-read",
+        "value": "400ms scroll throttle",
+        "purpose": "Stores the last numbered heading at or above 60px as rll-last."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "narrow",
+        "value": "920px",
+        "purpose": "Single column; contents behind a toggle; change bars move to the left margin."
+      }
+    ],
+    "layout": {
+      "pageMax": "1240px",
+      "contentsWidth": "17.5rem",
+      "headerHeight": "3.4rem",
+      "measure": "70ch",
+      "gutter": "2.25rem",
+      "bar": "3px",
+      "manualIndent": "2.25rem",
+      "narrowIndent": "0.9rem"
+    },
+    "numbering": {
+      "chapter": "Chapter N (one per configured section, reserved if empty)",
+      "entry": "N-M, id nN-M",
+      "paragraph": "N-M.k for h2, N-M.k<letter> for h3; id p<number>",
+      "table": "Table N-M-t",
+      "figure": "Figure N-M-f",
+      "task": "nN-M-t<n>"
+    },
+    "stateMarks": {
+      "draft": "open 0.5em square, 1px ink border",
+      "reviewed": "filled 0.55em ink square",
+      "stale": "line-through",
+      "unverified": "† UNVERIFIED inline mark plus a 3px ink change bar on the containing p, li, or tr",
+      "contentsCount": "†N in 11px ink-3 beside the entry"
+    },
+    "figureMarks": {
+      "mk1": "fill blue-soft, stroke blue, 1px",
+      "mk2": "fill paper, stroke ink, 2px",
+      "mk3": "fill code, stroke rule, 1px",
+      "assignment": "classDefs rewritten in order of appearance; classes beyond the third collapse into mk3"
+    },
+    "persistence": {
+      "prefix": "rll-",
+      "keys": {
+        "rll-q": "search query",
+        "rll-last": "id of the last-read numbered heading",
+        "rll-cb-<key>": "checkbox state 1/0"
+      },
+      "note": "All reads and writes wrapped in try/catch; the page renders correctly with empty storage."
+    },
+    "search": {
+      "unit": "a numbered heading and every sibling until the next h2/h3",
+      "match": "case-insensitive substring over the unit's text",
+      "keys": {
+        "/": "focus and select",
+        "Escape": "clear, re-apply, blur"
+      },
+      "hitMark": "2px underline under the heading address (.hit)",
+      "noMatch": "No paragraph matches. Clear the index field with Escape."
+    },
+    "fonts": {
+      "stylesheet": "https://fonts.googleapis.com/css2?family=B612:ital,wght@0,400;0,700;1,400&family=B612+Mono:wght@400;700&display=swap"
+    },
+    "buildNotes": [
+      "21 entries, all status draft; reviewed and stale marks have no instance in this build.",
+      "No blockquote in any note; the NOTE/WARNING box has no instance in this build.",
+      "mk1 used in 8 diagrams, mk2 in 1, mk3 unused.",
+      "No h4 and no dead cross-note link in this build."
+    ]
+  },
+  "components": [
+    {
+      "name": "Index search",
+      "kind": "input",
+      "refersTo": "search-input",
+      "description": "The running header's centred search: a label, an underlined field, and the / keycap; no box, no radius.",
+      "html": "<form class=\"ds-search\" role=\"search\" onsubmit=\"return false\"><label for=\"ds-q\">Index</label><input id=\"ds-q\" type=\"search\" placeholder=\"Search paragraphs\" autocomplete=\"off\"><kbd>/</kbd></form>",
+      "css": ".ds-search{display:flex;align-items:center;gap:.5rem;max-width:34rem;border-bottom:1px solid var(--rule);padding:.15rem 0;font-family:\"B612\",\"Helvetica Neue\",Arial,sans-serif}.ds-search label{font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}.ds-search input{flex:1;border:0;background:transparent;color:var(--ink);font:14px \"B612\",\"Helvetica Neue\",Arial,sans-serif;padding:.25rem 0;min-width:0;caret-color:var(--blue)}.ds-search input::placeholder{color:var(--ink-3)}.ds-search input:focus{outline:none}.ds-search kbd{font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;font-size:10px;color:var(--ink-3);border:1px solid var(--rule-2);border-radius:2px;padding:0 .3em}"
+    },
+    {
+      "name": "Contents toggle",
+      "kind": "button",
+      "refersTo": "contents-toggle",
+      "description": "The only button on the page, shown under 920px; square ink hairline, inverts when expanded.",
+      "html": "<button class=\"ds-toggle\" aria-expanded=\"false\">Contents</button> <button class=\"ds-toggle\" aria-expanded=\"true\">Contents</button>",
+      "css": ".ds-toggle{background:none;border:1px solid var(--ink);color:var(--ink);font:11px \"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .55rem;cursor:pointer;border-radius:0}.ds-toggle[aria-expanded=\"true\"]{background:var(--ink);color:var(--paper)}.ds-toggle:focus-visible{outline:2px solid var(--ink);outline-offset:2px}"
+    },
+    {
+      "name": "Contents entry",
+      "kind": "nav",
+      "refersTo": "contents-link",
+      "description": "A contents row: mono address, title, and the dagger count; the active row goes bold and unfolds its paragraph list.",
+      "html": "<nav class=\"ds-contents\"><h2>Chapter 2 <span class=\"rsv\">Topics</span></h2><ol><li><a href=\"#\"><span class=\"num\">2-3</span><span class=\"t\">Imitation learning for real robot manipulation</span><span class=\"cnt\">†2</span></a></li><li class=\"active\"><a href=\"#\"><span class=\"num\">2-4</span><span class=\"t\">3D sensing and geometric perception</span><span class=\"cnt\">†10</span></a><ol class=\"paras\"><li><a href=\"#\"><span class=\"num\">2-4.1</span><span class=\"t\">What it is</span></a></li><li><a href=\"#\"><span class=\"num\">2-4.4</span><span class=\"t\">Sensor comparison table</span></a></li></ol></li></ol></nav>",
+      "css": ".ds-contents{font-family:\"B612\",\"Helvetica Neue\",Arial,sans-serif;font-size:13.5px;color:var(--ink);max-width:17.5rem}.ds-contents h2{font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin:0 0 .35rem;padding-bottom:.25rem;border-bottom:1px solid var(--rule)}.ds-contents h2 .rsv{font-weight:400;color:var(--ink-3);margin-left:.5em}.ds-contents ol{list-style:none;margin:0;padding:0}.ds-contents li>a{display:grid;grid-template-columns:2.9rem minmax(0,1fr) auto;gap:.5rem;padding:.22rem 0;color:var(--ink);text-decoration:none;line-height:1.3}.ds-contents li>a:hover .t{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.18em}.ds-contents li.active>a{font-weight:700}.ds-contents .num{font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;color:var(--ink-2);font-size:12px;padding-top:.1em}.ds-contents .cnt{font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;font-size:11px;color:var(--ink-3);padding-top:.15em}.ds-contents ol.paras{margin:.1rem 0 .5rem;border-left:1px solid var(--rule-2);padding-left:.6rem}.ds-contents ol.paras a{grid-template-columns:3.6rem minmax(0,1fr);font-size:12.5px;color:var(--ink-2);padding:.12rem 0;font-weight:400}.ds-contents ol.paras a .num{font-size:11px}"
+    },
+    {
+      "name": "Entry header",
+      "kind": "custom",
+      "refersTo": "entry-header",
+      "description": "A numbered entry title on an ink rule, with the status mark, revision, counts, path, and tags beneath.",
+      "html": "<header class=\"ds-entry\"><h2><span class=\"pnum\">2-4</span>3D sensing and geometric perception</h2><div class=\"meta\"><span class=\"st draft\">Draft</span><span>Rev 2026-09-05</span><span>31 sources</span><span>†10 unverified</span><span class=\"path\">library/topics/3d-sensing.md</span></div><div class=\"tags\"><span>perception</span><span>depth</span><span>lidar</span></div></header><div class=\"ds-entry-marks\"><span class=\"st reviewed\">Reviewed</span><span class=\"st stale\">Stale</span></div>",
+      "css": ".ds-entry{font-family:\"B612\",\"Helvetica Neue\",Arial,sans-serif;color:var(--ink);margin:0;padding-bottom:.6rem;border-bottom:1px solid var(--ink);max-width:70ch}.ds-entry h2{margin:0;font-size:22px;line-height:1.2;font-weight:700;text-wrap:balance}.ds-entry h2 .pnum{font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;margin-right:.6em;font-weight:400;font-size:18px;color:var(--ink-2)}.ds-entry .meta,.ds-entry-marks{display:flex;flex-wrap:wrap;gap:0 1.25rem;margin-top:.45rem;font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}.ds-entry .st,.ds-entry-marks .st{color:var(--ink)}.ds-entry .st.draft::before{content:\"\";display:inline-block;width:.5em;height:.5em;border:1px solid var(--ink);margin-right:.45em;vertical-align:baseline}.ds-entry-marks .st.reviewed::before{content:\"\";display:inline-block;width:.55em;height:.55em;background:var(--ink);margin-right:.45em;vertical-align:baseline}.ds-entry-marks .st.stale{text-decoration:line-through}.ds-entry .path{color:var(--ink-3);text-transform:none;letter-spacing:0}.ds-entry .tags{display:flex;flex-wrap:wrap;gap:.25rem .8rem;margin:.35rem 0 0;font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;font-size:11.5px;color:var(--ink-3)}"
+    },
+    {
+      "name": "Numbered paragraph with change bar",
+      "kind": "custom",
+      "refersTo": "change-bar",
+      "description": "A paragraph heading with its address, a paragraph carrying an unverified claim, and the 3px change bar in the outer gutter.",
+      "html": "<div class=\"ds-body\"><h2 id=\"ds-p\"><span class=\"pnum\">2-4.4</span>Sensor comparison table</h2><p class=\"chg\">The D435i ideal range is 0.3-3 m with a MinZ near 28 cm; baseline <span class=\"unv\">unverified</span>.</p><p>Verified figures only; see the hardware entry for detail and quirks.</p></div>",
+      "css": ".ds-body{--gutter:2.25rem;--bar:3px;font-family:\"B612\",\"Helvetica Neue\",Arial,sans-serif;font-size:15px;line-height:1.55;color:var(--ink);max-width:70ch;padding-right:var(--gutter);position:relative}.ds-body h2{font-size:15px;font-weight:700;margin:0 0 .5rem;line-height:1.35;text-transform:uppercase;letter-spacing:.02em}.ds-body .pnum{font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;display:inline-block;min-width:3.2em;margin-right:.6em;font-weight:400;color:var(--ink-2);font-size:.92em}.ds-body p{margin:.55rem 0}.ds-body .chg{position:relative}.ds-body p.chg::before{content:\"\";position:absolute;top:.2em;bottom:.2em;right:calc(-1 * var(--gutter) + .6rem);width:var(--bar);background:var(--ink)}.ds-body .unv{font-size:.82em;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}.ds-body .unv::before{content:\"†\";margin-right:.2em}.ds-body h2:target .pnum,.ds-body h2:hover .pnum{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.2em;text-decoration-color:var(--ink)}"
+    },
+    {
+      "name": "NOTE / WARNING box",
+      "kind": "card",
+      "refersTo": "box",
+      "description": "A ruled box from a Markdown blockquote; the label breaks the top rule on a patch of paper. Defined by the generator; no instance in the 2026-09-05 build.",
+      "html": "<div class=\"ds-box\" role=\"note\"><span class=\"boxlabel\">WARNING</span><p>Warning: never run the arm with the e-stop bypassed. Check the tether before every session.</p></div>",
+      "css": ".ds-box{font-family:\"B612\",\"Helvetica Neue\",Arial,sans-serif;font-size:15px;line-height:1.55;color:var(--ink);border:1px solid var(--ink);padding:.7rem .9rem .6rem;margin:1rem 0;position:relative;border-radius:0;max-width:70ch}.ds-box .boxlabel{position:absolute;top:-.6em;left:.7rem;background:var(--paper);padding:0 .4em;font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.14em}.ds-box p{margin:.3rem 0}.ds-box p:first-of-type{margin-top:0}"
+    },
+    {
+      "name": "Ruled table",
+      "kind": "custom",
+      "refersTo": "table",
+      "description": "Table N-M-t: caption above, ink rules top, head, and bottom, faint rules between rows, tabular figures; scrolls in its wrapper when wide.",
+      "html": "<figure class=\"ds-tbl\"><figcaption>Table 2-4-2</figcaption><div class=\"tablewrap\"><table><thead><tr><th>Sensor</th><th>Principle</th><th>Range (vendor)</th></tr></thead><tbody><tr><td><a href=\"#\">RealSense D435i</a></td><td>Active IR stereo</td><td>ideal 0.3-3 m</td></tr><tr><td><a href=\"#\">RealSense D455</a></td><td>Active IR stereo</td><td>ideal 0.6-6 m</td></tr></tbody></table></div></figure>",
+      "css": ".ds-tbl{margin:1.1rem 0;font-family:\"B612\",\"Helvetica Neue\",Arial,sans-serif;color:var(--ink);position:relative}.ds-tbl figcaption{font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:0 0 .3rem}.ds-tbl .tablewrap{overflow-x:auto}.ds-tbl table{border-collapse:collapse;width:100%;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);font-size:13.5px;line-height:1.4;font-variant-numeric:tabular-nums}.ds-tbl th{text-align:left;font-weight:700;padding:.4rem .6rem .35rem;border-bottom:1px solid var(--ink);vertical-align:bottom}.ds-tbl td{padding:.35rem .6rem;border-bottom:1px solid var(--rule-2);vertical-align:top}.ds-tbl tr:last-child td{border-bottom:0}.ds-tbl th:first-child,.ds-tbl td:first-child{padding-left:.2rem}.ds-tbl th:last-child,.ds-tbl td:last-child{padding-right:.2rem}.ds-tbl a{color:var(--blue);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.18em;text-decoration-color:color-mix(in srgb,var(--blue) 45%,transparent)}.ds-tbl a:hover{text-decoration-color:currentColor}"
+    },
+    {
+      "name": "Figure emphasis marks",
+      "kind": "custom",
+      "refersTo": "figure",
+      "description": "Figure N-M-f: a diagram between two hairlines with the three node emphasis classes mk1 (blue), mk2 (outlined ink), mk3 (subdued).",
+      "html": "<figure class=\"ds-fig\"><svg viewBox=\"0 0 420 60\" width=\"420\" height=\"60\" role=\"img\" aria-label=\"Three diagram nodes\"><g class=\"mk1\"><rect x=\"2\" y=\"10\" width=\"120\" height=\"40\"/><text x=\"62\" y=\"35\">Action chunking</text></g><g class=\"mk2\"><rect x=\"150\" y=\"10\" width=\"120\" height=\"40\"/><text x=\"210\" y=\"35\">Plain BC</text></g><g class=\"mk3\"><rect x=\"298\" y=\"10\" width=\"120\" height=\"40\"/><text x=\"358\" y=\"35\">Legacy</text></g></svg><figcaption>Figure 2-3-1</figcaption></figure>",
+      "css": ".ds-fig{margin:1.1rem 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:.6rem 0 .4rem;text-align:center;overflow-x:auto;font-family:\"B612\",\"Helvetica Neue\",Arial,sans-serif;color:var(--ink)}.ds-fig figcaption{font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:.5rem 0 0;text-align:left}.ds-fig text{font-family:\"B612\",\"Helvetica Neue\",Arial,sans-serif;font-size:12px;fill:var(--ink);text-anchor:middle}.ds-fig g.mk1>rect{fill:var(--blue-soft);stroke:var(--blue);stroke-width:1px}.ds-fig g.mk2>rect{fill:var(--paper);stroke:var(--ink);stroke-width:2px}.ds-fig g.mk3>rect{fill:var(--code);stroke:var(--rule);stroke-width:1px}"
+    },
+    {
+      "name": "Checklist item",
+      "kind": "input",
+      "refersTo": "task-checkbox",
+      "description": "A Markdown task item as a square ink checkbox on a field tint; checked fills an ink square and strikes the text.",
+      "html": "<ul class=\"ds-tasks\"><li class=\"task\"><label><input type=\"checkbox\"><span>Tensor shapes and dtypes asserted or documented at boundaries.</span></label></li><li class=\"task\"><label><input type=\"checkbox\" checked><span>Seeds logged for every random source.</span></label></li></ul>",
+      "css": ".ds-tasks{list-style:none;margin:.5rem 0;padding:0;font-family:\"B612\",\"Helvetica Neue\",Arial,sans-serif;font-size:15px;line-height:1.55;color:var(--ink)}.ds-tasks li{margin:.2rem 0}.ds-tasks label{display:grid;grid-template-columns:1.1rem 1fr;gap:.55rem;align-items:start;cursor:pointer}.ds-tasks input{appearance:none;width:.95rem;height:.95rem;margin:.28em 0 0;border:1px solid var(--ink);background:var(--field);border-radius:0;display:grid;place-content:center}.ds-tasks input:checked::before{content:\"\";width:.5rem;height:.5rem;background:var(--ink)}.ds-tasks input:checked+span{color:var(--ink-2);text-decoration:line-through}.ds-tasks input:focus-visible{outline:2px solid var(--ink);outline-offset:2px}"
+    },
+    {
+      "name": "Code",
+      "kind": "custom",
+      "refersTo": "code-block",
+      "description": "Inline code on the code tint with a 2px softening; blocks on the same tint behind a 1px rule at the left.",
+      "html": "<p class=\"ds-code-p\">Run it with <code>/code-review</code> before every push.</p><pre class=\"ds-pre\"><code>python tools/build_site.py --artifact</code></pre>",
+      "css": ".ds-code-p{font-family:\"B612\",\"Helvetica Neue\",Arial,sans-serif;font-size:15px;line-height:1.55;color:var(--ink);margin:.55rem 0}.ds-code-p code{font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;font-size:13px;background:var(--code);padding:.05em .35em;border-radius:2px;overflow-wrap:anywhere}.ds-pre{font-family:\"B612 Mono\",ui-monospace,\"SF Mono\",Menlo,monospace;background:var(--code);border-left:1px solid var(--rule);padding:.8rem 1rem;overflow-x:auto;font-size:12.5px;line-height:1.5;margin:.8rem 0;color:var(--ink)}.ds-pre code{background:none;padding:0;font-size:inherit}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Ring-Bound Equipment Manual",
+    "overview": "The site is one HTML file laid out as an equipment technical manual, and it refuses the docs-site arrangement it replaced: no top bar with product tabs, no left nav of icons, no right-hand TOC, no admonition cards, no KPI tiles, no shadowed panels, no coloured pills. Every heading carries a paragraph number, so every fact has an address (`2-4.4`) that can be typed, linked, searched, and remembered. The reader lands on the contents page, types or scans to a number, reads the fact with its source link and its change bar, and leaves knowing whether it was verified.\n\nThe material is uncoated stock and ink. One warm off-white paper, one near-black ink with two greys of ink for secondary and tertiary text, two greys for rules, and a single blueprint blue reserved for links and the diagram's primary emphasis fill. There is no shadow, no gradient, no radius beyond a 2px softening on inline code. Structure is carried entirely by hairline rules: a 1px rule under the running header and under every entry header, a 2px rule under each chapter title, a hairline top-and-bottom on tables and figures, and a 3px ink bar in the outer margin beside any block that contains an unverified claim. Density is that of a reference book: 15px body on a 70ch measure, headings that step in weight and case rather than size, and a mono address column that keeps numbers aligned.\n\nState is a mark, never a colour. Draft entries carry an open square, reviewed ones a filled square, stale ones a strikethrough; unverified claims carry a dagger and pull a change bar into the margin. The same marks recur in the contents column (†N beside an entry), the entry meta line, and the colophon key, so the reader learns the notation once. The whole page is generated from Markdown and front matter, so nothing here is hand-tuned; a rule that cannot be derived from the notes does not exist.",
+    "keyCharacteristics": [
+      "One typeface family: B612 for prose, B612 Mono for addresses, labels, meta, captions, and code.",
+      "Single hairline ruling grid in ink and two greys; no shadows, no fills except code and field surfaces.",
+      "Every heading numbered `chapter-entry.paragraph[letter]`; every table and figure labelled with the entry number.",
+      "One blue, used for links, the search caret, selection, and the mk1 diagram fill; nothing else is coloured.",
+      "State as marks: open square, filled square, strikethrough, dagger, and a 3px marginal change bar.",
+      "Sticky running header with manual title, current entry, revision date, and a centred index search.",
+      "Three-state theme contract: bare root light, `prefers-color-scheme: dark` guarded, `data-theme` stamps win.",
+      "Phone: single column, contents behind a bordered toggle, change bars move to the left margin."
+    ],
+    "rules": [
+      {
+        "name": "The One Ink Rule",
+        "body": "Colour on this page is ink at three strengths, two rule greys, and one blue. The blue appears only on links, the caret, selection, and the `mk1` diagram fill. Nothing else is coloured, and no state is ever conveyed by colour.",
+        "section": "colors"
+      },
+      {
+        "name": "The Three-State Theme Rule",
+        "body": "Light lives on bare `:root`; dark is redefined under `prefers-color-scheme: dark` guarded by `:root:not([data-theme=\"light\"])` and again under `:root[data-theme=\"dark\"]`, with identical values, so the host's stamp wins in both directions.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "B612 and B612 Mono are the only faces. Mono is the address and label face, not a code face; anything that is a number, a status, a caption, or a key sets in mono.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Scale Rule",
+        "body": "Body, paragraph headings, and sub-headings are all 15px. Level is signalled by weight, case, tracking, and the address, not by size. Only entry titles (22px) and chapter titles (20px) rise above the text.",
+        "section": "typography"
+      },
+      {
+        "name": "The Outer Margin Rule",
+        "body": "Change bars live in the gutter outside the text block: the right gutter on the spread, the left margin on the phone. They are never drawn inside the measure.",
+        "section": "layout"
+      },
+      {
+        "name": "The Address Column Rule",
+        "body": "Every numbered thing starts with its address in mono at a fixed minimum width, so numbers align down the page and titles start on a common line.",
+        "section": "layout"
+      },
+      {
+        "name": "The No-Shadow Rule",
+        "body": "Nothing casts a shadow. Separation is a 1px rule in `rule`, `rule-2`, or ink; hierarchy is the weight of the rule (1px, 2px for chapters, 3px for change bars).",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do give every heading an address and set it in B612 Mono at 0.92em, 400, ink-2, with `min-width: 3.2em` (3.6em for letter sub-headings) before the title.",
+      "Do separate with 1px rules: `rule` for edges (search, figures, code), `rule-2` for internal divisions (table rows, contents edges), ink for structural edges (header, entry header, box, table top/bottom/head).",
+      "Do reserve 2px rules for chapter titles and 3px ink bars for change bars; these are the only weights above hairline.",
+      "Do use `mk1` (blue-soft fill, blue stroke) for the one thing a diagram is about, `mk2` (paper, 2px ink) for its counterpart, `mk3` (code fill, rule stroke) for the rest; never a fourth class.",
+      "Do mark state with the four marks (open square, filled square, strikethrough, dagger) and reuse them wherever that state appears: meta line, contents count, colophon key.",
+      "Do define every colour on bare `:root`, then redefine the same tokens under both dark blocks with identical values.",
+      "Do keep the measure at 70ch with a 2.25rem outer gutter that exists only for change bars; under 920px move the bars to a 0.9rem left margin.",
+      "Do derive every element from Markdown and front matter through `tools/build_site.py`; if the generator does not emit it, it is not on the page.",
+      "Do persist reader state in `localStorage` under the `rll-` prefix (`rll-q`, `rll-last`, `rll-cb-<key>`) inside try/catch, and render correctly when storage is empty or throws."
+    ],
+    "donts": [
+      "Don't add shadows, gradients, or filled panels; the only tints are `code` behind code and `field` inside a checkbox.",
+      "Don't round corners beyond the 2px on inline code and the keycap; boxes, buttons, checkboxes, tables, and figures are square.",
+      "Don't use colour for state, status, or emphasis; blue is for links, the caret, selection, and the `mk1` fill only.",
+      "Don't render tags, statuses, or counts as pills, chips, or badges; they are plain mono words and marks.",
+      "Don't introduce a third typeface, or a display size above the 22px entry title; body, paragraph headings, and sub-headings all stay at 15px.",
+      "Don't put a top bar of tabs, a left icon rail, a right-hand table of contents, or admonition cards on the page; the manual has one running header, one contents column, and ruled boxes.",
+      "Don't chart the notes themselves (lines per note, counts over time); the only figures are the notes' own Mermaid diagrams of sensors, methods, and pipelines.",
+      "Don't let a wide table widen the page; it scrolls inside `.tablewrap` and its change bars are drawn from the figure, not the row.",
+      "Don't hand-edit `site/index.html`; edit the CSS and JS constants in `tools/build_site.py` and rebuild."
+    ]
+  }
+}

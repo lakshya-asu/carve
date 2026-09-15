@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Print the identity, memory index, rules, and skill list for a harness that does not auto-load them.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+echo "===== IDENTITY.md"; cat IDENTITY.md
+echo; echo "===== memory/MEMORY.md"; cat memory/MEMORY.md
+echo; echo "===== CLAUDE.md"; cat CLAUDE.md
+echo; echo "===== Skills"; for s in .claude/skills/*/SKILL.md; do n=$(basename "$(dirname "$s")"); d=$(grep -m1 '^description:' "$s" | cut -d: -f2- | sed 's/^ //'); echo "- $n: $d (procedure in $s)"; done
+echo; echo "===== WORKFLOW.md"; cat WORKFLOW.md
