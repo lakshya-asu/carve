@@ -33,6 +33,7 @@ import mujoco
 import numpy as np
 
 from meat_cell_sim.arms import UR5E_SPEC, ArmSpec
+from meat_cell_sim.cameras import intrinsics_from_model
 from meat_cell_sim.contracts import Frame, Observation, Pose2D, wrap_axis_angle
 from meat_cell_sim.frames import CameraPose, Intrinsics
 from meat_cell_sim.product import product_geom_ids
@@ -183,9 +184,22 @@ class Sensors:
         return pool[name]
 
     def intrinsics(self, name: str) -> Intrinsics:
-        """Pinhole model for a camera, derived from its declared vertical field of view."""
+        """Pinhole model for a camera.
+
+        A camera declared with a resolution and focal lengths (a datasheet camera
+        from `cameras.py`) uses those, and may have non-square pixels. Any other
+        camera is derived from its vertical field of view with square pixels.
+        """
         spec = self._specs[name]
         cam_id = mujoco.mj_name2id(self._model, mujoco.mjtObj.mjOBJ_CAMERA, spec.name)
+        declared = intrinsics_from_model(self._model, cam_id)
+        if declared is not None:
+            if (declared.width_px, declared.height_px) != (spec.width_px, spec.height_px):
+                raise ValueError(
+                    f"camera {spec.name!r} is declared {declared.width_px}x{declared.height_px}; "
+                    f"render it at that size, not {spec.width_px}x{spec.height_px}"
+                )
+            return declared
         return Intrinsics.from_fovy(float(self._model.cam_fovy[cam_id]), spec.width_px, spec.height_px)
 
     def camera_pose(self, data: mujoco.MjData, name: str) -> CameraPose:

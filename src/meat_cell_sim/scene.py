@@ -20,6 +20,7 @@ from pathlib import Path
 import mujoco
 
 from meat_cell_sim.arms import ARM_SPECS, ArmModel, build_arm
+from meat_cell_sim.cameras import DepthCameraModel, add_depth_camera
 from meat_cell_sim.gripper import GRIPPER_SPECS, GripperModel
 from meat_cell_sim.holddown import HoldDownConfig, add_hold_down
 from meat_cell_sim.product import TROTTER_BODY, LegConfig, add_leg_geoms
@@ -107,6 +108,12 @@ class CellConfig:
     arm_mount: ArmMount | None = None
     gripper: GripperModel = GripperModel.PINCH
     timestep_s: float = 0.002
+    # Datasheet depth cameras mounted with the overhead camera, for the camera
+    # comparison (experiments/2026-09-15-depth-camera-comparison.md). Empty by
+    # default so every earlier experiment builds the cell it was run on.
+    depth_cameras: tuple[DepthCameraModel, ...] = ()
+    # 0: image width along the belt; 90: across it.
+    depth_camera_yaw_deg: float = 0.0
 
     @property
     def mount(self) -> ArmMount:
@@ -173,6 +180,8 @@ def build_spec(config: CellConfig | None = None) -> mujoco.MjSpec:
         )
     spec = mujoco.MjSpec.from_file(str(ASSETS / "cell.xml"))
     _apply_config(spec, config)
+    for camera in config.depth_cameras:
+        add_depth_camera(spec, camera, yaw_deg=config.depth_camera_yaw_deg)
 
     arm = ARM_SPECS[config.arm]
     mount = config.mount

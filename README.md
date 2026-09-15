@@ -67,6 +67,8 @@ env -u PYTHONPATH PYTHONPATH=src MUJOCO_GL=egl python -m pytest -q     # 184 tes
 | `scripts/view_perception.py --out perception.mp4 --seconds 20` | Perception and tracking drawn on the overhead camera |
 | `scripts/view_cell.py --record cell.mp4 --seconds 12` | The cell running |
 | `scripts/show_leg_variants.py --count 20 --out legs.png` | The generated leg population |
+| `scripts/measure_depth_cameras.py [--mount-yaw-deg 90]` | Gemini 335L against D455 on the 20 legs: depth noise, pixels on the shank, legs in view |
+| `scripts/view_depth_cameras.py --out cams.mp4` | Both depth cameras side by side: colour, reported depth, depth error |
 
 Prefix each with `env -u PYTHONPATH PYTHONPATH=src MUJOCO_GL=egl`. Experiment records, written
 before each run, are in `experiments/`; raw results in `experiments/data/`.
