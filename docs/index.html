@@ -1839,6 +1839,137 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
       <tr><td>ready pose, mounts, saw distance</td><td class="num">y 0.25 m; x 0 and 0.35 m; 1.75 m</td><td>shakedown (11.6)</td><td>the cell design</td></tr>
     </tbody></table></div></div>
   <p><b>The order.</b> A parameter moves up one level only when the level below has shown it should. Level one is the hand-set value with its reason, which is where every parameter is now. Level two is a sweep over the 20 test legs through the same runner and the same judge as Table 11.7; it costs minutes and it says whether one value serves every leg. Level three is a learned output, where the sweep shows the best value differs from leg to leg and the perception carries enough to predict it: the grasp station and lean are there already, in the policy of 11.7. Level four is the residual policy of 13.3, for the parameters that interact through contact and cannot be swept one at a time: the pivot point, the lift and the turn rate together. A parameter that reaches level three or four keeps its level-one value as the fallback the contract promises, so nothing the cell learns can move it outside what the sweep already showed safe.</p>
+  <h3><span class="addr">13.7</span>Sub-goals and hierarchy: how a whole plant runs as one graph</h3>
+  <p>A primitive in this codebase is a skill with a contract (<code>src/robotics/core/skill_library/contract.py</code>). Its preconditions are the states it may start from. Its success checks are its goal condition. Its failure modes are the outcomes the graph routes on, and <code>graph.py</code> refuses to build a task with an outcome that has no edge. In the language of hierarchical reinforcement learning that is an option: an initiation set, a policy and a termination condition. The library holds no note on Sutton, Precup and Singh 1999, where the option is defined, so that correspondence is stated from memory (unverified). The three parts are the contract's whatever they are called, and the runner enforces them: it re-checks a claimed success and reports <code>success_not_verified</code> when the checks disagree (3.1).</p>
+  <p>Six primitives exist as contracts with code under <code>src/applications/pork_leg_alignment/skills/</code>: perceive (<code>EstimateLegFromCamera</code>, <code>leg_estimate.py</code>), select grasp (<code>SelectShankGrasp</code>, <code>SelectTrotterEndGrasp</code>), acquire shank (<code>AcquireShank</code>), acquire trotter end-on (<code>AcquireTrotterEnd</code>), rotate on belt (<code>RotateOnBelt</code>) and pick and place (<code>PickAndPlace</code>, both in <code>rotate_on_belt.py</code>). The first four have unit tests under <code>tests/applications/pork_leg_alignment/skills/</code>, ten test functions in three files. The two in <code>rotate_on_belt.py</code> have no unit test file; their evidence is the 80 approach-B and 40 approach-A episodes of Table 11.7, run through <code>scripts/measure/alignment_approaches.py</code>. Four primitives that 8.1 counts are not built as contracts. Push has no code (Table 14.1). Inspect exists only as the simulator's judge, <code>sim/saw.py</code>; no skill declares it, and the verification camera before the ramp is not built (Table 10.1). Transport is a step inside <code>PickAndPlace</code>, not a skill with the <code>slipped_in_transport</code> outcome the library's design gives it (<code>library/topics/learning-grasp-lift-and-orient-skills.md</code>, section 4). Place is the lower, open, retreat and clear steps inside <code>RotateOnBelt</code>, with their own failures <code>released_late</code> and <code>dropped</code>, and not a skill of its own.</p>
+  <p>The levels above are the same shape. A composed skill is a graph of primitives with a goal condition of its own: align a leg for the saw ends when the blade cuts within 10 mm of the hock at entry and exit and within 5° of square (Table 11.7; both tolerances are assumed until the plant gives its own). Inside it, each primitive's goal condition is a sub-goal: a held shank, a hock on the blade plane, jaws open before x = 0.48 m. A job is a composed skill run once per product with the job's terminals, <code>aligned</code>, <code>let_pass</code> to the manual station and <code>stop_cell</code> (Figure 4). A plant is jobs sharing primitives: the leg cell and the loin puller infeed share all nine of the primitives 8.1 counts (<code>pork-plant-skill-tree.md</code>, ranking row 7). Each level's goal condition is a sub-goal for the level above, and each level judges the one below by its outcome without looking inside it: the runner re-checks a primitive, the saw and not the orient skill decides the composed skill, the shift's tally decides the job.</p>
+  <p>The two worked jobs. In the leg cell the job passes "cut inside tolerance" down to the composed skill, which passes "the shank at 0.70 of the length, jaws square" to select grasp and "hock on the blade plane, heading −90°" to rotate on belt. What comes back is one outcome per primitive: from the grasp, <code>success</code>, <code>unreachable</code>, <code>closed_on_nothing</code>, <code>slipped</code> or <code>lift_not_achieved</code>; from the turn, <code>success</code>, <code>unreachable</code>, <code>slipped</code>, <code>misaligned</code>, <code>released_late</code> or <code>dropped</code>; from any of them, the runner's <code>precondition_failed</code> and <code>success_not_verified</code>. On the loin puller infeed (section 14) the composed graph is the same and the sub-goals change: the grasp station becomes the section at the centre of gravity (14.2), the turn's target becomes the bone edge on the fixture's datum (14.3, unverified), and the composed skill's goal condition becomes the fixture crossing score of <code>sim/infeed_fixture.py</code> in place of the saw (14.4). Approach A is closed to a 20 kg middle (14.2), so that job never calls pick and place. No primitive's contract changes between the two jobs. What changes is the sub-goal passed to it and the judge above it.</p>
+
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 900 520" role="img" aria-label="The plant as a hierarchy. Top row: three jobs, the leg alignment cell, the loin puller infeed, and a third job not yet chosen, drawn grey. Middle row: two composed skills, align a leg for the saw and present a loin to the puller. Bottom row: ten primitives, each a box in three parts labelled pre, policy and goal. Six are solid and built: perceive, select grasp, acquire shank, acquire trotter end-on, rotate on belt, pick and place. Four are dashed and not built: push, inspect, transport, place. Arrows from each job to its composed skill carry a sub-goal down, cut within 10 mm and 5 degrees for the leg and bone edge on the datum for the loin, and an outcome up, aligned, let pass or stop. Arrows from each composed skill to the primitives it uses carry a sub-goal down, such as hock on blade plane, and the primitive's declared outcomes up, such as success, slipped, unreachable.">
+      <defs>
+        <marker id="hk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-ink"/></marker>
+        <marker id="hkr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker>
+      </defs>
+      <!-- jobs, y 34..86 -->
+      <text x="20" y="22" class="t2">JOBS · one composed skill run per product</text>
+      <rect x="40" y="34" width="250" height="52" class="f-soft s-blue" stroke-width="1.5"/>
+      <text x="52" y="56" class="b">leg alignment cell</text><text x="52" y="74" class="t2">first cell, sections 1 to 13</text>
+      <rect x="320" y="34" width="250" height="52" class="f-paper s-ink" stroke-width="1"/>
+      <text x="332" y="56" class="b">loin puller infeed</text><text x="332" y="74" class="t2">stage 2, section 14</text>
+      <rect x="600" y="34" width="260" height="52" class="f-none s-rule dash" stroke-width="1"/>
+      <text x="612" y="56" class="t3">third job, not chosen</text><text x="612" y="74" class="t3">candidates ranked in 8.2</text>
+      <!-- job to composed skill: sub-goal down, outcome up -->
+      <line x1="70" y1="86" x2="70" y2="194" class="s-ink" marker-end="url(#hk)"/>
+      <line x1="92" y1="196" x2="92" y2="88" class="s-ink" marker-end="url(#hk)"/>
+      <text x="104" y="128" class="t2">↓ cut within 10 mm, 5° †</text>
+      <text x="104" y="146" class="t2">↑ aligned · let_pass · stop</text>
+      <line x1="350" y1="86" x2="350" y2="194" class="s-ink" marker-end="url(#hk)"/>
+      <line x1="372" y1="196" x2="372" y2="88" class="s-ink" marker-end="url(#hk)"/>
+      <text x="384" y="128" class="t2">↓ bone edge on datum †</text>
+      <text x="384" y="146" class="t2">↑ aligned · let_pass</text>
+      <!-- composed skills, y 196..248 -->
+      <text x="20" y="186" class="t2">COMPOSED SKILLS · a graph of primitives with a goal of its own</text>
+      <rect x="40" y="196" width="250" height="52" class="f-paper s-ink" stroke-width="1.5"/>
+      <text x="52" y="218" class="b">align a leg for the saw</text><text x="52" y="236" class="t2">goal: the saw's cut inside tolerance</text>
+      <rect x="320" y="196" width="250" height="52" class="f-paper s-ink" stroke-width="1.5"/>
+      <text x="332" y="218" class="b">present a loin to the puller</text><text x="332" y="236" class="t2">goal: the fixture crossing score †</text>
+      <!-- buses: leg at y=262 (ink), loin at y=272 (ink-2) -->
+      <path d="M 165 248 L 165 262 L 26 262" class="s-ink f-none" stroke-width="1.2"/>
+      <line x1="26" y1="262" x2="692" y2="262" class="s-ink" stroke-width="1.2"/>
+      <path d="M 445 248 L 445 272 L 31 272" class="f-none" style="stroke:var(--ink-2)" stroke-width="1"/>
+      <line x1="31" y1="272" x2="824" y2="272" style="stroke:var(--ink-2)" stroke-width="1"/>
+      <!-- drops from the leg bus (x+4) and the loin bus (x+9) to each primitive -->
+      <line x1="26" y1="262" x2="26" y2="398" class="s-ink" stroke-width="1.2" marker-end="url(#hk)"/>
+      <line x1="31" y1="272" x2="31" y2="398" style="stroke:var(--ink-2)" stroke-width="1" marker-end="url(#hkr)"/>
+      <line x1="126" y1="262" x2="126" y2="398" class="s-ink" stroke-width="1.2" marker-end="url(#hk)"/>
+      <line x1="131" y1="272" x2="131" y2="398" style="stroke:var(--ink-2)" stroke-width="1" marker-end="url(#hkr)"/>
+      <line x1="226" y1="262" x2="226" y2="398" class="s-ink" stroke-width="1.2" marker-end="url(#hk)"/>
+      <line x1="231" y1="272" x2="231" y2="398" style="stroke:var(--ink-2)" stroke-width="1" marker-end="url(#hkr)"/>
+      <line x1="326" y1="262" x2="326" y2="398" class="s-ink" stroke-width="1.2" marker-end="url(#hk)"/>
+      <line x1="426" y1="262" x2="426" y2="398" class="s-ink" stroke-width="1.2" marker-end="url(#hk)"/>
+      <line x1="431" y1="272" x2="431" y2="398" style="stroke:var(--ink-2)" stroke-width="1" marker-end="url(#hkr)"/>
+      <line x1="526" y1="262" x2="526" y2="398" class="s-ink" stroke-width="1.2" marker-end="url(#hk)"/>
+      <line x1="692" y1="262" x2="692" y2="398" class="s-ink dash" stroke-width="1" marker-end="url(#hkr)"/>
+      <line x1="697" y1="272" x2="697" y2="398" class="dash" style="stroke:var(--ink-2)" stroke-width="1" marker-end="url(#hkr)"/>
+      <line x1="829" y1="272" x2="829" y2="398" class="dash" style="stroke:var(--ink-2)" stroke-width="1" marker-end="url(#hkr)"/>
+      <!-- what each edge carries: sub-goal down, declared outcomes up -->
+      <text x="20" y="284" class="t2">PRIMITIVES · solid: built · dashed: not built · ↓ sub-goal · ↑ outcomes</text>
+      <g style="font-size:11px">
+        <text x="36" y="300">↓ leg pose</text>
+        <text x="36" y="313" class="t2">↑ success</text>
+        <text x="136" y="300">↓ shank at 0.70</text>
+        <text x="136" y="313" class="t2">↑ success</text>
+        <text x="236" y="300">↓ shank held</text>
+        <text x="236" y="313" class="t2">↑ success</text><text x="236" y="326" class="t2">unreachable</text><text x="236" y="339" class="t2">closed_on_</text><text x="236" y="352" class="t2">nothing</text><text x="236" y="365" class="t2">slipped</text><text x="236" y="378" class="t2">lift_not_</text><text x="236" y="391" class="t2">achieved</text>
+        <text x="336" y="300">↓ trotter held</text>
+        <text x="336" y="313" class="t2">↑ success</text><text x="336" y="326" class="t2">unreachable</text><text x="336" y="339" class="t2">closed_on_</text><text x="336" y="352" class="t2">nothing</text><text x="336" y="365" class="t2">slipped</text><text x="336" y="378" class="t2">lift_not_</text><text x="336" y="391" class="t2">achieved</text>
+        <text x="436" y="300">↓ hock on</text><text x="436" y="313">blade plane</text>
+        <text x="436" y="326" class="t2">↑ success</text><text x="436" y="339" class="t2">unreachable</text><text x="436" y="352" class="t2">slipped</text><text x="436" y="365" class="t2">misaligned</text><text x="436" y="378" class="t2">released_late</text><text x="436" y="391" class="t2">dropped</text>
+        <text x="536" y="300">↓ carry to</text><text x="536" y="313">the pose</text>
+        <text x="536" y="326" class="t2">↑ as rotate,</text><text x="536" y="339" class="t2">plus</text><text x="536" y="352" class="t2">not_lifted</text>
+      </g>
+      <!-- built primitives: 92 wide, pitch 100, y 400..466 in three bands -->
+      <g>
+        <rect x="22" y="400" width="92" height="66" class="f-paper s-ink"/><line x1="22" y1="422" x2="114" y2="422" class="s-rule"/><line x1="22" y1="444" x2="114" y2="444" class="s-rule"/>
+        <rect x="122" y="400" width="92" height="66" class="f-paper s-ink"/><line x1="122" y1="422" x2="214" y2="422" class="s-rule"/><line x1="122" y1="444" x2="214" y2="444" class="s-rule"/>
+        <rect x="222" y="400" width="92" height="66" class="f-paper s-ink"/><line x1="222" y1="422" x2="314" y2="422" class="s-rule"/><line x1="222" y1="444" x2="314" y2="444" class="s-rule"/>
+        <rect x="322" y="400" width="92" height="66" class="f-paper s-ink"/><line x1="322" y1="422" x2="414" y2="422" class="s-rule"/><line x1="322" y1="444" x2="414" y2="444" class="s-rule"/>
+        <rect x="422" y="400" width="92" height="66" class="f-paper s-ink"/><line x1="422" y1="422" x2="514" y2="422" class="s-rule"/><line x1="422" y1="444" x2="514" y2="444" class="s-rule"/>
+        <rect x="522" y="400" width="92" height="66" class="f-paper s-ink"/><line x1="522" y1="422" x2="614" y2="422" class="s-rule"/><line x1="522" y1="444" x2="614" y2="444" class="s-rule"/>
+      </g>
+      <!-- unbuilt primitives: 58 wide, pitch 66 -->
+      <g class="dash">
+        <rect x="622" y="400" width="58" height="66" class="f-none s-rule"/><line x1="622" y1="422" x2="680" y2="422" class="s-rule"/><line x1="622" y1="444" x2="680" y2="444" class="s-rule"/>
+        <rect x="688" y="400" width="58" height="66" class="f-none s-rule"/><line x1="688" y1="422" x2="746" y2="422" class="s-rule"/><line x1="688" y1="444" x2="746" y2="444" class="s-rule"/>
+        <rect x="754" y="400" width="58" height="66" class="f-none s-rule"/><line x1="754" y1="422" x2="812" y2="422" class="s-rule"/><line x1="754" y1="444" x2="812" y2="444" class="s-rule"/>
+        <rect x="820" y="400" width="58" height="66" class="f-none s-rule"/><line x1="820" y1="422" x2="878" y2="422" class="s-rule"/><line x1="820" y1="444" x2="878" y2="444" class="s-rule"/>
+      </g>
+      <g class="t3" style="font-size:11px;fill:var(--ink-3)">
+        <text x="28" y="415">pre</text><text x="28" y="437">policy</text><text x="28" y="459">goal</text>
+        <text x="128" y="415">pre</text><text x="128" y="437">policy</text><text x="128" y="459">goal</text>
+        <text x="228" y="415">pre</text><text x="228" y="437">policy</text><text x="228" y="459">goal</text>
+        <text x="328" y="415">pre</text><text x="328" y="437">policy</text><text x="328" y="459">goal</text>
+        <text x="428" y="415">pre</text><text x="428" y="437">policy</text><text x="428" y="459">goal</text>
+        <text x="528" y="415">pre</text><text x="528" y="437">policy</text><text x="528" y="459">goal</text>
+        <text x="628" y="415">pre</text><text x="628" y="437">policy</text><text x="628" y="459">goal</text>
+        <text x="694" y="415">pre</text><text x="694" y="437">policy</text><text x="694" y="459">goal</text>
+        <text x="760" y="415">pre</text><text x="760" y="437">policy</text><text x="760" y="459">goal</text>
+        <text x="826" y="415">pre</text><text x="826" y="437">policy</text><text x="826" y="459">goal</text>
+      </g>
+      <!-- names -->
+      <g style="font-size:11px">
+        <text x="22" y="484" class="b">perceive</text><text x="22" y="498" class="t2">leg_estimate</text>
+        <text x="122" y="484" class="b">select grasp</text><text x="122" y="498" class="t2">shank_grasp</text>
+        <text x="222" y="484" class="b">acquire shank</text><text x="222" y="498" class="t2">AcquireShank</text>
+        <text x="322" y="484" class="b">acquire trotter</text><text x="322" y="498" class="t2">trotter_grasp</text>
+        <text x="422" y="484" class="b">rotate on belt</text><text x="422" y="498" class="t2">RotateOnBelt</text>
+        <text x="522" y="484" class="b">pick and place</text><text x="522" y="498" class="t2">PickAndPlace</text>
+        <text x="622" y="484" class="t2">push</text><text x="622" y="498" class="t3">no code</text>
+        <text x="688" y="484" class="t2">inspect</text><text x="688" y="498" class="t3">judge only</text>
+        <text x="754" y="484" class="t2">transport</text><text x="754" y="498" class="t3">inside A</text>
+        <text x="820" y="484" class="t2">place</text><text x="820" y="498" class="t3">a step</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>Figure 13.7.</b> The plant as one hierarchy. Every edge carries a sub-goal down and an outcome up; the outcomes listed are the failure modes each skill declares in code, and every primitive also returns the runner's <code>precondition_failed</code> and <code>success_not_verified</code>. The black bus is the leg cell's composed skill, the grey one the loin infeed's; the loin never calls acquire trotter or pick and place (14.2, 14.5). Dashed edges go to primitives 8.1 counts that have no contract yet. The loin's sub-goals and judge are working assumptions (†, 14.3). The third job is drawn empty because 8.2 ranks candidates and commits to none.</figcaption>
+  </figure>
+
+  <p>Where learning sits in this hierarchy today: nowhere that decides. Every primitive's policy is a rule (the shank rule, the scripted turn about the centre of gravity) or a supervised model on top of a rule (the segmenter, the centre-of-gravity correction and the grasp offsets of Table 13.1). The routing is fixed: each declared outcome has exactly one edge, written by hand, and the graph raises <code>ContractError</code> at construction if one is missing. Hierarchical reinforcement learning would put learning at three places. (a) The routing: a high-level policy that picks the next primitive from the state, the policy over options. (b) The sub-goals: what the composed skill passes down, where to grip, how high to carry, where to release. (c) The primitive's own low-level policy, which for this cell is the bounded residual of 13.3.</p>
+  <p>The results on this page pick (b), and they pick supervised learning for it before any reinforcement learning. The largest loss is after release: every cut-angle failure above 5° in Table 11.7 came from the hold-down's lead-in turning a leg the arm had set down within 1.3 mm median (UR20) or 2.3 mm (SR-20iA) of the blade plane (11.6). No level of the arm's hierarchy controls that; it is a fixture model to fix. The second loss is a sub-goal error: closing the jaws moves the leg 20 to 25 mm toward its thin end, so a turn planned on the pre-grasp pose set the hock 22 to 24 mm outboard and scored 0 of 3 from the camera, and 2 of 3 with a second look after the grasp (11.6). The fix is a sub-goal recomputed after the grasp, which the graph already has an edge for, and a grasp point that moves the leg less, which is the learned offset of 11.7 with labels the simulator hands over for every candidate. Both are supervised, with a pre-registered gate (13.4). The routing has little to learn: the alignment graph has three terminals and one sensible edge per outcome, and its only open choice, retry against <code>let_pass</code>, is set by the takt, 2 to 4 s per lane at 1,000 head per hour (derived, 8.1). The library also records why a learned routing is not free: on the same events, "options and hierarchical RL ... can converge to suboptimal policies because the hierarchy prunes the policy space", shown on a Minecraft-like world of 10 tasks on 10 maps with 3 trials each (<a href="https://proceedings.mlr.press/v80/icarte18a.html">Toro Icarte et al. 2018</a>, Fig. 3, as <code>skill-composition-action-outcome-input.md</code> reads it). That note calls a reward machine the formal counterpart of this task graph; the graph is one written by hand. (c) comes after the hold-down is fixed, when the two slips in 20 on the SR-20iA's turn (Table 11.7) are the largest loss left: the residual of 13.3, reward equal to the contract's success check, about 2.1 hours of one process per 160,000 policy steps on this simulator.</p>
+  <p>What the library holds on hierarchical methods, and what it does not. It has no note on HIRO, HAC, feudal networks, the option-critic or skill chaining as Konidaris defined it; no claim is made about them here. What it does hold. A high-level policy over latent skills: SPiRL picks a latent every H steps under a learned prior (<a href="https://arxiv.org/abs/2010.11944">Pertsch, Lee and Lim 2020</a>), and OPAL's ablation puts a number on temporal abstraction, 55.3 ± 3.8 with one-step primitives against 81.1 with ten-step, antmaze in simulation, 4 seeds (<a href="https://arxiv.org/abs/2010.13611">Ajay et al. 2021</a>, Table 5). A sub-goal-passing hierarchy across bodies: a high level that outputs an x-y sub-goal delta and a per-morphology low level, simulation only (<a href="https://arxiv.org/abs/2003.01709">Hejna et al. 2020</a>). A meta-controller over a growing library that picks a skill index and a sub-goal embedding every step: LOTUS, forward transfer 74.0 ± 3.0 against 56 for experience replay on LIBERO-Object, 3 seeds, 20 trials per task (<a href="https://arxiv.org/abs/2311.02058">Wan et al. 2024</a>). A VLA that writes its own sub-goal in text: π0.5, where the high-level step helped even when skipped at inference (<a href="https://arxiv.org/abs/2504.16054">Fig. 13</a>, and Table 13.5). Chaining: a policy-sequencing baseline failed the fourth furniture sub-task because the initial state distribution had shifted, and pulling each skill's terminal states toward the next skill's initiation set took full-task success from 0 to 56 percent on one model (<a href="https://arxiv.org/abs/2111.07999">Lee et al. 2021</a>); widening a stationary skill's start states dropped Pick from 95 to 45 percent and the chain to 37.7 (<a href="https://arxiv.org/abs/2209.02778">Gu et al. 2022</a>). That is the failure the contract's preconditions exist to catch, and the reason the library's plan evaluates each skill on its predecessor's recorded terminal states before composing (<code>learning-grasp-lift-and-orient-skills.md</code>, section 5). Behaviour trees: the only note is Nav2's BT Navigator, where recovery logic changes by editing the tree's XML and not the code (<a href="https://docs.nav2.org/rolling/">Nav2 docs</a>); the task graph does the same with its edge table. Older than all of these, Morrow and Khosla define a skill as a composition of sensorimotor primitives that solves a recurring sub-goal, each primitive a controller, a trajectory and event detectors (<a href="https://doi.org/10.1109/ROBOT.1997.606800">1997</a>), which is the contract's policy plus its checks.</p>
+
+  <div class="tbl"><div class="cap">Table 13.7 · the four levels: goal condition, judge, what learns there today, what hierarchical RL would learn</div>
+  <div class="scroll"><table>
+    <thead><tr><th>Level</th><th>Goal condition</th><th>Who checks it</th><th>Learned at this level today</th><th>What hierarchical RL would learn here</th></tr></thead>
+    <tbody>
+      <tr><td>Primitive<br><span class="t3">acquire shank, as the example</span></td><td>The contract's success checks: jaws stopped between half the shank's width and the widest section under the pads; the shank rose with the tool, lag at most 2 mm on a 5 mm proof lift (3.1, 11.7)</td><td><code>run_skill</code> re-checks the claimed success; a failed check is <code>success_not_verified</code>, never success</td><td>No policy. Three supervised models feed the rules: segmenter and centre-of-gravity correction trained and kept, grasp offsets specified and untrained (Table 13.1)</td><td>The low-level policy: a bounded residual on the scripted turn, reward equal to the success check (13.3). Nowhere else yet</td></tr>
+      <tr><td>Composed skill<br><span class="t3">align a leg for the saw</span></td><td>The saw's cut within 10 mm of the hock at entry and exit and within 5° of square; both tolerances assumed (Table 11.7)</td><td>The saw: <code>CutResult</code> in simulation; in the plant a camera after the saw, a proposal (Table 13.2)</td><td>Nothing. One hand-written edge per outcome; an unrouted outcome fails construction</td><td>The sub-goals passed down (grasp point, release pose), supervised first from simulated labels (11.7); then the routing, a policy over options, which the library warns can prune the optimum (Toro Icarte et al. 2018)</td></tr>
+      <tr><td>Job<br><span class="t3">the alignment cell</span></td><td>Every leg aligned or handed to the manual station inside the takt, about 2 to 4 s per lane at 1,000 head per hour (derived, 8.1)</td><td>The cell's tally per shift; a pre-registered A/B before any model replaces a rule (13.4)</td><td>Nothing</td><td>Retry against <code>let_pass</code> under takt, and which composed skill for which arrival. The library holds no result of this kind on a production line (unverified)</td></tr>
+      <tr><td>Plant<br><span class="t3">jobs sharing primitives</span></td><td>Jobs whose every primitive is in the library, 7 of 21 after stage 2 (Figure 8.4), and yield held on matched lots (8.2)</td><td>Matched-lot yield against people; the roadmap's gates, one product at a time</td><td>Nothing shared beyond code. Each job retrains its perception and grasp offsets on its own product (14.3)</td><td>Primitives updated from the outcomes of every job that calls them. No plant-scale result in the library; the nearest evidence is the chaining loss in simulation (Lee et al. 2021, Gu et al. 2022)</td></tr>
+    </tbody>
+  </table></div></div>
 </section>
 
 <!-- 14 TRANSFER -->
