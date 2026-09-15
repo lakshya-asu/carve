@@ -46,7 +46,14 @@ from applications.pork_leg_alignment.grasping.shank_grasp_rule import SHANK_FRAC
 from applications.pork_leg_alignment.perception.leg_segmentation import EmptyBeltReference, LegSegmenter
 from applications.pork_leg_alignment.perception.perceive_leg import perceive_leg
 from applications.pork_leg_alignment.sim.cell import Cell
-from applications.pork_leg_alignment.sim.product import PRODUCT_BODY, LegConfig, leg_centreline, leg_half_width_m
+from applications.pork_leg_alignment.sim.product import (
+    ORIGIN_FRACTION,
+    PRODUCT_BODY,
+    LegConfig,
+    leg_centreline,
+    leg_half_width_m,
+    product_geom_ids,
+)
 from applications.pork_leg_alignment.sim.scene import CellConfig
 from applications.pork_leg_alignment.sim.sensing import CameraSpec
 from robotics.core.camera_frame import CameraFrameData
@@ -59,6 +66,9 @@ STEPS_PER_TICK = 5  # 10 ms of simulation per tick at the 2 ms timestep
 SPAWN_X_M = -1.05
 OUT_OF_VIEW_X_M = 1.3
 PERCEIVE_EVERY_S = 0.3
+# The jaw gripper's pads (assets/jaw_gripper.xml): 120 mm long along the tool x axis, prefixed g_ in the cell.
+PAD_GEOMS = ("g_finger_left_pad", "g_finger_right_pad")
+PAD_HALF_LENGTH_M = 0.060
 # A leg is perceived once its outline centre is inside this stretch under the camera.
 PERCEIVE_BAND_X_M = (-0.65, -0.25)
 
@@ -135,6 +145,7 @@ class MujocoBridgeNode(Node):
         self.actuators = [mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, n) for n in self.arm.actuator_names]
         self.tcp = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, TCP_SITE)
         self.body = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, PRODUCT_BODY)
+        self.pad_geoms = {mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, name): name for name in PAD_GEOMS}
         self.rng = np.random.default_rng(20260915)
         self.edges = EdgeEffects()
 
@@ -217,6 +228,26 @@ class MujocoBridgeNode(Node):
         rotation = self.cell.data.xmat[self.body].reshape(3, 3)
         return np.asarray(position + rotation @ leg_centreline(self.leg, np.array([SHANK_FRACTION]))[0])
 
+    def _widest_under_pads_m(self) -> float:
+        """Widest leg section between the jaw pads, which are 120 mm long along the leg, at the tool's position now."""
+        position = self.cell.data.xpos[self.body]
+        axis = self.cell.data.xmat[self.body].reshape(3, 3)[:, 0]
+        along_m = float((self.cell.data.site_xpos[self.tcp] - position) @ axis)
+        centre = ORIGIN_FRACTION + along_m / self.leg.length_m
+        span = PAD_HALF_LENGTH_M / self.leg.length_m
+        fractions = np.clip(np.linspace(centre - span, centre + span, 101), 0.0, 1.0)
+        return float(2 * leg_half_width_m(self.leg, fractions).max())
+
+    def _pads_touching_leg(self) -> list[str]:
+        """Names of the jaw pads in contact with any part of the leg right now."""
+        leg_geoms = set(int(g) for g in product_geom_ids(self.cell.model))
+        touching = set()
+        for contact in self.cell.data.contact[: self.cell.data.ncon]:
+            for pad, other in ((contact.geom1, contact.geom2), (contact.geom2, contact.geom1)):
+                if pad in self.pad_geoms and other in leg_geoms:
+                    touching.add(self.pad_geoms[pad])
+        return sorted(touching)
+
     def _run_checks(self, now: float) -> None:
         due = [check for check in self.pending_checks if check[0] <= now]
         self.pending_checks = [check for check in self.pending_checks if check[0] > now]
@@ -238,9 +269,11 @@ class MujocoBridgeNode(Node):
                 width = 2 * float(leg_half_width_m(self.leg, np.array([SHANK_FRACTION]))[0])
                 report = {
                     "event": "closed",
-                    "t_s": now,
-                    "opening_mm": 1000 * self.cell.gripper_opening_m,
-                    "shank_width_mm": 1000 * width,
+                    "t_s": round(now, 3),
+                    "opening_mm": round(1000 * self.cell.gripper_opening_m, 1),
+                    "shank_width_mm": round(1000 * width, 1),
+                    "widest_under_pads_mm": round(1000 * self._widest_under_pads_m(), 1),
+                    "pads_touching_leg": self._pads_touching_leg(),
                 }
             self.report.publish(String(data=json.dumps(report)))
             self.get_logger().info(f"grasp report: {report}")
@@ -259,7 +292,9 @@ class MujocoBridgeNode(Node):
             first = [float(v) for v in self.cell.data.ctrl[self.actuators]]
             self.trajectory = (start_s, times, positions, first)
             if len(times) >= 3:
-                self.pending_checks += [(start_s + times[1], "meet"), (start_s + times[2] + 0.3, "closed")]
+                self.pending_checks += [(start_s + times[1], "meet")]
+                # The opening at three times after closing tells a slow close from a close on something wider.
+                self.pending_checks += [(start_s + times[2] + after, "closed") for after in (0.3, 0.6, 1.0)]
         while self.cell.time_s < start_s + times[-1] and not self.stop.is_set():
             time.sleep(0.01)
         goal_handle.succeed()
@@ -269,6 +304,8 @@ class MujocoBridgeNode(Node):
         """Open to the requested width, or close when it is zero."""
         self.ready.wait()
         opening = float(goal_handle.request.command.position)
+        action = f"open to {1000 * opening:.0f} mm" if opening > 1e-3 else "close"
+        self.get_logger().info(f"gripper command at t = {self.cell.time_s:.3f} s: {action}")
         with self.lock:
             if opening > 1e-3:
                 self.cell.open_gripper(opening)

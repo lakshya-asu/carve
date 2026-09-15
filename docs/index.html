@@ -1650,15 +1650,15 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
   <p><b>First runs, end to end.</b> The simulated cell now runs as ROS 2 nodes too: the camera's leg goes out as a message, the policy decides, the executor plans and solves, the simulated arm follows the trajectory, and the simulator scores the result against the truth. The first runs found five defects in the chain, all fixed; the worst was stray pixels at the leg's outline that made the leg look twice as long and put every grasp 155 mm off. After the fixes, one leg per run:</p>
   <div class="tbl"><div class="cap">Table 11.6 · the grasp chain through ROS 2 and MoveIt against the simulated cell, one leg per run, 2026-09-15</div>
   <div class="scroll"><table>
-    <thead><tr><th>Arm</th><th class="num">Leg angle</th><th class="num">Tool to the true grasp point at the meeting</th><th class="num">Along belt / across / height, mm</th><th class="num">Jaws after closing (shank 101 mm)</th></tr></thead>
+    <thead><tr><th>Arm</th><th class="num">Leg angle</th><th class="num">Tool to the true grasp point at the meeting</th><th class="num">Along belt / across / height, mm</th><th class="num">Jaws after closing</th></tr></thead>
     <tbody>
-      <tr><td>SR-20iA</td><td class="num">0°</td><td class="num">19 mm</td><td class="num">−12 / +11 / +12</td><td class="num">116 mm</td></tr>
-      <tr><td>SR-20iA</td><td class="num">−35°</td><td class="num">17 mm</td><td class="num">−9 / +10 / +11</td><td class="num">110 mm</td></tr>
-      <tr><td>UR20</td><td class="num">+35°</td><td class="num">52 mm</td><td class="num">−16 / −5 / +49</td><td class="num">110 mm</td></tr>
+      <tr><td>SR-20iA</td><td class="num">0°</td><td class="num">19 mm</td><td class="num">−12 / +11 / +12</td><td class="num">116 mm, both pads on the leg †</td></tr>
+      <tr><td>SR-20iA</td><td class="num">−35°</td><td class="num">17 mm</td><td class="num">−9 / +10 / +11</td><td class="num">110 mm, contact not checked</td></tr>
+      <tr><td>UR20</td><td class="num">+35°</td><td class="num">52 mm</td><td class="num">−16 / −5 / +49</td><td class="num">110 mm, contact not checked</td></tr>
       <tr><td>UR20</td><td class="num">0°</td><td class="num">476 mm</td><td class="num">+425 / +122 / +178</td><td class="num">20 mm, closed on nothing</td></tr>
     </tbody>
   </table></div></div>
-  <p>The chain works on both arms from the camera to the gripper, and the SCARA refuses a tilted grasp through ROS exactly as designed. The SCARA reaches the grasp point within 17 to 19 mm. The UR20 is not there yet: on one run MoveIt's solver chose an arm configuration far from where the arm stood, and the arm could not swing there in the two seconds it had. And no run gripped the leg: the jaws stopped 9 to 15 mm wider than the shank. Those are the next things to fix, before the A/B test is worth running.</p>
+  <p>The chain works on both arms from the camera to the gripper, and the SCARA refuses a tilted grasp through ROS exactly as designed. The SCARA reaches the grasp point within 17 to 19 mm. The UR20 is not there yet: on one run MoveIt's solver chose an arm configuration far from where the arm stood, and the arm could not swing there in the two seconds it had. We first read the 110 to 116 mm openings as misses against a 101 mm shank, but the jaw pads are 120 mm long along a leg that widens toward the ham. On a rerun of the SCARA's square case that checks contact inside the simulator, both pads were on the leg, stopped at the widest section under them (113 mm). The other two 110 mm runs very likely gripped the same way; contact was not checked on them. † checked on the rerun.</p>
   <div class="tbl"><div class="cap">Table 11.5 · the A/B test, written down before it runs (<code>experiments/2026-09-15-intercept-grasp.md</code>)</div>
   <div class="scroll"><table>
     <thead><tr><th>Question</th><th>Conditions</th><th>Decided by</th></tr></thead>
@@ -1668,7 +1668,7 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
       <tr><td>SCARA or six-axis</td><td>SR-20iA vertical against UR20</td><td>if tilt is not needed and the SCARA holds within 2 legs of 20 of the UR20, it stays in on cost and speed; otherwise we propose the six-axis arm</td></tr>
     </tbody>
   </table></div></div>
-  <p class="chg"><b>Before the A/B test runs:</b> the jaws have to close on the shank (grasp height and jaw timing are the first suspects); the executor has to refuse IK answers far from the arm's current configuration; the simulated arms still sag under a leg (a commanded 5 mm lift rises 1.6 mm on the UR20 and 2.6 mm on the SCARA), so the lift check cannot be trusted yet; and after its first grasp the executor received more grasp actions with an impossible belt prediction, not yet explained.</p>
+  <p class="chg"><b>Before the A/B test runs:</b> the executor has to refuse IK answers far from the arm's current configuration, which is what sent the UR20 476 mm wide; the simulated arms still sag under a leg (a commanded 5 mm lift rises 1.6 mm on the UR20 and 2.6 mm on the SCARA), so holding the leg through the lift cannot be scored yet; and after its first grasp the executor received more grasp actions with an impossible belt prediction, not yet explained.</p>
 </section>
 
 <!-- 11 VIDEOS -->

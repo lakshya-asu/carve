@@ -108,7 +108,8 @@ Same input and output types. Specified now, trained only after policy A has run 
   followed on the simulation clock.
 - Tilted shank grasps have no IK path yet in the simulator skills (`arm.solve_ik_rotation` exists
   and is used by the trotter grasp).
-- The grip itself: in the first four end-to-end runs (below) the jaws never closed on the shank.
+- The lift check: the simulated arms still sag under a leg, so holding through a 5 mm lift cannot be
+  scored yet, and grip force against the leg's weight is unmeasured.
 - UR20 IK through MoveIt's KDL plugin can return a solution on a different arm configuration from
   the seed; the executor has to reject solutions far from the current joints before timing them.
 
@@ -151,8 +152,14 @@ Runs after those fixes:
   high; its tilt refusal also works through ROS (15 degrees asked, refused before planning).
 - UR20 at yaw 0: KDL's answer put the arm on a configuration up to 2.4 rad from where it stood, and
   the arm could not get there in the 2.1 s planned. At yaw +35 the tool was 49 mm too high.
-- No run gripped the shank: the jaws stopped 9 to 15 mm wider than it (and on the failed UR20 run,
-  closed on nothing). Not yet diagnosed: grasp height, jaw timing, or contact with a wider section.
+- Correction, same day: the first reading of the jaw column was wrong. It compared the opening with
+  the shank's width at the two-thirds point (101 mm), and called 110 to 116 mm a miss. The pads are
+  120 mm long along a leg that widens toward the ham. A rerun of the SR-20iA square case with the
+  bridge checking contact in MuJoCo: gripper opened to 142 mm at 1.45 s, close commanded at 2.91 s
+  (the meeting), opening 115.7, 115.0 and 114.9 mm at 0.9, 1.2 and 1.6 s after, the widest section
+  under the pads 113.0 mm, and both pads in contact with the leg at all three. So the SR-20iA square
+  run closed on the leg. The SR-20iA -35 and UR20 +35 runs (both 110 mm) very likely did too, but
+  contact was not checked on them; the UR20 yaw 0 run closed on nothing (20 mm).
 - In the first SR-20iA run the executor then received further grasp actions and refused them with a
   predicted closing position of 16 m, which points at the belt state after the bridge's first
   trajectory; not yet diagnosed.
