@@ -15,7 +15,9 @@ from meat_cell_sim.cameras import (
     DEPTH_CAMERAS,
     GEMINI_335L,
     REALSENSE_D455,
+    EdgeEffects,
     add_depth_camera,
+    apply_edge_effects,
     intrinsics_from_model,
     sense_depth,
 )
@@ -114,3 +116,31 @@ def test_saturated_colour_loses_depth() -> None:
     reported = sense_depth(depth, GEMINI_335L, np.random.default_rng(3), rgb=rgb)
     assert np.all(reported[22:28, 22:28] == 0)
     assert np.all(reported[50:, 50:] > 0)
+
+
+def test_edge_effects_leave_a_flat_surface_alone() -> None:
+    flat = np.full((120, 160), MOUNT_HEIGHT_M, dtype=np.float32)
+    out = apply_edge_effects(flat, GEMINI_335L.intrinsics, EdgeEffects(), np.random.default_rng(5))
+    assert np.array_equal(out, flat)
+
+
+def test_edge_effects_stay_inside_the_band_around_a_depth_step() -> None:
+    depth = np.full((120, 160), MOUNT_HEIGHT_M, dtype=np.float32)
+    depth[:, 80:] = MOUNT_HEIGHT_M - 0.10  # a 100 mm step at column 80
+    effects = EdgeEffects(max_incidence_deg=89.9)
+    out = apply_edge_effects(depth, GEMINI_335L.intrinsics, effects, np.random.default_rng(6))
+    changed_cols = np.nonzero(np.any(out != depth, axis=0))[0]
+    assert changed_cols.size > 0
+    assert changed_cols.min() >= 80 - effects.band_px - 1
+    assert changed_cols.max() <= 80 + effects.band_px
+    mixed = out[:, 76:84]
+    assert np.any((mixed > MOUNT_HEIGHT_M - 0.10 + 1e-4) & (mixed < MOUNT_HEIGHT_M - 1e-4))
+
+
+def test_edge_effects_drop_a_surface_seen_nearly_edge_on() -> None:
+    intr = GEMINI_335L.intrinsics
+    rows = np.arange(200, dtype=np.float32)[:, None] * np.ones((1, 160), dtype=np.float32)
+    # Depth rising 10 mm per pixel down the image: a surface tilted about 85 degrees from the ray.
+    steep = (0.5 + 0.010 * rows).astype(np.float32)
+    out = apply_edge_effects(steep, intr, EdgeEffects(jump_m=1.0), np.random.default_rng(7))
+    assert np.mean(out[50:150, 20:140] == 0) > 0.9

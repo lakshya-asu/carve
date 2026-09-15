@@ -37,6 +37,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+import cv2
 import mujoco
 import numpy as np
 
@@ -171,8 +172,95 @@ def intrinsics_from_model(model: mujoco.MjModel, camera_id: int) -> Intrinsics |
     )
 
 
+@dataclass(frozen=True)
+class EdgeEffects:
+    """What active stereo does at depth edges and on steep surfaces, which a rendered depth image does not.
+
+    MuJoCo draws a perfectly sharp depth step at an object's outline, so depth
+    segmentation in simulation came out exact (2 of 67,526 pixels wrong,
+    `experiments/2026-09-15-leg-segmentation.md`). Real stereo matches small
+    windows of pixels, so near an outline it reports depths from the wrong side
+    of the edge, or a mixture of both, and it loses depth on surfaces seen nearly
+    edge-on.
+
+    Attributes:
+        jump_m: Depth difference between neighbouring pixels that counts as an edge.
+        band_px: Half-width of the affected band around an edge. Assumed, unverified.
+        lateral_sigma_px: Sideways jitter of depth near edges; a D435 measures about
+            1 px below 0.7 m (Halmetschlager-Funek et al., IEEE RAM 2019, Table 2).
+        mixed_probability: Share of band pixels that report a mixture of the near and
+            far depth rather than either. Assumed, unverified.
+        max_incidence_deg: Surfaces tilted further than this from the camera ray return
+            nothing. Axial noise rises steeply past 45 degrees and the published fit stops
+            at 75 (Fankhauser et al., ICAR 2015); the cut-off itself is assumed.
+    """
+
+    jump_m: float = 0.02
+    band_px: int = 2
+    lateral_sigma_px: float = 1.0
+    mixed_probability: float = 0.5
+    max_incidence_deg: float = 75.0
+
+
+def apply_edge_effects(
+    depth_m: np.ndarray, intrinsics: Intrinsics, effects: EdgeEffects, rng: np.random.Generator
+) -> np.ndarray:
+    """Spread depth edges and drop steep surfaces in a depth image.
+
+    Args:
+        depth_m: (H, W) float, depth along the optical axis, 0 where missing.
+        intrinsics: Pinhole model of the image, for surface normals.
+        effects: Which artefacts, and how strong.
+        rng: Noise source.
+
+    Returns:
+        (H, W) float32 depth, 0 where lost.
+    """
+    depth = depth_m.astype(np.float32)
+    valid = depth > 0
+    jump_x = np.abs(np.diff(depth, axis=1, prepend=depth[:, :1])) > effects.jump_m
+    jump_y = np.abs(np.diff(depth, axis=0, prepend=depth[:1, :])) > effects.jump_m
+    size = 2 * effects.band_px + 1
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (size, size))
+    band = cv2.dilate((jump_x | jump_y).astype(np.uint8), kernel) > 0
+    out = depth.copy()
+
+    rows, cols = np.nonzero(band)
+    if rows.size:
+        height, width = depth.shape
+        jitter_rows = np.clip(np.rint(rows + rng.normal(0.0, effects.lateral_sigma_px, rows.size)), 0, height - 1)
+        jitter_cols = np.clip(np.rint(cols + rng.normal(0.0, effects.lateral_sigma_px, cols.size)), 0, width - 1)
+        out[rows, cols] = depth[jitter_rows.astype(int), jitter_cols.astype(int)]
+        near = cv2.erode(np.where(valid, depth, np.float32(np.inf)), kernel)
+        far = cv2.dilate(depth, kernel)
+        mixed = (rng.random(rows.size) < effects.mixed_probability) & np.isfinite(near[rows, cols])
+        weight = rng.random(rows.size).astype(np.float32)
+        r, c, w = rows[mixed], cols[mixed], weight[mixed]
+        out[r, c] = w * near[r, c] + (1.0 - w) * far[r, c]
+
+    # Surface normal from the back-projected points, angle against the viewing ray.
+    height, width = depth.shape
+    v, u = np.mgrid[0:height, 0:width].astype(np.float32)
+    points = np.stack(
+        [(u - intrinsics.cx) / intrinsics.fx * depth, -(v - intrinsics.cy) / intrinsics.fy * depth, -depth], axis=-1
+    )
+    normal = np.cross(np.gradient(points, axis=1), np.gradient(points, axis=0))
+    normal_length = np.linalg.norm(normal, axis=-1)
+    ray_length = np.linalg.norm(points, axis=-1)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        cosine = np.abs(np.sum(normal * points, axis=-1)) / (normal_length * ray_length)
+    steep = valid & ~band & (normal_length > 0) & (cosine < math.cos(math.radians(effects.max_incidence_deg)))
+    out[steep] = 0.0
+    out[~valid] = 0.0
+    return np.asarray(out, dtype=np.float32)
+
+
 def sense_depth(
-    true_depth_m: np.ndarray, camera: DepthCameraModel, rng: np.random.Generator, rgb: np.ndarray | None = None
+    true_depth_m: np.ndarray,
+    camera: DepthCameraModel,
+    rng: np.random.Generator,
+    rgb: np.ndarray | None = None,
+    edges: EdgeEffects | None = None,
 ) -> np.ndarray:
     """What the camera reports for a noiseless depth render.
 
@@ -182,14 +270,19 @@ def sense_depth(
         rng: Noise source; seed it per run.
         rgb: (H, W, 3) uint8 colour image of the same frame; saturated pixels lose
             depth. None skips that term.
+        edges: Edge and steep-surface artefacts, applied before the noise. None
+            reproduces the idealised depth the earlier experiments used.
 
     Returns:
         (H, W) float32 depth in metres, 0 where the camera returns nothing.
     """
+    if edges is not None:
+        true_depth_m = apply_edge_effects(true_depth_m, camera.intrinsics, edges, rng)
+    lost = true_depth_m <= 0
     depth = true_depth_m.astype(np.float64)
     noisy = depth + rng.normal(0.0, 1.0, depth.shape) * camera.depth_rms_m(depth)
     noisy = np.round(noisy / camera.depth_unit_m) * camera.depth_unit_m
-    noisy[(depth < camera.min_range_m) | (depth > camera.max_range_m)] = 0.0
+    noisy[(depth < camera.min_range_m) | (depth > camera.max_range_m) | lost] = 0.0
     out = noisy.astype(np.float32)
     if rgb is not None:
         out = depth_dropout_where_specular(out, rgb)

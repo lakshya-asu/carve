@@ -1,0 +1,465 @@
+{
+ "protocol": "experiments/2026-09-15-leg-segmentation.md, addition: real plant footage",
+ "graded_by": "eye, Claude, 2026-09-15",
+ "totals": {
+  "legs": 55,
+  "colour_complete": 14,
+  "colour_merges": 15,
+  "colour_splits": 10,
+  "colour_false": 1,
+  "sam_complete": 36,
+  "sam_merges": 1,
+  "sam_splits": 10,
+  "sam_missed": 7,
+  "sam_false": 0
+ },
+ "rows": [
+  {
+   "frame": "IMG_1005-t001",
+   "legs": 2,
+   "colour_complete": 0,
+   "colour_merges": 1,
+   "colour_splits": 0,
+   "colour_false": 0,
+   "sam_complete": 0,
+   "sam_merges": 1,
+   "sam_splits": 0,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "two touching legs; both methods merge; colour also spills over steel wall"
+  },
+  {
+   "frame": "IMG_1005-t003",
+   "legs": 2,
+   "colour_complete": 1,
+   "colour_merges": 0,
+   "colour_splits": 1,
+   "colour_false": 0,
+   "sam_complete": 2,
+   "sam_merges": 0,
+   "sam_splits": 0,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "colour loses the held leg's shank (and a patch inside)"
+  },
+  {
+   "frame": "IMG_1005-t005",
+   "legs": 3,
+   "colour_complete": 2,
+   "colour_merges": 0,
+   "colour_splits": 1,
+   "colour_false": 0,
+   "sam_complete": 2,
+   "sam_merges": 0,
+   "sam_splits": 0,
+   "sam_missed": 1,
+   "sam_false": 0,
+   "note": "colour splits held shank off; SAM misses the held top leg; colour middle leg spills onto wall"
+  },
+  {
+   "frame": "IMG_1005-t007",
+   "legs": 2,
+   "colour_complete": 1,
+   "colour_merges": 0,
+   "colour_splits": 1,
+   "colour_false": 1,
+   "sam_complete": 2,
+   "sam_merges": 0,
+   "sam_splits": 0,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "colour: hole in shank, held trotter separate, false piece at left wall"
+  },
+  {
+   "frame": "IMG_1005-t009",
+   "legs": 2,
+   "colour_complete": 0,
+   "colour_merges": 1,
+   "colour_splits": 0,
+   "colour_false": 0,
+   "sam_complete": 2,
+   "sam_merges": 0,
+   "sam_splits": 0,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "touching legs: colour merges (plus wall strip), SAM separates"
+  },
+  {
+   "frame": "IMG_1005-t011",
+   "legs": 3,
+   "colour_complete": 1,
+   "colour_merges": 1,
+   "colour_splits": 0,
+   "colour_false": 0,
+   "sam_complete": 3,
+   "sam_merges": 0,
+   "sam_splits": 0,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "leg touching partial piece bottom-left: colour merges, SAM separates"
+  },
+  {
+   "frame": "IMG_1005-t013",
+   "legs": 2,
+   "colour_complete": 2,
+   "colour_merges": 0,
+   "colour_splits": 0,
+   "colour_false": 0,
+   "sam_complete": 1,
+   "sam_merges": 0,
+   "sam_splits": 1,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "SAM splits the cut face from the ham"
+  },
+  {
+   "frame": "IMG_1005-t015",
+   "legs": 2,
+   "colour_complete": 0,
+   "colour_merges": 1,
+   "colour_splits": 1,
+   "colour_false": 0,
+   "sam_complete": 2,
+   "sam_merges": 0,
+   "sam_splits": 0,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "touching legs: colour merges both (plus wall) and cuts the trotter off; SAM separates both"
+  },
+  {
+   "frame": "IMG_1008-t001",
+   "legs": 5,
+   "colour_complete": 1,
+   "colour_merges": 1,
+   "colour_splits": 0,
+   "colour_false": 0,
+   "sam_complete": 3,
+   "sam_merges": 0,
+   "sam_splits": 1,
+   "sam_missed": 1,
+   "sam_false": 0,
+   "note": "IMG_1008 station, crowded, legs touching: colour merges four into one piece; SAM misses one, cuts one shank off"
+  },
+  {
+   "frame": "IMG_1008-t003",
+   "legs": 2,
+   "colour_complete": 0,
+   "colour_merges": 0,
+   "colour_splits": 2,
+   "colour_false": 0,
+   "sam_complete": 0,
+   "sam_merges": 0,
+   "sam_splits": 0,
+   "sam_missed": 2,
+   "sam_false": 0,
+   "note": "lean cut faces fall outside the colour band: colour gets fragments, SAM+colour drops both"
+  },
+  {
+   "frame": "IMG_1008-t005",
+   "legs": 4,
+   "colour_complete": 1,
+   "colour_merges": 1,
+   "colour_splits": 0,
+   "colour_false": 0,
+   "sam_complete": 3,
+   "sam_merges": 0,
+   "sam_splits": 1,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "colour merges three pieces into one; SAM cuts one shank off its ham"
+  },
+  {
+   "frame": "IMG_1008-t007",
+   "legs": 1,
+   "colour_complete": 1,
+   "colour_merges": 0,
+   "colour_splits": 0,
+   "colour_false": 0,
+   "sam_complete": 1,
+   "sam_merges": 0,
+   "sam_splits": 0,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "arm covers most of the belt; colour spills onto the wall"
+  },
+  {
+   "frame": "IMG_1008-t009",
+   "legs": 2,
+   "colour_complete": 0,
+   "colour_merges": 1,
+   "colour_splits": 0,
+   "colour_false": 0,
+   "sam_complete": 2,
+   "sam_merges": 0,
+   "sam_splits": 0,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "touching: colour merges, SAM separates"
+  },
+  {
+   "frame": "IMG_1008-t011",
+   "legs": 2,
+   "colour_complete": 0,
+   "colour_merges": 1,
+   "colour_splits": 0,
+   "colour_false": 0,
+   "sam_complete": 2,
+   "sam_merges": 0,
+   "sam_splits": 0,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "colour merges everything in the lower half into one piece"
+  },
+  {
+   "frame": "IMG_1008-t013",
+   "legs": 1,
+   "colour_complete": 0,
+   "colour_merges": 0,
+   "colour_splits": 1,
+   "colour_false": 0,
+   "sam_complete": 0,
+   "sam_merges": 0,
+   "sam_splits": 0,
+   "sam_missed": 1,
+   "sam_false": 0,
+   "note": "lean face: colour has holes and loses the shank; SAM+colour drops the leg"
+  },
+  {
+   "frame": "IMG_1008-t015",
+   "legs": 3,
+   "colour_complete": 0,
+   "colour_merges": 1,
+   "colour_splits": 2,
+   "colour_false": 0,
+   "sam_complete": 1,
+   "sam_merges": 0,
+   "sam_splits": 1,
+   "sam_missed": 1,
+   "sam_false": 0,
+   "note": "lean middle leg: colour fragment, SAM+colour drops it; front leg's ham split from its shank by both"
+  },
+  {
+   "frame": "IMG_1008-t017",
+   "legs": 3,
+   "colour_complete": 1,
+   "colour_merges": 1,
+   "colour_splits": 0,
+   "colour_false": 0,
+   "sam_complete": 1,
+   "sam_merges": 0,
+   "sam_splits": 2,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "crowded: colour merges two legs and scraps into one; SAM cuts both off at the shank"
+  },
+  {
+   "frame": "IMG_1008-t019",
+   "legs": 2,
+   "colour_complete": 1,
+   "colour_merges": 1,
+   "colour_splits": 0,
+   "colour_false": 0,
+   "sam_complete": 2,
+   "sam_merges": 0,
+   "sam_splits": 0,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "colour merges the front leg with the one under the gloves"
+  },
+  {
+   "frame": "IMG_1008-t021",
+   "legs": 5,
+   "colour_complete": 0,
+   "colour_merges": 2,
+   "colour_splits": 1,
+   "colour_false": 0,
+   "sam_complete": 4,
+   "sam_merges": 0,
+   "sam_splits": 0,
+   "sam_missed": 1,
+   "sam_false": 0,
+   "note": "colour merges two pairs and fragments the lean front leg; SAM+colour separates four, drops the lean front leg"
+  },
+  {
+   "frame": "IMG_1008-t023",
+   "legs": 5,
+   "colour_complete": 0,
+   "colour_merges": 2,
+   "colour_splits": 0,
+   "colour_false": 0,
+   "sam_complete": 3,
+   "sam_merges": 0,
+   "sam_splits": 2,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "colour merges three legs into one and the back row into another; SAM cuts two legs at the shank"
+  },
+  {
+   "frame": "IMG_1008-t025",
+   "legs": 2,
+   "colour_complete": 2,
+   "colour_merges": 0,
+   "colour_splits": 0,
+   "colour_false": 0,
+   "sam_complete": 0,
+   "sam_merges": 0,
+   "sam_splits": 2,
+   "sam_missed": 0,
+   "sam_false": 0,
+   "note": "two long-shank legs apart on the belt: colour gets both whole, SAM cuts both in two"
+  }
+ ],
+ "timing": {
+  "torch_threads": 6,
+  "points_per_side": 16,
+  "rows": [
+   {
+    "frame": "IMG_1005-t001.0",
+    "colour_pieces": 4,
+    "colour_ms": 252.13117199018598,
+    "sam_pieces": 3,
+    "sam_ms": 77892.49844796723
+   },
+   {
+    "frame": "IMG_1005-t003.0",
+    "colour_pieces": 3,
+    "colour_ms": 56.13921501208097,
+    "sam_pieces": 3,
+    "sam_ms": 85599.77535001235
+   },
+   {
+    "frame": "IMG_1005-t005.0",
+    "colour_pieces": 5,
+    "colour_ms": 50.54869799641892,
+    "sam_pieces": 3,
+    "sam_ms": 85332.8048090334
+   },
+   {
+    "frame": "IMG_1005-t007.0",
+    "colour_pieces": 6,
+    "colour_ms": 33.87610998470336,
+    "sam_pieces": 4,
+    "sam_ms": 81040.41281802347
+   },
+   {
+    "frame": "IMG_1005-t009.0",
+    "colour_pieces": 4,
+    "colour_ms": 33.58898195438087,
+    "sam_pieces": 4,
+    "sam_ms": 52904.96963803889
+   },
+   {
+    "frame": "IMG_1005-t011.0",
+    "colour_pieces": 3,
+    "colour_ms": 16.254579997621477,
+    "sam_pieces": 4,
+    "sam_ms": 61449.41870204639
+   },
+   {
+    "frame": "IMG_1005-t013.0",
+    "colour_pieces": 5,
+    "colour_ms": 21.43317396985367,
+    "sam_pieces": 5,
+    "sam_ms": 63174.49312197277
+   },
+   {
+    "frame": "IMG_1005-t015.0",
+    "colour_pieces": 3,
+    "colour_ms": 27.671877993270755,
+    "sam_pieces": 4,
+    "sam_ms": 60387.98575499095
+   },
+   {
+    "frame": "IMG_1008-t001.0",
+    "colour_pieces": 2,
+    "colour_ms": 22.36203203210607,
+    "sam_pieces": 7,
+    "sam_ms": 59508.30236199545
+   },
+   {
+    "frame": "IMG_1008-t003.0",
+    "colour_pieces": 5,
+    "colour_ms": 25.271927006542683,
+    "sam_pieces": 2,
+    "sam_ms": 58609.31965900818
+   },
+   {
+    "frame": "IMG_1008-t005.0",
+    "colour_pieces": 2,
+    "colour_ms": 25.267969991546124,
+    "sam_pieces": 8,
+    "sam_ms": 56148.742870020214
+   },
+   {
+    "frame": "IMG_1008-t007.0",
+    "colour_pieces": 3,
+    "colour_ms": 26.68544399784878,
+    "sam_pieces": 5,
+    "sam_ms": 54949.534271028824
+   },
+   {
+    "frame": "IMG_1008-t009.0",
+    "colour_pieces": 2,
+    "colour_ms": 21.434824040625244,
+    "sam_pieces": 8,
+    "sam_ms": 53797.6541420212
+   },
+   {
+    "frame": "IMG_1008-t011.0",
+    "colour_pieces": 4,
+    "colour_ms": 27.45898300781846,
+    "sam_pieces": 5,
+    "sam_ms": 57585.92655498069
+   },
+   {
+    "frame": "IMG_1008-t013.0",
+    "colour_pieces": 4,
+    "colour_ms": 20.748468989040703,
+    "sam_pieces": 1,
+    "sam_ms": 60540.6964700087
+   },
+   {
+    "frame": "IMG_1008-t015.0",
+    "colour_pieces": 4,
+    "colour_ms": 33.85477000847459,
+    "sam_pieces": 5,
+    "sam_ms": 60979.77673099376
+   },
+   {
+    "frame": "IMG_1008-t017.0",
+    "colour_pieces": 3,
+    "colour_ms": 24.887061037588865,
+    "sam_pieces": 12,
+    "sam_ms": 72158.55547401588
+   },
+   {
+    "frame": "IMG_1008-t019.0",
+    "colour_pieces": 4,
+    "colour_ms": 41.514577984344214,
+    "sam_pieces": 6,
+    "sam_ms": 85901.99333103374
+   },
+   {
+    "frame": "IMG_1008-t021.0",
+    "colour_pieces": 5,
+    "colour_ms": 51.382967038080096,
+    "sam_pieces": 6,
+    "sam_ms": 79425.91521603754
+   },
+   {
+    "frame": "IMG_1008-t023.0",
+    "colour_pieces": 3,
+    "colour_ms": 45.04874401027337,
+    "sam_pieces": 9,
+    "sam_ms": 68271.63997897878
+   },
+   {
+    "frame": "IMG_1008-t025.0",
+    "colour_pieces": 4,
+    "colour_ms": 24.59997101686895,
+    "sam_pieces": 5,
+    "sam_ms": 66398.55596498819
+   }
+  ]
+ }
+}

@@ -32,6 +32,7 @@ third_party/
 .obsidian/workspace-mobile.json
 .obsidian/cache
 .trash/
+
 # kept out of the public repo: personal assistant memory and raw customer messages
 memory/
 field-notes/customer/meat-men/

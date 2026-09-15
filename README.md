@@ -69,6 +69,12 @@ env -u PYTHONPATH PYTHONPATH=src MUJOCO_GL=egl python -m pytest -q     # 184 tes
 | `scripts/show_leg_variants.py --count 20 --out legs.png` | The generated leg population |
 | `scripts/measure_depth_cameras.py [--mount-yaw-deg 90]` | Gemini 335L against D455 on the 20 legs: depth noise, pixels on the shank, legs in view |
 | `scripts/view_depth_cameras.py --out cams.mp4` | Both depth cameras side by side: colour, reported depth, depth error |
+| `scripts/measure_leg_segmentation.py [--edge-effects]` | Depth-height leg segmentation on 20 legs × 9 poses against the silhouette |
+| `scripts/view_leg_segmentation.py` | Video of the depth-height segmenter on moving legs |
+| `scripts/view_edge_effects.py` | Zoomed picture of the camera's edge effects and the mask fringe they cause |
+| `scripts/train_leg_segmenter.py [--edge-effects]` | Render simulated frames and train the U-Net leg segmenter on CPU |
+| `scripts/compare_leg_segmenters.py --checkpoint <pt> [--edge-effects]` | Geometry, U-Net and both combined on the same 180 frames, with time per frame |
+| `scripts/segment_real_footage.py --frames <dir> --checkpoint <sam.pth> --out <dir>` | Real plant frames: colour rule against Segment Anything plus the colour rule |
 
 Prefix each with `env -u PYTHONPATH PYTHONPATH=src MUJOCO_GL=egl`. Experiment records, written
 before each run, are in `experiments/`; raw results in `experiments/data/`.

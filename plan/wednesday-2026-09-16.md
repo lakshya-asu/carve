@@ -58,6 +58,16 @@ planar push against a datum ([[latent-skill-representations]]).
   perception, sim demo video, next steps.
 - [ ] Deck
 - [ ] Demo video embedded
+- Videos for the main presentation (Lakshya, 2026-09-15): the depth camera comparison,
+  `~/Videos/meat-cell/2026-09-15/depth-cameras.mp4` (Gemini 335L and D455 side by side: colour,
+  reported depth, depth error, three arrival angles).
+- Pipeline step 1, leg segmentation: `~/Videos/meat-cell/2026-09-15/leg-segmentation.mp4` (true
+  and found outline, height above the belt, matched, extra and missed pixels, per-frame readout).
+  Checked 2026-09-15. Pair it with `edge-effects.png` (same folder: what stereo edge effects do to
+  the outline) and the geometry against learned table on the plan page.
+- Real footage: `outputs/real-footage/real-footage-segmentation.mp4` (21 plant frames, colour rule
+  against Segment Anything plus the colour rule) and the two stills on the plan page, touching legs
+  and lean cut faces.
 - [ ] Lakshya review
 
 ## 3. Simulation of the station, then two alignment approaches
@@ -108,9 +118,14 @@ Order set by Lakshya: model the problem completely, then test approaches.
 - Week: a learned baseline on the same test set.
 - Current state: pipeline measured on slabs; on a leg the old pose estimator was off by 47 mm and
   19 degrees because it uses the area centroid, not the hock.
+- [x] Whole-leg segmentation from depth over 20 legs × 9 poses, with and without edge effects
+  (2026-09-15, [[2026-09-15-leg-segmentation]])
+- [x] Learned baseline, first pass: small U-Net trailed geometry by 3 mm from a label-shift bug;
+  fixed, retraining 2026-09-15
+- [x] Real plant footage: colour rule 14 of 55 legs whole and separate, SAM + colour 36
+- [ ] Retrained U-Net compared, decision recorded
 - [ ] Hock and trotter keypoints from depth
 - [ ] Error table over 20 legs
-- [ ] Learned baseline
 
 ## 6. Skill library skeleton
 
