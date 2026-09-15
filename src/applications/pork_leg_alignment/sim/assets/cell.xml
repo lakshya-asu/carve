@@ -34,7 +34,6 @@
     <material name="belt_mat" rgba="0.88 0.89 0.90 1"/>
     <material name="steel" rgba="0.72 0.74 0.76 1"/>
     <material name="slab_mat" rgba="0.87 0.71 0.68 1"/>
-    <material name="lane_mat" rgba="0.55 0.57 0.60 1"/>
   </asset>
 
   <worldbody>
@@ -52,8 +51,9 @@
     <!--
       Belt. A long slab on a slide joint driven at constant velocity; the product
       is carried by friction rather than teleported, so slip is emergent and the
-      tracking chain sees the same error a real belt produces. Two metres of
-      travel is far longer than one episode needs.
+      tracking chain sees the same error a real belt produces. Four metres long
+      (2026-09-15, was 3.2 m): at 0.3 m/s an alignment cycle needs about 1.1 m
+      of belt after the pick, and the saw and hold-down sit downstream of that.
     -->
     <body name="belt" pos="0 0.50 0.87">
       <!--
@@ -64,7 +64,7 @@
         speed and the only error is the load term, under 1 mm/s here.
       -->
       <joint name="belt_x" type="slide" axis="1 0 0" range="-3 3" damping="0" armature="1"/>
-      <geom name="belt_surface" type="box" size="1.6 0.35 0.03" material="belt_mat"
+      <geom name="belt_surface" type="box" size="2.0 0.35 0.03" material="belt_mat"
             friction="0.55 0.02 0.001" class="cell_solid" mass="40"/>
       <site name="belt_origin" pos="0 0 0.03" size="0.004" rgba="0.9 0.6 0.2 0.6"/>
     </body>
@@ -79,7 +79,7 @@
       against the static world and held it at zero speed under full actuator
       force.
     -->
-    <geom name="rail_far" type="box" pos="0 0.865 0.945" size="1.6 0.008 0.045"
+    <geom name="rail_far" type="box" pos="0 0.865 0.945" size="2.0 0.008 0.045"
           material="steel" class="cell_solid"/>
 
     <!--
@@ -95,17 +95,10 @@
     </body>
 
     <!--
-      Cutter lane. The datum edge is the reference the placement error is measured
-      against: lane offset is the y distance from slab centre to lane centreline,
-      yaw is the angle between the slab long axis and the lane axis.
+      The slab cutter lane that stood beyond the open edge at (0.30, -0.45) is
+      gone (2026-09-15): the trotter saw replaced it, and the UR20's wrist hit
+      it reaching for a trotter hanging over that edge.
     -->
-    <body name="cutter_lane" pos="0.30 -0.45 0.90">
-      <geom name="lane_floor" type="box" size="0.16 0.10 0.010" pos="0 0 0.010"
-            material="lane_mat" class="cell_solid"/>
-      <geom name="lane_datum" type="box" size="0.16 0.008 0.030" pos="0 -0.108 0.030"
-            material="steel" class="cell_solid"/>
-      <site name="lane_centre" pos="0 0 0.020" size="0.005" rgba="0.2 0.6 0.9 0.8"/>
-    </body>
 
     <!--
       Cameras. Overhead sits 800 mm above the belt and 400 mm upstream of the
@@ -155,6 +148,5 @@
     <jointvel name="belt_speed" joint="belt_x"/>
     <framepos name="slab_pos" objtype="site" objname="slab_centre"/>
     <framequat name="slab_quat" objtype="body" objname="slab"/>
-    <framepos name="lane_pos" objtype="site" objname="lane_centre"/>
   </sensor>
 </mujoco>

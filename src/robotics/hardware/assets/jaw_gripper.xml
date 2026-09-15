@@ -4,8 +4,20 @@
     (library/hardware/arm-models-for-sim.md): 80 mm stroke per jaw, 1800 N grip
     force as the arithmetic total over both jaws (900 N each), 2.6 kg, fingers up
     to 160 mm long. Pads are 120 mm long along the tool x axis so a grasp across
-    a shank has a long contact line to resist the moment of a hanging leg; the
-    pad length is a design choice, not a Zimmer part.
+    a shank has a long contact line to resist the moment of a hanging leg, and
+    90 mm tall, sized to a shank lying on the belt (80 to 96 mm from the belt to
+    its top across the leg population): the pad tip sits 35 mm below the tool
+    centre point, so with the tool on the shank's centreline the tip clears the
+    belt by a few millimetres and the pad reaches the shank's top. With 60 mm
+    pads centred on the tool point, a 766 mm leg's shank stood 18 mm above the
+    pads and the finger arms closed on it (2026-09-15). Each pad is drawn as
+    three 40 mm segments because MuJoCo gives a box on a convex hull one contact
+    point: a single 120 mm box on a tapering shank touched at one edge only, and
+    the leg pivoted and wedged along it; three segments give each pad a line of
+    contacts. Closing on the taper still drives the leg about 20 mm toward its
+    thin end before the pads settle; vertical cylinder ribs were tried and
+    threw the leg 40 to 50 mm and splayed the jaws. The pads are a design
+    choice, not a Zimmer part.
 
     Same names as gripper.xml, so gripper.py measures it the same way. Frame: +z
     points away from the wrist along the approach, fingers open along y.
@@ -30,7 +42,7 @@
       <geom name="coupler" type="cylinder" size="0.045 0.012" pos="0 0 0.012"/>
       <geom name="body_block" type="box" size="0.060 0.110 0.045" pos="0 0 0.069"/>
 
-      <!-- Tool centre point: midway between the closed pads, at pad mid height. -->
+      <!-- Tool centre point: midway between the closed pads, 10 mm below the pads' mid height. -->
       <site name="tcp" pos="0 0 0.234" size="0.005" rgba="0.9 0.3 0.3 0.9"/>
       <site name="grasp_axis" pos="0 0 0.234" size="0.004" rgba="0.3 0.9 0.3 0.6"/>
 
@@ -38,18 +50,26 @@
         <inertial pos="0 0 0.07" mass="0.25" diaginertia="0.0012 0.0012 0.0002"/>
         <joint name="finger_left_joint" range="0 0.080"/>
         <geom name="finger_left_arm" type="box" size="0.015 0.008 0.060" pos="0 0.004 0.060"/>
-        <geom name="finger_left_pad" type="box" size="0.060 0.005 0.030" pos="0 -0.005 0.120"
+        <geom name="finger_left_pad" type="box" size="0.020 0.005 0.045" pos="0 -0.005 0.110"
               rgba="0.12 0.13 0.15 1"/>
-        <site name="pad_left" pos="0 -0.010 0.120" size="0.003" rgba="0.9 0.6 0.2 0.6"/>
+        <geom name="finger_left_pad_fore" type="box" size="0.020 0.005 0.045" pos="0.040 -0.005 0.110"
+              rgba="0.12 0.13 0.15 1"/>
+        <geom name="finger_left_pad_aft" type="box" size="0.020 0.005 0.045" pos="-0.040 -0.005 0.110"
+              rgba="0.12 0.13 0.15 1"/>
+        <site name="pad_left" pos="0 -0.010 0.110" size="0.003" rgba="0.9 0.6 0.2 0.6"/>
       </body>
 
       <body name="finger_right" pos="0 -0.020 0.114">
         <inertial pos="0 0 0.07" mass="0.25" diaginertia="0.0012 0.0012 0.0002"/>
         <joint name="finger_right_joint" range="-0.080 0"/>
         <geom name="finger_right_arm" type="box" size="0.015 0.008 0.060" pos="0 -0.004 0.060"/>
-        <geom name="finger_right_pad" type="box" size="0.060 0.005 0.030" pos="0 0.005 0.120"
+        <geom name="finger_right_pad" type="box" size="0.020 0.005 0.045" pos="0 0.005 0.110"
               rgba="0.12 0.13 0.15 1"/>
-        <site name="pad_right" pos="0 0.010 0.120" size="0.003" rgba="0.9 0.6 0.2 0.6"/>
+        <geom name="finger_right_pad_fore" type="box" size="0.020 0.005 0.045" pos="0.040 0.005 0.110"
+              rgba="0.12 0.13 0.15 1"/>
+        <geom name="finger_right_pad_aft" type="box" size="0.020 0.005 0.045" pos="-0.040 0.005 0.110"
+              rgba="0.12 0.13 0.15 1"/>
+        <site name="pad_right" pos="0 0.010 0.110" size="0.003" rgba="0.9 0.6 0.2 0.6"/>
       </body>
 
       <camera name="wrist" pos="0 -0.12 0.07" quat="0.9239 0.3827 0 0" fovy="58"/>

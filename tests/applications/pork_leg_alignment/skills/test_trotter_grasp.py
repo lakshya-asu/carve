@@ -14,7 +14,8 @@ import pytest
 from applications.pork_leg_alignment.sim.cell import Cell
 from applications.pork_leg_alignment.sim.product import LegConfig
 from applications.pork_leg_alignment.sim.scene import CellConfig
-from applications.pork_leg_alignment.skills import AcquireTrotterEnd, SelectTrotterEndGrasp
+from applications.pork_leg_alignment.skills import AcquireTrotterEnd, EstimateLegFromGroundTruth, SelectTrotterEndGrasp
+from applications.pork_leg_alignment.skills.shank_grasp import LIFT_FOLLOW_TOLERANCE_M
 from robotics.core.skill_library import PRECONDITION_FAILED, SUCCESS, run_skill
 from robotics.hardware.arms import ArmModel
 from robotics.hardware.grippers import GripperModel
@@ -26,7 +27,8 @@ BLADE_PLANE_Y_M = 0.12  # the saw's default: 30 mm outside the open edge at y = 
 def _grip(cell: Cell, leg_y_m: float):
     cell.reset()
     cell.place_product(0.30, leg_y_m, -math.pi / 2, settle_s=0.3)
-    selected = run_skill(SelectTrotterEndGrasp(), cell, {})
+    estimated = run_skill(EstimateLegFromGroundTruth(), cell, {})
+    selected = run_skill(SelectTrotterEndGrasp(), cell, estimated.outputs)
     assert selected.outcome == SUCCESS
     return run_skill(AcquireTrotterEnd(), cell, selected.outputs)
 
@@ -44,7 +46,7 @@ def test_the_ur20_grips_an_overhanging_trotter_end_on_and_lifts_it(ur20_three_fi
     result = _grip(cell, BLADE_PLANE_Y_M + cell.config.leg.hock_offset_m)
     assert result.outcome == SUCCESS, f"{result.outcome}: {dict(result.evidence)}"
     assert result.evidence["tool_rise_m"] > 0.0005
-    assert abs(result.evidence["part_minus_tool_m"]) <= 0.001
+    assert abs(result.evidence["part_minus_tool_m"]) <= LIFT_FOLLOW_TOLERANCE_M
 
 
 def test_a_trotter_lying_on_the_belt_is_refused_before_the_arm_moves(ur20_three_finger) -> None:

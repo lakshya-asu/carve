@@ -27,6 +27,7 @@ from applications.pork_leg_alignment.sim.scene import CellConfig
 from applications.pork_leg_alignment.skills import (
     AcquireShank,
     AcquireTrotterEnd,
+    EstimateLegFromGroundTruth,
     SelectShankGrasp,
     SelectTrotterEndGrasp,
 )
@@ -266,7 +267,8 @@ def film_grasp(title: str, arm: ArmModel, gripper: GripperModel, trotter_end: bo
         rule = "PASS = the tool rises on a 5 mm lift and the part stays within 1 mm of it"
         film.caption = [headline, rule, "leg placed square on a stopped belt"]
         cell.step(seconds=0.6)
-        selected = run_skill(select, cell, {})
+        estimated = run_skill(EstimateLegFromGroundTruth(), cell, {})
+        selected = run_skill(select, cell, estimated.outputs)
         film.caption = [headline, rule, f"skill 1 {select.name}: {selected.outcome}"]
         if selected.outcome != SUCCESS:
             film.hold(cell.data, 3.0)

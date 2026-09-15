@@ -81,13 +81,12 @@ def test_cameras_sit_at_the_heights_the_experiment_record_specifies() -> None:
         assert height == pytest.approx(expected_m, abs=1e-6), f"{cam_name} sits {height:.3f} m above the surface"
 
 
-def test_pick_zone_and_cutter_lane_are_inside_the_arm_reach() -> None:
+def test_pick_zone_is_inside_the_arm_reach() -> None:
     model, data = build_model()
     _settle(model, data, 0.1)
     base = _site(model, data, "arm_mount")
-    for name in ("slab_centre", "lane_centre"):
-        reach = float(np.linalg.norm(_site(model, data, name) - base))
-        assert reach < UR5E_MAX_REACH_M, f"{name} at {reach:.3f} m is outside the UR5e reach"
+    reach = float(np.linalg.norm(_site(model, data, "slab_centre") - base))
+    assert reach < UR5E_MAX_REACH_M, f"slab_centre at {reach:.3f} m is outside the UR5e reach"
 
 
 def test_slab_rests_on_the_belt_without_sinking() -> None:

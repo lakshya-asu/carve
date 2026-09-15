@@ -54,6 +54,7 @@ from applications.pork_leg_alignment.sim.product import (
 logger = logging.getLogger(__name__)
 
 SAW_BODY = "saw_blade"
+SAW_POST_GEOM = "saw_post"
 SAW_DISC_GEOM = "saw_disc"
 BELT_BODY = "belt"
 BELT_GEOM = "belt_surface"
@@ -207,7 +208,7 @@ def add_saw(spec: mujoco.MjSpec, config: SawConfig) -> None:
         **visual,
     )
     spec.worldbody.add_geom(
-        name="saw_post",
+        name=SAW_POST_GEOM,
         type=mujoco.mjtGeom.mjGEOM_BOX,
         size=[0.04, 0.04, (centre[2] - radius) / 2],
         pos=[centre[0], centre[1] - 0.08, (centre[2] - radius) / 2],

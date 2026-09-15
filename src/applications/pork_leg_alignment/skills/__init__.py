@@ -5,12 +5,23 @@ the leg model, which is why they live in the application. A skill with no produc
 `robotics/skills/`, which is created with the first such skill.
 """
 
+from applications.pork_leg_alignment.skills.leg_estimate import (
+    EstimateLegFromCamera,
+    EstimateLegFromGroundTruth,
+    LegEstimate,
+)
+from applications.pork_leg_alignment.skills.rotate_on_belt import Alignment, RotateOnBelt
 from applications.pork_leg_alignment.skills.shank_grasp import AcquireShank, SelectShankGrasp, ShankGrasp
 from applications.pork_leg_alignment.skills.trotter_grasp import AcquireTrotterEnd, SelectTrotterEndGrasp, TrotterGrasp
 
 __all__ = [
     "AcquireShank",
     "AcquireTrotterEnd",
+    "Alignment",
+    "EstimateLegFromCamera",
+    "EstimateLegFromGroundTruth",
+    "LegEstimate",
+    "RotateOnBelt",
     "SelectShankGrasp",
     "SelectTrotterEndGrasp",
     "ShankGrasp",

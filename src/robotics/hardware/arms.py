@@ -183,7 +183,7 @@ UR20_LINK_RADIUS_M = (0.090, 0.075, 0.060, 0.050, 0.050, 0.045)
 # Position servo stiffness per joint, N m/rad. UR publishes no torque limits or
 # servo gains; these are high enough that the arm tracks under its own weight
 # with gravity compensation on, chosen in simulation.
-UR20_KP = (20000.0, 20000.0, 12000.0, 3000.0, 3000.0, 2000.0)
+UR20_KP = (200000.0, 200000.0, 120000.0, 30000.0, 30000.0, 20000.0)
 
 # FANUC SR-20iA, from its datasheet unless marked.
 SR20IA_ARM_LENGTHS_M = (0.550, 0.550)  # derived from the envelope drawing, unverified
@@ -195,10 +195,30 @@ SR20IA_J4_RANGE_RAD = math.radians(720.0)
 SR20IA_ARM_PLANE_HEIGHT_M = 0.60
 SR20IA_QUILL_LENGTH_M = 0.45
 SR20IA_LINK_MASS_KG = (18.0, 10.0, 3.0, 1.0)
-SR20IA_KP = (30000.0, 20000.0, 40000.0, 800.0)
+# J4 at 800 N m/rad let a jaw's uneven squeeze on a shank twist the tool a few
+# degrees, so the pads closed skewed and the finger arms bore on the leg; 8000
+# holds it (2026-09-15). Both values are assumptions, as the UR20's are.
+SR20IA_KP = (30000.0, 20000.0, 40000.0, 8000.0)
 
 ARM_RGBA = (0.82, 0.84, 0.86, 1.0)
 JOINT_ARMATURE = 0.5  # rotor inertia is not published for either arm; keeps the servos stable
+
+# Integral action on the joint position loop, applied by whatever steps the
+# cell (`Cell.step`). MuJoCo's position actuator is a pure spring and damper, so
+# under a leg's weight it settles a few millimetres low: on a commanded 5 mm
+# lift the UR20 rose 1.6 mm and the SR-20iA 2.6 mm (2026-09-14). A real drive
+# closes its position loop with an integrator and holds a rated payload at its
+# repeatability (UR20 0.05 mm, SR-20iA 0.01 mm, both datasheets). The gain is
+# the rate at which the command is corrected per unit of standing error, and
+# the limit bounds the correction so a joint held against something cannot
+# wind up. Both chosen in simulation against the check in
+# plan/overnight-2026-09-14.md task 4b: at 10 /s the UR20 rose 5.08 mm and the
+# SR-20iA 5.06 mm of a commanded 5 mm holding the default leg, steady within
+# 0.04 mm over the next second; at 20 /s the UR20 hunted at 3 Hz, a millimetre
+# either way at the tool; at 5 /s it was still creeping 0.3 s after the move
+# (measured 2026-09-15).
+SERVO_INTEGRAL_GAIN_PER_S = 10.0
+SERVO_INTEGRAL_LIMIT = 0.05  # radians, or metres on a prismatic joint
 
 
 def _rot_x(angle: float) -> np.ndarray:

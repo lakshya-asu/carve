@@ -69,6 +69,40 @@ round a shank lying on the belt without its pads striking the belt.
 
 8 conditions, 160 episodes. Deterministic simulation, so one episode per leg per condition.
 
+Amended 2026-09-15, before any condition ran its 20 legs, after shakedown runs on legs 0 to 2 of the
+population. Every change is in the code with the measurement that motivated it; the protocol,
+trial counts and success definition are unchanged.
+
+- Cell layout. At 0.30 m/s a grasp-and-rotate cycle needs about 1.1 m of belt after the pick
+  (grasp 1.9 s, turn and release 1.75 s, measured on the default leg), so the saw and hold-down
+  moved from x = 1.10 m to x = 1.75 m, the hold-down's pressing section is 0.50 m long (lead-in
+  from x = 1.11 m), the belt is 4 m long, and the SR-20iA is mounted at x = 0.35 m so its 1.1 m
+  reach covers both the pick and the set-down. The UR20 stays at x = 0. The layout is a design
+  output of this work, not a fact about the plant.
+- Ready pose. Both arms wait over the open-edge side of the belt at (x -0.10, y 0.25, 0.21 m up)
+  between legs, and return there after release; from mid-belt the SR-20iA swept its open jaws
+  through a 766 mm leg's ham on the way to the shank.
+- Arm servos. Integral action (10 /s), velocity feedforward and a ten-times stiffer UR20 position
+  loop; SR-20iA J4 at 8000 N m/rad. Before: 5 mm lifts of 1.6 and 2.6 mm; 30 to 40 mm tracking
+  lag on fast moves. After: lifts within 0.1 mm, a moving grasp point met within 1 mm on both
+  arms. All gains remain assumptions (`src/robotics/hardware/arms.py`).
+- Grasp. The shank grasp moved from 0.66 to 0.70 of the leg's length so the jaw's 120 mm pads
+  clear the waist by 37 mm; the pads are 90 mm tall, tip 35 mm below the tool point, in three
+  segments so a pad has a line of contacts rather than one point; the tilted tool's grasp rises
+  to keep the pad's downhill corner off the belt. Tool tilt is about the finger axis, positive
+  leaning the tool body toward the ham.
+- Proof lift. The part may lag the tool by 2 mm rather than 1 mm on the 5 mm lift: the
+  three-finger hold on a trotter settles 1.6 to 1.8 mm whatever the lift height, which is contact
+  settling, not slip. The jaw on a shank lags under 0.1 mm.
+- Three-finger gripper on the shank. Dropped for a geometric reason, not a margin: a centric
+  gripper's off-axis fingers sit half the open radius from the tool axis, so two of three fingers
+  land on any shank wider than half the 155 mm opening, and every shank is 78 to 110 mm wide.
+- Hold-down. The lead-in ramp is a separate body that rides up with the plate but does not move
+  along the belt: rewinding an inclined surface drilled it into a ham and jammed the leg. Ramp at
+  15 degrees over 0.40 m (was 25 over 0.30), friction 0.1.
+- The old slab cutter lane beyond the open edge is removed from the cell; the UR20's wrist hit
+  it reaching for an overhanging trotter.
+
 Amended 2026-09-14, before any approach ran, after the grasp check (task 4): a three-finger
 gripper closing round a vertical axis cannot straddle a shank lying on the belt (it failed its
 jaw-fit precondition on both arms), so Lakshya gave it an end-on grasp at the trotter on the UR20
@@ -99,14 +133,67 @@ the fingers' open radius, so legs that arrive with the trotter on the belt end i
 
 ## Results
 
-Not run.
+Approach B, jaw on the shank, from ground-truth pose. Two runs of the same protocol on
+2026-09-15, both kept in `experiments/data/2026-09-15-alignment-approaches/`: the first at git
+b42a2e7 plus the amendments above (`B-*-b42a2e7.csv`), the second after the skills were moved onto
+the `LegEstimate` layer with a second estimate after the grasp (`B-*-truth-2406215.csv`), which is
+the code the videos in the plan were filmed from. The saw is the judge; "entry offset" and "cut
+angle" are the blade's first contact relative to the hock, over the cut legs.
 
-| Condition | Successes / trials | Notes |
-|-----------|--------------------|-------|
+| Condition | Successes / trials, final run | Entry offset median, p95 mm | Cut angle median, p95 deg | Cycle median s | Failures | First run |
+|---|---|---|---|---|---|---|
+| B, SR-20iA, jaw, tilt 0 | 13 / 20 | 3.8, 12.8 | 2.6, 12.9 | 3.65 | unreachable x2 (legs 10 and 19, arrivals -25 and -12 deg); slipped in the turn x2; cut out of tolerance x3 | 14 / 20 |
+| B, UR20, jaw, tilt 0 | 12 / 20 | 2.2, 12.6 | 1.6, 9.4 | 3.85 | set down 10 to 14 mm inboard x2; cut out of tolerance x5; pad brushed the belt x1 | 12 / 20 |
+| B, UR20, jaw, tilt 15 | 17 / 20 | 1.7, 10.4 | 0.9, 8.8 | 3.85 | cut out of tolerance x3 | 16 / 20 |
+| B, UR20, jaw, tilt 30 | 15 / 20 | 1.4, 6.2 | 1.1, 9.8 | 3.85 | grasp slipped on the proof lift x2 (legs 7 and 15); cut angle 9 to 13 deg x3 | 16 / 20 |
+
+Between the runs one grasp detail was tried and reverted: taking the jaw line from the
+centreline's local direction at the shank instead of the leg's overall heading dropped the
+SR-20iA to 8 of 20 (two lifts stalled, two slips, two more cuts out of tolerance) while the UR20
+moved by one leg; the heading is kept, and the reason the SCARA is sensitive to a few degrees of
+jaw yaw is not yet understood.
+| B, UR20, three-finger end-on | not run | | | | the end-on grasp does not yet track a moving belt |
+| A, all | not run | | | | approach A is not built |
+
+Where the failures come from, from the per-episode rows and the traces behind them:
+
+- At release the arms do better than the saw sees. The hock's median distance from the blade
+  plane at release is 2.3 mm on the SR-20iA (18 legs gripped) and 1.3 mm on the UR20 (20 legs,
+  tool vertical); the turn itself is accurate on both arms.
+- The hold-down's lead-in disturbs the aligned leg. Traced on leg 10 (arrival -25 deg): square
+  within 3 degrees at release, turned to 13 degrees and 10 mm inboard while the ramp lifted over
+  the ham. On the largest leg (15, 799 mm, 14.6 kg) the ramp rolled the ham over before the saw.
+  Both arms suffer this equally; it is a limitation of the rigid plate-and-ramp hold-down model
+  (`sim/hold_down.py`), not of either approach. Every cut-angle failure above 5 degrees is of this
+  kind.
+- Legs arriving 16 to 31 degrees off square with the trotter swung downstream (arrival -16 to -31)
+  are set down 6 to 10 mm inboard on the SR-20iA, a direction-dependent bias not yet explained.
+- The SR-20iA cannot reach two of the 20 arrivals from its mount at x = 0.35 m; the UR20 reaches
+  all 20.
+- Tilting the UR20's tool 15 or 30 degrees did not hurt: 17 and 15 of 20 against 12 of 20
+  vertical. H2 (tilt gains no more than 2 legs) is not supported on this sample, but the
+  difference is inside the failures the hold-down causes, so it is not a tilt result either.
+
+Camera in the loop (UR20, tilt 0, 3 legs, same runner with `--pose-source camera`): 0 of 3. The
+first camera estimate put the hock 20 to 23 mm from the truth and the heading within 3 degrees;
+closing the jaws then moved the hock 25 mm along the leg, the camera could not look again because
+the leg had left its field, and the turn planned on the stale estimate set the hock 22 to 24 mm
+outboard. The longest leg of the three ran off the image edge at arrival and was refused. From
+ground truth with a second estimate after the grasp the same three legs score 2 of 3.
 
 ## Decision taken and why
 
-Not yet taken.
+Not yet taken: approach A has not run, and the three-finger and camera conditions are partial.
+What the B results already say:
+
+- The grasp moves the leg. Closing the jaws on the tapered shank drives the leg about 20 to
+  25 mm toward its thin end (ground truth, every leg tried). Whatever is planned after the grasp
+  must be planned on where the leg is after it, so the cell needs a look at the leg between grasp
+  and turn: a camera over the pick zone, or the pick made inside the first camera's field.
+- The camera's field must cover the longest leg at any arrival across the belt.
+- The camera pipeline's along-leg station error (20 to 25 mm) is larger than the 10 mm cut
+  tolerance, so the hock has to be found as a landmark rather than as a fraction of a noisy length.
+- The hold-down model has to become a belt before its numbers count against an approach.
 
 ## Caveats
 

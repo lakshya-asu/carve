@@ -17,8 +17,8 @@ from robotics.core.grasp_action import GraspAction
 from robotics.core.grasp_policy import GraspRefusedError
 
 # Where the existing shank skill grips, as a fraction of the length from the ham butt
-# (`skills/shank_grasp.py`, SHANK_GRASP_FRACTION).
-SHANK_FRACTION = 0.66
+# (`skills/shank_grasp.py`, SHANK_GRASP_FRACTION, which says why 0.70 and not 0.66).
+SHANK_FRACTION = 0.70
 # Each jaw opens at least 20 mm clear of the shank, as the skills' spare-opening precondition requires.
 SPARE_OPENING_M = 0.040
 # Cross sections either side of the grasp station used to fit the local centreline direction.

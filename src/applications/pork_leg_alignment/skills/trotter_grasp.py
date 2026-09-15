@@ -18,6 +18,7 @@ trotter rose with the tool.
 from __future__ import annotations
 
 import logging
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -26,8 +27,9 @@ import mujoco
 import numpy as np
 
 from applications.pork_leg_alignment.sim.cell import Cell
-from applications.pork_leg_alignment.sim.product import PRODUCT_BODY, leg_centreline, leg_half_width_m
+from applications.pork_leg_alignment.sim.product import PRODUCT_BODY, leg_centreline
 from applications.pork_leg_alignment.sim.saw import BELT_BODY, BELT_GEOM
+from applications.pork_leg_alignment.skills.leg_estimate import LegEstimate
 from applications.pork_leg_alignment.skills.shank_grasp import (
     CLOSE_S,
     LIFT_CHECK_M,
@@ -38,7 +40,6 @@ from applications.pork_leg_alignment.skills.shank_grasp import (
     SETTLE_S,
     SPEED_FRACTION,
     LiftProof,
-    _leg_on_belt,
     lift_followed,
 )
 from robotics.core.skill_library import SUCCESS, Check, CheckResult, Contract, FailureMode, Port
@@ -101,28 +102,27 @@ class SelectTrotterEndGrasp:
 
     name = "select_trotter_end_grasp"
     contract = Contract(
-        inputs=(),
-        preconditions=(
-            Check("leg_on_belt_m", "the leg rests on the belt, origin within 20 mm of its surface", _leg_on_belt),
-        ),
+        inputs=(Port("leg_estimate", LegEstimate, "the leg's centreline, widths and heading, world frame"),),
+        preconditions=(),
         outputs=(Port("trotter_grasp", TrotterGrasp, "tool target and approach on the trotter, world frame"),),
         success=(),
         failures=(),
     )
 
     def execute(self, world: Any, args: Mapping[str, Any]) -> tuple[str, dict[str, Any], dict[str, float]]:  # noqa: ANN401
-        """Place the grasp on the leg centreline at `TROTTER_GRASP_FRACTION`, approached along the leg."""
-        cell: Cell = world
-        leg = cell.config.leg
-        assert leg is not None
-        point, toward_ham = _trotter_point_world(cell, TROTTER_GRASP_FRACTION)
-        half_span = TROTTER_PAD_SPAN_HALF_M / leg.length_m
-        under_pads = np.linspace(TROTTER_GRASP_FRACTION - half_span, min(1.0, TROTTER_GRASP_FRACTION + half_span), 21)
+        """Place the grasp on the estimated centreline at `TROTTER_GRASP_FRACTION`, approached along the leg."""
+        estimate: LegEstimate = args["leg_estimate"]
+        point = estimate.point_at(TROTTER_GRASP_FRACTION)
+        heading = estimate.direction_at(TROTTER_GRASP_FRACTION)
+        toward_ham = -np.array([math.cos(heading), math.sin(heading), 0.0])
+        half_span = TROTTER_PAD_SPAN_HALF_M / estimate.length_m
         grasp = TrotterGrasp(
             position_m=point,
             approach_dir=toward_ham,
-            diameter_m=2.0 * float(leg_half_width_m(leg, np.array([TROTTER_GRASP_FRACTION]))[0]),
-            widest_under_pads_m=2.0 * float(leg_half_width_m(leg, under_pads).max()),
+            diameter_m=estimate.width_at(TROTTER_GRASP_FRACTION),
+            widest_under_pads_m=estimate.widest_between(
+                TROTTER_GRASP_FRACTION - half_span, min(1.0, TROTTER_GRASP_FRACTION + half_span)
+            ),
             fraction=TROTTER_GRASP_FRACTION,
         )
         return SUCCESS, {"trotter_grasp": grasp}, {"trotter_diameter_m": grasp.diameter_m}

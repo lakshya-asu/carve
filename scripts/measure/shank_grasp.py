@@ -28,6 +28,7 @@ from applications.pork_leg_alignment.sim.scene import CellConfig
 from applications.pork_leg_alignment.skills import (
     AcquireShank,
     AcquireTrotterEnd,
+    EstimateLegFromGroundTruth,
     SelectShankGrasp,
     SelectTrotterEndGrasp,
 )
@@ -71,7 +72,8 @@ def main() -> None:
             with Cell(config) as cell:
                 cell.reset()
                 cell.place_product(LEG_X_M, LEG_Y_M, -math.pi / 2, settle_s=0.3)
-                selected = run_skill(SelectShankGrasp(), cell, {})
+                estimated = run_skill(EstimateLegFromGroundTruth(), cell, {})
+                selected = run_skill(SelectShankGrasp(), cell, estimated.outputs)
                 if selected.outcome != SUCCESS:
                     print(f"| {arm.value} | {gripper.value}, shank | select: {selected.outcome} | | | | | |")
                     continue
@@ -82,7 +84,8 @@ def main() -> None:
     with Cell(config) as cell:
         cell.reset()
         cell.place_product(LEG_X_M, BLADE_PLANE_Y_M + leg.hock_offset_m, -math.pi / 2, settle_s=0.3)
-        selected = run_skill(SelectTrotterEndGrasp(), cell, {})
+        estimated = run_skill(EstimateLegFromGroundTruth(), cell, {})
+        selected = run_skill(SelectTrotterEndGrasp(), cell, estimated.outputs)
         result = run_skill(AcquireTrotterEnd(), cell, selected.outputs)
     print(_row("ur20", "three_finger_3fg25, end-on trotter", result, selected.outputs["trotter_grasp"].diameter_m))
 

@@ -174,7 +174,9 @@ def measure_geometry(
     travel_per_joint = (opened - rest_gap) / probe
 
     pad_geom = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, PAD_GEOM)
-    pad_half_height = float(model.geom_size[pad_geom][2])
+    # A box pad's half height is its third size; a cylinder rib's is its half length, the second.
+    is_cylinder = int(model.geom_type[pad_geom]) == int(mujoco.mjtGeom.mjGEOM_CYLINDER)
+    pad_half_height = float(model.geom_size[pad_geom][1 if is_cylinder else 2])
     # The approach direction is the tool's +z. Measured along that axis, so the
     # answer does not depend on which way the arm happens to point the tool.
     approach = tcp_pose[3:].reshape(3, 3)[:, 2]

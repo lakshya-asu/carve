@@ -66,8 +66,9 @@ STEPS_PER_TICK = 5  # 10 ms of simulation per tick at the 2 ms timestep
 SPAWN_X_M = -1.05
 OUT_OF_VIEW_X_M = 1.3
 PERCEIVE_EVERY_S = 0.3
-# The jaw gripper's pads (assets/jaw_gripper.xml): 120 mm long along the tool x axis, prefixed g_ in the cell.
-PAD_GEOMS = ("g_finger_left_pad", "g_finger_right_pad")
+# The jaw gripper's pads (assets/jaw_gripper.xml): 120 mm long along the tool x axis in three
+# segments per pad, prefixed g_ in the cell.
+PAD_GEOMS = tuple(f"g_finger_{side}_pad{segment}" for side in ("left", "right") for segment in ("", "_fore", "_aft"))
 PAD_HALF_LENGTH_M = 0.060
 # A leg is perceived once its outline centre is inside this stretch under the camera.
 PERCEIVE_BAND_X_M = (-0.65, -0.25)
@@ -177,7 +178,7 @@ class MujocoBridgeNode(Node):
             with self.lock:
                 now = self.cell.time_s
                 if self.trajectory is not None:
-                    self.cell.data.ctrl[self.actuators] = self._trajectory_command(now)
+                    self.cell.command_arm(self._trajectory_command(now))
                 self.cell.step(STEPS_PER_TICK)
                 now = self.cell.time_s
                 self._publish_state(now)
@@ -254,7 +255,7 @@ class MujocoBridgeNode(Node):
         for _, kind in due:
             if kind == "meet":
                 miss = self.cell.data.site_xpos[self.tcp] - self._true_shank_point()
-                commanded = np.asarray(self.cell.data.ctrl[self.actuators])
+                commanded = self.cell.arm_target
                 actual = np.asarray([self.cell.data.qpos[i] for i in self.qpos])
                 report = {
                     "joint_tracking_error": [round(float(v), 4) for v in actual - commanded],
@@ -289,7 +290,7 @@ class MujocoBridgeNode(Node):
         with self.lock:
             # A stamped trajectory is timed from its stamp, as ros2_control's controller does; 0 means now.
             start_s = stamp_s if stamp_s > 0.0 else self.cell.time_s
-            first = [float(v) for v in self.cell.data.ctrl[self.actuators]]
+            first = [float(v) for v in self.cell.arm_target]
             self.trajectory = (start_s, times, positions, first)
             if len(times) >= 3:
                 self.pending_checks += [(start_s + times[1], "meet")]
