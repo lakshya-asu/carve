@@ -165,10 +165,11 @@ def estimate_from_perception(leg: LegPerception, centre_of_gravity_m: np.ndarray
     )
 
 
-def _leg_on_belt(cell: Any, _args: Mapping[str, Any]) -> CheckResult:  # noqa: ANN401
+def product_on_belt(cell: Any, _args: Mapping[str, Any]) -> CheckResult:  # noqa: ANN401
+    """The product body's origin rests within 20 mm of the belt surface. Shared by every ground-truth estimator."""
     body = cell.model.body("slab").id
     height = float(cell.data.xpos[body][2]) - BELT_TOP_Z_M
-    return CheckResult(abs(height) < 0.02, height, "leg origin within 20 mm of the belt surface")
+    return CheckResult(abs(height) < 0.02, height, "product origin within 20 mm of the belt surface")
 
 
 class EstimateLegFromGroundTruth:
@@ -178,7 +179,7 @@ class EstimateLegFromGroundTruth:
     contract = Contract(
         inputs=(),
         preconditions=(
-            Check("leg_on_belt_m", "the leg rests on the belt, origin within 20 mm of its surface", _leg_on_belt),
+            Check("leg_on_belt_m", "the leg rests on the belt, origin within 20 mm of its surface", product_on_belt),
         ),
         outputs=(Port("leg_estimate", LegEstimate, "true centreline, widths, heading and centre of mass"),),
         success=(),

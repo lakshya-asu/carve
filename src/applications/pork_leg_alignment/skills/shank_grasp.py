@@ -19,13 +19,20 @@ The leg comes in as a `LegEstimate` (`skills/leg_estimate.py`), from the
 simulator's ground truth or from the camera; which one is the task graph's
 choice, not these skills'. The proof lift's measurement of the shank is ground
 truth, because it is scoring the grip, not planning it.
+
+Where along the piece the jaws close is the grasp rule's station, a function
+of the estimate given to `SelectShankGrasp`. The leg's is the shank
+(`shank_station`); the loin's is the section at its centre of gravity
+(`loin_infeed.py`). Everything after the station, the approach, the close,
+the proof lift and the fit check, is the same for both (Section 14.2 of the
+plan).
 """
 
 from __future__ import annotations
 
 import logging
 import math
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -33,7 +40,7 @@ import mujoco
 import numpy as np
 
 from applications.pork_leg_alignment.sim.cell import TOOL_TICK_S, Cell
-from applications.pork_leg_alignment.sim.product import PRODUCT_BODY, leg_centreline
+from applications.pork_leg_alignment.sim.product import PRODUCT_BODY
 from applications.pork_leg_alignment.skills.leg_estimate import LegEstimate
 from robotics.core.grasp_action import tool_rotation
 from robotics.core.skill_library import SUCCESS, Check, CheckResult, Contract, FailureMode, Port
@@ -106,21 +113,25 @@ PAD_BELT_CLEARANCE_M = 0.003
 
 @dataclass(frozen=True)
 class ShankGrasp:
-    """Where the tool closes on the shank, world frame, at a known belt position.
+    """Where the tool closes on the piece, world frame, at a known belt position.
+
+    Named for the leg's station; a loin's grasp at its centre of gravity
+    travels in the same record.
 
     Attributes:
-        position_m: Tool centre point target, (3,) metres, where the shank was
-            when the encoder read `belt_travel_m`.
-        yaw_rad: Tool heading; the tool x axis lies along the leg, so the
+        position_m: Tool centre point target, (3,) metres, where the station
+            was when the encoder read `belt_travel_m`.
+        yaw_rad: Tool heading; the tool x axis lies along the piece, so the
             fingers, which close along tool y, close across it.
-        shank_width_m: Width of the shank at the grasp centre.
-        widest_under_pads_m: Widest the shank gets within `PAD_SPAN_HALF_M` of
-            the grasp along the leg.
-        fraction: Where along the leg, 0 at the ham butt and 1 at the trotter tip.
+        shank_width_m: Width of the piece at the grasp centre.
+        widest_under_pads_m: Widest the piece gets within `PAD_SPAN_HALF_M` of
+            the grasp along it.
+        fraction: Where along the piece, 0 at row 0 of the estimate's
+            centreline (the leg's ham butt) and 1 at its last row.
         tilt_rad: Lean of the tool from vertical about the finger axis, positive
-            leaning the tool body toward the ham. Zero on an arm that cannot tilt.
-        belt_travel_m: Encoder reading when the leg's pose was read. The grasp
-            point has moved along the belt by the travel since.
+            leaning the tool body toward row 0. Zero on an arm that cannot tilt.
+        belt_travel_m: Encoder reading when the piece's pose was read. The
+            grasp point has moved along the belt by the travel since.
     """
 
     position_m: np.ndarray
@@ -180,29 +191,38 @@ def leg_heading_rad(rotation: np.ndarray) -> float:
 
 
 def _shank_point_world(cell: Cell, fraction: float) -> tuple[np.ndarray, float]:
-    """World position of the leg centreline at `fraction`, and the leg's heading."""
-    leg = cell.config.leg
-    assert leg is not None
-    position, rotation = leg_pose(cell)
-    point_body = leg_centreline(leg, np.array([fraction]))[0]
-    return position + rotation @ point_body, leg_heading_rad(rotation)
+    """World position of the product's centreline at `fraction`, and the product's heading, from ground truth."""
+    _, rotation = leg_pose(cell)
+    return cell.product_centreline_world(np.array([fraction]))[0], leg_heading_rad(rotation)
+
+
+def shank_station(estimate: LegEstimate) -> float:
+    """The leg's grasp station: the shank, at `SHANK_GRASP_FRACTION` of the length from the ham end."""
+    del estimate
+    return SHANK_GRASP_FRACTION
 
 
 class SelectShankGrasp:
-    """Choose where on the shank to close, from the leg estimate, with the tool leaned by `tilt_rad`."""
+    """Choose where on the piece to close, from the estimate, at the station the grasp rule gives.
+
+    The rule is `station`, a function of the estimate returning a fraction of
+    the piece's length: the shank on a leg by default. The tool is leaned by
+    `tilt_rad`.
+    """
 
     name = "select_shank_grasp"
     contract = Contract(
-        inputs=(Port("leg_estimate", LegEstimate, "the leg's centreline, widths and heading, world frame"),),
+        inputs=(Port("leg_estimate", LegEstimate, "the piece's centreline, widths and heading, world frame"),),
         preconditions=(),
-        outputs=(Port("shank_grasp", ShankGrasp, "tool target on the shank, world frame"),),
+        outputs=(Port("shank_grasp", ShankGrasp, "tool target on the piece, world frame"),),
         success=(),
         failures=(),
     )
 
-    def __init__(self, tilt_rad: float = 0.0) -> None:
+    def __init__(self, tilt_rad: float = 0.0, station: Callable[[LegEstimate], float] = shank_station) -> None:
         """A tilt other than zero is refused at run time on an arm whose tool cannot leave vertical."""
         self.tilt_rad = tilt_rad
+        self.station = station
         self.contract = Contract(
             inputs=self.contract.inputs,
             preconditions=(
@@ -221,10 +241,11 @@ class SelectShankGrasp:
         )
 
     def execute(self, world: Any, args: Mapping[str, Any]) -> tuple[str, dict[str, Any], dict[str, float]]:  # noqa: ANN401
-        """Place the grasp on the estimated centreline at `SHANK_GRASP_FRACTION`, across its local direction."""
+        """Place the grasp on the estimated centreline at the rule's station, jaws across the piece."""
         cell: Cell = world
         estimate: LegEstimate = args["leg_estimate"]
-        point = estimate.point_at(SHANK_GRASP_FRACTION)
+        fraction = self.station(estimate)
+        point = estimate.point_at(fraction)
         # The jaws align with the leg's overall heading, not the centreline's
         # local direction at the shank: on a bent leg the local direction
         # differs by a few degrees, and with it the SR-20iA lost 6 of 20 legs
@@ -241,15 +262,17 @@ class SelectShankGrasp:
         grasp = ShankGrasp(
             position_m=point,
             yaw_rad=heading,
-            shank_width_m=estimate.width_at(SHANK_GRASP_FRACTION),
-            widest_under_pads_m=estimate.widest_between(
-                SHANK_GRASP_FRACTION - half_span, SHANK_GRASP_FRACTION + half_span
-            ),
-            fraction=SHANK_GRASP_FRACTION,
+            shank_width_m=estimate.width_at(fraction),
+            widest_under_pads_m=estimate.widest_between(fraction - half_span, fraction + half_span),
+            fraction=fraction,
             tilt_rad=self.tilt_rad,
             belt_travel_m=estimate.belt_travel_m,
         )
-        evidence = {"shank_width_m": grasp.shank_width_m, "widest_under_pads_m": grasp.widest_under_pads_m}
+        evidence = {
+            "station_fraction": fraction,
+            "shank_width_m": grasp.shank_width_m,
+            "widest_under_pads_m": grasp.widest_under_pads_m,
+        }
         return SUCCESS, {"shank_grasp": grasp}, evidence
 
 

@@ -45,6 +45,9 @@ class GripperModel(str, Enum):
     PINCH = "pinch"  # the original functional stand-in for a Robotiq 2F-140
     JAW_GEH6180 = "jaw_geh6180"
     THREE_FINGER_3FG25 = "three_finger_3fg25"
+    # A placeholder for a loin-class jaw: the GEH6180's force and mass with a
+    # 150 mm stroke per jaw, so a 170 to 215 mm piece fits (wide_jaw_gripper.xml).
+    WIDE_JAW = "wide_jaw"
 
 
 @dataclass(frozen=True)
@@ -72,6 +75,10 @@ GRIPPER_SPECS = {
     GripperModel.THREE_FINGER_3FG25: GripperSpec(
         GripperModel.THREE_FINGER_3FG25, "three_finger_gripper.xml", ("g_pad_left", "g_pad_2", "g_pad_3"), 450.0, 1.6
     ),
+    # Force and mass unverified: no gripper of this stroke has been selected, and
+    # the GEH6180's numbers are kept so the stroke is the one variable changed
+    # (the asset's comment gives the reason and a real part's figures).
+    GripperModel.WIDE_JAW: GripperSpec(GripperModel.WIDE_JAW, "wide_jaw_gripper.xml", PAD_SITES, 1800.0, 2.6),
 }
 
 

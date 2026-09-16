@@ -21,6 +21,8 @@ import mujoco
 import numpy as np
 
 from applications.pork_leg_alignment.sim.hold_down import HoldDownConfig, add_hold_down
+from applications.pork_leg_alignment.sim.infeed_fixture import InfeedFixtureConfig, add_infeed_fixture
+from applications.pork_leg_alignment.sim.loin import LoinConfig, add_loin_geoms
 from applications.pork_leg_alignment.sim.product import TROTTER_BODY, LegConfig, add_leg_geoms, leg_half_width_m
 from applications.pork_leg_alignment.sim.saw import SawConfig, add_saw
 from robotics.hardware.arms import ARM_SPECS, UR5E_XML, ArmModel, build_arm
@@ -35,6 +37,8 @@ UR5E_PIN = "8161bba"  # git SHA of the Menagerie checkout this was built against
 GRIP_PREFIX = "g_"
 # Inner face of the far rail in cell.xml, world y. The open edge, where trotters overhang, is the other side.
 FAR_RAIL_INNER_Y_M = 0.857
+# The body the overhead camera and the datasheet depth cameras hang from, in cell.xml.
+OVERHEAD_CAMERA_MOUNT_BODY = "overhead_cam_mount"
 
 
 def leg_centre_y_for_rail_gap(leg: LegConfig, yaw_deg: float, gap_m: float) -> float:
@@ -118,8 +122,13 @@ class CellConfig:
     belt_half_length_m: float = 2.0
     slab: SlabConfig = field(default_factory=SlabConfig)
     leg: LegConfig | None = None
+    # The loin puller infeed's piece (sim/loin.py). A cell carries one product:
+    # the leg, the loin, or the slab when neither is given.
+    loin: LoinConfig | None = None
     saw: SawConfig | None = None
     hold_down: HoldDownConfig | None = None
+    # The loin cell's judge, in the saw's place (sim/infeed_fixture.py).
+    infeed_fixture: InfeedFixtureConfig | None = None
     arm: ArmModel = ArmModel.UR5E
     arm_mount: ArmMount | None = None
     gripper: GripperModel = GripperModel.PINCH
@@ -130,6 +139,10 @@ class CellConfig:
     depth_cameras: tuple[DepthCameraModel, ...] = ()
     # 0: image width along the belt; 90: across it.
     depth_camera_yaw_deg: float = 0.0
+    # Where the overhead camera mount stands, world frame, or None for where
+    # cell.xml puts it. A cell whose longest piece does not fit the field at
+    # the XML's height raises the mount here (the loin cell does).
+    overhead_camera_mount_m: tuple[float, float, float] | None = None
 
     @property
     def mount(self) -> ArmMount:
@@ -137,17 +150,31 @@ class CellConfig:
         return self.arm_mount if self.arm_mount is not None else DEFAULT_MOUNTS[self.arm]
 
     @property
+    def product(self) -> LegConfig | LoinConfig | None:
+        """The shaped product in the cell, or None for the slab.
+
+        Both shapes answer `centreline_m` and `half_width_m`, which is all the
+        cell and the skills read from them.
+        """
+        return self.leg if self.leg is not None else self.loin
+
+    @property
     def product_rest_height_m(self) -> float:
         """Height of the product body origin above the belt when it is at rest."""
-        return self.leg.rest_height_m if self.leg is not None else self.slab.half_extents_m[2]
+        product = self.product
+        return product.rest_height_m if product is not None else self.slab.half_extents_m[2]
 
     def __post_init__(self) -> None:
         if not 0.0 <= self.belt_speed_mps <= 1.0:
             raise ValueError(f"belt speed must be within the actuator range 0 to 1 m/s, got {self.belt_speed_mps}")
         if self.timestep_s <= 0:
             raise ValueError(f"timestep must be positive, got {self.timestep_s}")
+        if self.leg is not None and self.loin is not None:
+            raise ValueError("a cell carries one product: a leg or a loin, not both")
         if self.saw is not None and self.leg is None:
             raise ValueError("the saw cuts a trotter off a leg; a slab has none")
+        if self.infeed_fixture is not None and self.loin is None:
+            raise ValueError("the infeed fixture scores a loin's bone edge; the cell has no loin")
 
 
 def _apply_config(spec: mujoco.MjSpec, config: CellConfig) -> None:
@@ -159,6 +186,8 @@ def _apply_config(spec: mujoco.MjSpec, config: CellConfig) -> None:
     spec.geom("rail_far").size[0] = config.belt_half_length_m
     if config.leg is not None:
         add_leg_geoms(spec, config.leg)
+    elif config.loin is not None:
+        add_loin_geoms(spec, config.loin)
     else:
         slab = spec.geom("slab_geom")
         slab.size[:3] = config.slab.half_extents_m
@@ -174,6 +203,10 @@ def _apply_config(spec: mujoco.MjSpec, config: CellConfig) -> None:
         spec.body(TROTTER_BODY).pos[:] = spec.body("slab").pos
     if config.saw is not None:
         add_saw(spec, config.saw)
+    if config.infeed_fixture is not None:
+        add_infeed_fixture(spec, config.infeed_fixture)
+    if config.overhead_camera_mount_m is not None:
+        spec.body(OVERHEAD_CAMERA_MOUNT_BODY).pos[:] = config.overhead_camera_mount_m
 
 
 def build_spec(config: CellConfig | None = None) -> mujoco.MjSpec:

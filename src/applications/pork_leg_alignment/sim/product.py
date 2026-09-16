@@ -129,6 +129,19 @@ class LegConfig:
         """
         return (HOCK_FRACTION - ORIGIN_FRACTION) * self.length_m
 
+    def centreline_m(self, fraction: np.ndarray) -> np.ndarray:
+        """Points on the centreline in the body frame, (N, 3); see `leg_centreline`.
+
+        The method form is what the cell and the skills read, so a second
+        product with the same two methods (`sim/loin.py`) goes through them
+        unchanged.
+        """
+        return leg_centreline(self, fraction)
+
+    def half_width_m(self, fraction: np.ndarray) -> np.ndarray:
+        """Half the width across the piece at each fraction, (N,); see `leg_half_width_m`."""
+        return leg_half_width_m(self, fraction)
+
 
 # Cross sections along the leg: (fraction of the length, half width, half
 # height) in metres. Read off the customer's footage: a bulky ham, a waist, a
@@ -260,7 +273,21 @@ def leg_mesh(
     ring[:, :, 0] = x[:, None]
     ring[:, :, 1] = lateral[:, None] + half_width[:, None] * np.cos(theta)[None, :]
     ring[:, :, 2] = np.maximum(centre_z[:, None] + half_height[:, None] * np.sin(theta)[None, :], 0.0)
+    return loft_mesh(ring)
 
+
+def loft_mesh(ring: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Close a stack of cross-section rings into one triangle mesh.
+
+    Args:
+        ring: (S, A, 3) vertices, S cross sections of A points each, in order
+            around the section. Consecutive sections are joined by quads and the
+            two end sections are capped with a fan about their mean point.
+
+    Returns:
+        (vertices (S * A + 2, 3), triangle indices (M, 3)).
+    """
+    stations, around = ring.shape[0], ring.shape[1]
     faces: list[list[int]] = []
     for i in range(stations - 1):
         for k in range(around):
@@ -394,21 +421,33 @@ def add_leg_geoms(spec: mujoco.MjSpec, config: LegConfig) -> None:
     )
 
 
+def product_body_ids(model: mujoco.MjModel) -> list[int]:
+    """Every body the product is made of: the slab or the loin alone, or a leg's ham and trotter.
+
+    Whatever asks "is the product touching the belt" or "what does the product
+    weigh" sums over these; nothing may assume one body or the trotter's presence.
+    """
+    body = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, PRODUCT_BODY)
+    if body < 0:
+        raise ValueError(f"no body named {PRODUCT_BODY!r}")
+    bodies = [int(body)]
+    trotter = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, TROTTER_BODY)
+    if trotter >= 0:
+        bodies.append(int(trotter))
+    return bodies
+
+
 def product_geom_ids(model: mujoco.MjModel) -> np.ndarray:
     """Every geom belonging to the product: the slab, or the ham and the trotter.
 
     A segmentation mask of the product is the union over these. Nothing may
     assume a single id.
     """
-    body = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, PRODUCT_BODY)
-    if body < 0:
-        raise ValueError(f"no body named {PRODUCT_BODY!r}")
-    bodies = [body]
-    trotter = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, TROTTER_BODY)
-    if trotter >= 0:
-        bodies.append(trotter)
     return np.concatenate(
-        [np.arange(int(model.body_geomadr[b]), int(model.body_geomadr[b]) + int(model.body_geomnum[b])) for b in bodies]
+        [
+            np.arange(int(model.body_geomadr[b]), int(model.body_geomadr[b]) + int(model.body_geomnum[b]))
+            for b in product_body_ids(model)
+        ]
     )
 
 

@@ -1,4 +1,4 @@
-"""The running cell: owns the clock, the belt, the saw and the sensors.
+"""The running cell: owns the clock, the belt, the judge (saw or infeed fixture) and the sensors.
 
 Stepping lives here rather than in each script because the belt needs it. A
 conveyor is an endless surface that carries product without going anywhere
@@ -21,7 +21,8 @@ plant knows where the belt "is".
 
 The saw is checked every step for the same reason the belt is rewound every
 step: a leg at 0.3 m/s moves 0.6 mm per step, and checking less often would
-move where the cut lands.
+move where the cut lands. The loin cell's infeed fixture is checked the same
+way, for the same reason.
 """
 
 from __future__ import annotations
@@ -34,7 +35,8 @@ import mujoco
 import numpy as np
 
 from applications.pork_leg_alignment.sim.hold_down import HOLD_DOWN_PLATE_GEOM, HOLD_DOWN_RAMP_GEOM, HoldDown
-from applications.pork_leg_alignment.sim.product import TROTTER_JOINT
+from applications.pork_leg_alignment.sim.infeed_fixture import InfeedFixture, InfeedResult
+from applications.pork_leg_alignment.sim.product import PRODUCT_BODY, TROTTER_JOINT
 from applications.pork_leg_alignment.sim.saw import BELT_GEOM, SAW_POST_GEOM, CutResult, Saw
 from applications.pork_leg_alignment.sim.scene import CellConfig, build_model
 from applications.pork_leg_alignment.sim.sensing import CameraSpec, GroundTruth, Sensors
@@ -81,6 +83,7 @@ class Cell:
         data: Simulator state. Read it, but step through `step` so the belt
             stays a belt and the saw sees every step.
         saw: The trotter saw, when the config has one.
+        infeed_fixture: The loin puller's infeed fixture, when the config has one.
     """
 
     def __init__(self, config: CellConfig | None = None, cameras: dict[str, CameraSpec] | None = None) -> None:
@@ -119,6 +122,11 @@ class Cell:
             else None
         )
         self.hold_down = HoldDown(self.model, self.config.hold_down) if self.config.hold_down is not None else None
+        self.infeed_fixture = (
+            InfeedFixture(self.model, self.config.infeed_fixture, self.config.loin)
+            if self.config.infeed_fixture is not None and self.config.loin is not None
+            else None
+        )
         self._travel_offset_m = 0.0
         self._arm_target = np.array(self.arm.home_qpos, dtype=float)
         self._arm_previous_target = self._arm_target.copy()
@@ -202,6 +210,41 @@ class Cell:
         """The saw's verdict on the current leg, once it has passed the blade."""
         return self.saw.result if self.saw is not None else None
 
+    @property
+    def infeed_result(self) -> InfeedResult | None:
+        """The infeed fixture's verdict on the current loin, once it has crossed the plane."""
+        return self.infeed_fixture.result if self.infeed_fixture is not None else None
+
+    @property
+    def release_before_x_m(self) -> float | None:
+        """The x no part of the product may reach before the arm has let go.
+
+        The hold-down's lead-in, or the infeed fixture's plane; None when the
+        cell has neither.
+        """
+        if self.hold_down is not None:
+            return self.hold_down.config.entry_x_m
+        if self.infeed_fixture is not None:
+            return self.infeed_fixture.config.x_m
+        return None
+
+    def product_centreline_world(self, fractions: np.ndarray) -> np.ndarray:
+        """Points on the product's centreline now, world frame, (N, 3), from the simulator's own pose.
+
+        Reads the leg or the loin through the same two methods, so a skill that
+        plans on a centreline does not know which product it holds.
+
+        Raises:
+            ValueError: If the product is the slab, which has no centreline.
+        """
+        product = self.config.product
+        if product is None:
+            raise ValueError("the slab has no centreline")
+        body = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, PRODUCT_BODY)
+        position = np.asarray(self.data.xpos[body], dtype=float)
+        rotation = self.data.xmat[body].reshape(3, 3)
+        return position + product.centreline_m(np.asarray(fractions, dtype=float)) @ rotation.T
+
     def reset(self, belt_speed_mps: float | None = None) -> None:
         """Return the arm to its home pose, zero the encoder, and set the belt running.
 
@@ -241,6 +284,8 @@ class Cell:
             self.data.qvel[self._trotter_dadr : self._trotter_dadr + 6] = 0.0
         if self.saw is not None:
             self.saw.rearm(self.model, self.data)
+        if self.infeed_fixture is not None:
+            self.infeed_fixture.rearm()
         mujoco.mj_forward(self.model, self.data)
         if settle_s > 0:
             self.step(seconds=settle_s)
@@ -368,6 +413,8 @@ class Cell:
                 self.hold_down.rewind(self.data)
             if self.saw is not None:
                 self.saw.update(self.model, self.data)
+            if self.infeed_fixture is not None:
+                self.infeed_fixture.update(self.model, self.data)
         mujoco.mj_forward(self.model, self.data)
 
     def observe(self, camera: str | None = None) -> tuple[Observation, CameraFrameData | None]:

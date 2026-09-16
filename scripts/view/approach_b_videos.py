@@ -1,14 +1,18 @@
-r"""Film approach B end to end on the moving belt: every condition, every leg, saw-judged.
+r"""Film approach B end to end on the moving belt: every condition, every piece, judged.
 
 Runs the same episodes as `scripts/measure/alignment_approaches.py` (ground-truth pose, the
 pre-registered arrivals) through a cell that writes a frame every 1/25 s of simulated time, so what
-is on screen is exactly what the results table counts. One video per condition holds all 20 legs
-back to back with a live caption: which leg, what the cell is doing, and the saw's verdict. A
-close-up video per condition follows three legs with a camera that tracks the leg.
+is on screen is exactly what the results table counts. One video per condition holds all 20 pieces
+back to back with a live caption: which piece, what the cell is doing, and the judge's verdict. A
+close-up video per condition follows three pieces with a camera that tracks the piece. `--product`
+and `--gripper` pass through to the runner; the leg with its jaw is the default.
 
 Usage:
     env -u PYTHONPATH PYTHONPATH=src MUJOCO_GL=egl python scripts/view/approach_b_videos.py \\
         --out-dir ~/Videos/meat-cell/2026-09-15
+    env -u PYTHONPATH PYTHONPATH=src MUJOCO_GL=egl python scripts/view/approach_b_videos.py \\
+        --product loin --gripper wide_jaw --arm ur20 --tilt-deg 0 --only-leg 0 \\
+        --out-dir ~/Videos/meat-cell/2026-09-16
 """
 
 from __future__ import annotations
@@ -31,18 +35,39 @@ from alignment_approaches import (
     BELT_SPEED_MPS,
     LEG_COUNT,
     LEG_SEED,
+    PRODUCTS,
     Episode,
+    Product,
     arrivals,
     judge,
     run_episode,
 )
 
 from applications.pork_leg_alignment.sim.cell import Cell
-from applications.pork_leg_alignment.sim.product import leg_population
 from robotics.hardware.arms import ArmModel
 from robotics.hardware.grippers import GripperModel
 
 logger = logging.getLogger("approach_b_videos")
+
+# Caption wording per product: what the jaws take hold of, what the judge is, and what a pass means.
+WORDING = {
+    "leg": {
+        "grip": "jaw on the shank",
+        "station": "intercepting the shank on the moving belt and closing the jaws",
+        "riding": "hock {offset:+.1f} mm from the blade plane; riding to the saw",
+        "pass": "PASS: cut {offset:+.1f} mm from the hock, {angle:+.1f} deg off square",
+        "bar": "PASS = the saw cuts within 10 mm of the hock and 5 deg of square",
+        "arrives": "off square",
+    },
+    "loin": {
+        "grip": "jaw across the piece at its centre of gravity",
+        "station": "intercepting the centre of gravity, closing the jaws",
+        "riding": "edge {offset:+.1f} mm; riding to the fixture",
+        "pass": "PASS: at the fixture {offset:+.1f} mm from the datum, {angle:+.1f} deg off",
+        "bar": "PASS = edge within 10 mm of the datum, 5 deg, at the fixture",
+        "arrives": "off the target heading",
+    },
+}
 
 WIDTH_PX, HEIGHT_PX, FPS = 960, 540, 25
 # Full view per arrival set: the square set's saw stands at 1.75 m, the any
@@ -149,31 +174,34 @@ class FilmedCell(Cell):
 
 
 def _verdict(row: Episode) -> str:
-    if row.cut:
+    words = WORDING[row.product]
+    if row.judge:
         # The runner judges the row after the cell has closed, so judge it here for the last frames.
         passed, why = judge(row)
         if passed:
-            return f"PASS: cut {row.entry_offset_mm:+.1f} mm from the hock, {row.cut_angle_deg:+.1f} deg off square"
+            return words["pass"].format(offset=row.entry_offset_mm, angle=row.angle_deg)
         return f"FAIL: {why}"
     if row.orient:
-        return f"released at x = {row.released_at_x_m:.2f} m, hock {row.hock_offset_mm:+.1f} mm from the blade plane; riding to the saw"
+        return f"released at x = {row.released_at_x_m:.2f} m, " + words["riding"].format(offset=row.datum_offset_mm)
     if row.acquire:
-        return f"grip {row.acquire}; moving the leg to the aligned pose"
+        return f"grip {row.acquire}; moving the {row.product} to the aligned pose"
     if row.select:
-        return "intercepting the shank on the moving belt and closing the jaws"
-    return "reading the leg's pose"
+        return words["station"]
+    return f"reading the {row.product}'s pose"
 
 
 def _caption(
     row: Episode, arm: ArmModel, tilt_deg: float, index: int, approach: str = "B", kind: str = "square"
 ) -> list[str]:
+    words = WORDING[row.product]
     tilt = "tool vertical" if tilt_deg == 0.0 else f"tool leaned {tilt_deg:.0f} deg"
     what = "grasp and rotate on the belt" if approach == "B" else "pick up, carry, place"
     drawn = f"drawn within +/-{math.degrees(ARRIVAL_KINDS[kind][0]):.0f} deg"
     return [
-        f"APPROACH {approach}, {what}: {arm.value}, jaw on the shank, {tilt}, belt {BELT_SPEED_MPS:.2f} m/s",
-        f"leg {index + 1} of {LEG_COUNT}: {row.length_mm:.0f} mm, {row.mass_kg:.1f} kg, arrives {row.arrival_heading_deg:+.0f} deg off square ({drawn})",
-        f"PASS = the saw cuts within 10 mm of the hock and 5 deg of square | {_verdict(row)}",
+        f"APPROACH {approach}, {what}: {arm.value}, {words['grip']}, {tilt}, belt {BELT_SPEED_MPS:.2f} m/s",
+        f"{row.product} {index + 1} of {LEG_COUNT}: {row.length_mm:.0f} mm, {row.mass_kg:.1f} kg, "
+        f"arrives {row.arrival_heading_deg:+.0f} deg {words['arrives']} ({drawn})",
+        f"{words['bar']} | {_verdict(row)}",
     ]
 
 
@@ -185,13 +213,16 @@ def film_condition(
     approach: str = "B",
     only: list[int] | None = None,
     kind: str = "square",
+    product: Product = PRODUCTS["leg"],
+    gripper: GripperModel = GripperModel.JAW_GEH6180,
 ) -> list[Episode]:
-    """All 20 legs (or the close-up legs, or `only`) of one condition into one video."""
-    legs = leg_population(LEG_COUNT, seed=LEG_SEED)
-    draws = arrivals(LEG_COUNT, kind, legs)
+    """All 20 pieces (or the close-up pieces, or `only`) of one condition into one video."""
+    legs = product.population(LEG_COUNT, LEG_SEED)
+    draws = arrivals(LEG_COUNT, kind, legs, product)
     indices = tuple(only) if only else (CLOSE_UP_LEGS[kind] if close_up else tuple(range(LEG_COUNT)))
     suffix = (f"-{kind}" if kind != "square" else "") + (f"-leg{'-'.join(str(i) for i in only)}" if only else "")
-    name = f"approach-{approach.lower()}-{'closeup-' if close_up else ''}{arm.value}-tilt{tilt_deg:.0f}{suffix}.mp4"
+    prefix = "" if product.name == "leg" else f"{product.name}-"
+    name = f"{prefix}approach-{approach.lower()}-{'closeup-' if close_up else ''}{arm.value}-tilt{tilt_deg:.0f}{suffix}.mp4"
     film: Film | None = None
     rows: list[Episode] = []
     for index in indices:
@@ -226,7 +257,7 @@ def film_condition(
 
         row = run_episode(
             arm,
-            GripperModel.JAW_GEH6180,
+            gripper,
             math.radians(tilt_deg),
             index,
             legs[index],
@@ -235,9 +266,10 @@ def film_condition(
             kind=kind,
             cell_class=FilmedCell,
             on_cell=attach,
+            product=product,
         )
         rows.append(row)
-        logger.info("%s leg %d: %s", name, index, "PASS" if row.success else row.failure)
+        logger.info("%s %s %d: %s", name, product.name, index, "PASS" if row.success else row.failure)
     if film is not None:
         film.close()
     return rows
@@ -255,9 +287,15 @@ def main() -> None:
         "--only-leg", type=int, nargs="+", default=None, help="film just these legs, full view unless --only closeup"
     )
     parser.add_argument("--arrivals", choices=list(ARRIVAL_KINDS), default="square", help="the arrival draw")
+    parser.add_argument("--product", choices=list(PRODUCTS), default="leg", help="the piece and its cell")
+    parser.add_argument("--gripper", type=GripperModel, default=GripperModel.JAW_GEH6180)
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
-    for name in ("applications.pork_leg_alignment.sim.scene", "applications.pork_leg_alignment.sim.product"):
+    for name in (
+        "applications.pork_leg_alignment.sim.scene",
+        "applications.pork_leg_alignment.sim.product",
+        "applications.pork_leg_alignment.sim.loin",
+    ):
         logging.getLogger(name).setLevel(logging.WARNING)
     args.out_dir.mkdir(parents=True, exist_ok=True)
     for arm, tilt_deg in CONDITIONS:
@@ -266,7 +304,17 @@ def main() -> None:
         for close_up in (False, True):
             if (args.only == "full" and close_up) or (args.only == "closeup" and not close_up):
                 continue
-            rows = film_condition(arm, tilt_deg, args.out_dir, close_up, args.approach, args.only_leg, args.arrivals)
+            rows = film_condition(
+                arm,
+                tilt_deg,
+                args.out_dir,
+                close_up,
+                args.approach,
+                args.only_leg,
+                args.arrivals,
+                PRODUCTS[args.product],
+                args.gripper,
+            )
             print(
                 f"{arm.value} tilt {tilt_deg:.0f} {'close-up' if close_up else 'full'}: {sum(r.success for r in rows)} / {len(rows)}"
             )

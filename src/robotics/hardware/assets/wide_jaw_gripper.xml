@@ -1,0 +1,97 @@
+<mujoco model="wide_jaw_gripper">
+  <!--
+    A named placeholder for a loin-class parallel jaw, not a selected part. It
+    exists because the GEH6180-sized jaw (jaw_gripper.xml) opens 180 mm and a
+    bone-in loin derived from the USDA cutout is 169 to 215 mm across where the
+    centre-of-gravity grasp rule closes the jaws, so the fit check refused every
+    piece of the population (experiments/2026-09-16-loin-infeed-transfer.md,
+    run one). Stroke: 150 mm per jaw, the Schunk PFH 150's
+    (library/hardware/arm-models-for-sim.md, section 3), for an opening of 20 to
+    320 mm that passes the whole population with the fit check's 40 mm margin.
+    Grip force 1800 N and 2.6 kg are the GEH6180's, kept so the stroke is the
+    one thing that differs from run one; both are unverified for a real gripper
+    of this stroke (the PFH 150 is 2120 N and 18.9 kg, near the arms' payload
+    with a 15 kg loin, which is a selection problem for later). Pads 100 mm tall
+    for a section about 100 mm tall lying on the belt: the tip sits 40 mm below
+    the tool centre point, so with the tool on the section's centreline the tip
+    clears the belt by a few millimetres and the pad reaches the section's top.
+    Pad length, segmentation and friction follow jaw_gripper.xml and its
+    reasons.
+
+    Same names as gripper.xml, so gripper.py measures it the same way. Frame: +z
+    points away from the wrist along the approach, fingers open along y. One
+    actuator drives the left jaw and an equality couples the right one.
+  -->
+  <compiler angle="radian" autolimits="true"/>
+
+  <default>
+    <default class="jaw">
+      <geom condim="4" friction="0.5 0.05 0.001" solref="0.004 1" solimp="0.95 0.99 0.001"
+            rgba="0.25 0.27 0.30 1"/>
+      <joint type="slide" axis="0 1 0" damping="200" armature="0.2"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <body name="gripper_base" childclass="jaw">
+      <inertial pos="0 0 0.06" mass="2.1" diaginertia="0.012 0.012 0.008"/>
+      <geom name="coupler" type="cylinder" size="0.045 0.012" pos="0 0 0.012"/>
+      <!-- Wide enough that the finger arms stay inside it at full stroke (20 + 150 mm each side). -->
+      <geom name="body_block" type="box" size="0.060 0.180 0.045" pos="0 0 0.069"/>
+
+      <!-- Tool centre point: midway between the closed pads, 10 mm below the pads' mid height. -->
+      <site name="tcp" pos="0 0 0.234" size="0.005" rgba="0.9 0.3 0.3 0.9"/>
+      <site name="grasp_axis" pos="0 0 0.234" size="0.004" rgba="0.3 0.9 0.3 0.6"/>
+
+      <body name="finger_left" pos="0 0.020 0.114">
+        <inertial pos="0 0 0.07" mass="0.25" diaginertia="0.0012 0.0012 0.0002"/>
+        <joint name="finger_left_joint" range="0 0.150"/>
+        <geom name="finger_left_arm" type="box" size="0.015 0.008 0.060" pos="0 0.004 0.060"/>
+        <geom name="finger_left_pad" type="box" size="0.020 0.005 0.050" pos="0 -0.005 0.110"
+              rgba="0.12 0.13 0.15 1"/>
+        <geom name="finger_left_pad_fore" type="box" size="0.020 0.005 0.050" pos="0.040 -0.005 0.110"
+              rgba="0.12 0.13 0.15 1"/>
+        <geom name="finger_left_pad_aft" type="box" size="0.020 0.005 0.050" pos="-0.040 -0.005 0.110"
+              rgba="0.12 0.13 0.15 1"/>
+        <site name="pad_left" pos="0 -0.010 0.110" size="0.003" rgba="0.9 0.6 0.2 0.6"/>
+      </body>
+
+      <body name="finger_right" pos="0 -0.020 0.114">
+        <inertial pos="0 0 0.07" mass="0.25" diaginertia="0.0012 0.0012 0.0002"/>
+        <joint name="finger_right_joint" range="-0.150 0"/>
+        <geom name="finger_right_arm" type="box" size="0.015 0.008 0.060" pos="0 -0.004 0.060"/>
+        <geom name="finger_right_pad" type="box" size="0.020 0.005 0.050" pos="0 0.005 0.110"
+              rgba="0.12 0.13 0.15 1"/>
+        <geom name="finger_right_pad_fore" type="box" size="0.020 0.005 0.050" pos="0.040 0.005 0.110"
+              rgba="0.12 0.13 0.15 1"/>
+        <geom name="finger_right_pad_aft" type="box" size="0.020 0.005 0.050" pos="-0.040 0.005 0.110"
+              rgba="0.12 0.13 0.15 1"/>
+        <site name="pad_right" pos="0 0.010 0.110" size="0.003" rgba="0.9 0.6 0.2 0.6"/>
+      </body>
+
+      <camera name="wrist" pos="0 -0.12 0.07" quat="0.9239 0.3827 0 0" fovy="58"/>
+    </body>
+  </worldbody>
+
+  <contact>
+    <exclude body1="gripper_base" body2="finger_left"/>
+    <exclude body1="gripper_base" body2="finger_right"/>
+    <exclude body1="finger_left" body2="finger_right"/>
+  </contact>
+
+  <equality>
+    <joint name="finger_coupling" joint1="finger_left_joint" joint2="finger_right_joint"
+           polycoef="0 -1 0 0 0" solref="0.004 1" solimp="0.99 0.999 0.0001"/>
+  </equality>
+
+  <actuator>
+    <position name="grip" joint="finger_left_joint" kp="100000" kv="1000"
+              ctrlrange="0 0.150" forcerange="-1800 1800"/>
+  </actuator>
+
+  <sensor>
+    <jointpos name="grip_pos" joint="finger_left_joint"/>
+    <force name="pad_left_force" site="pad_left"/>
+    <force name="pad_right_force" site="pad_right"/>
+  </sensor>
+</mujoco>

@@ -1,9 +1,11 @@
-"""The two leg grippers must match their datasheets where it matters for a grasp.
+"""The grippers must match their datasheets, or their stated placeholders, where it matters for a grasp.
 
-Stroke decides whether a gripper fits round a shank at all; grip force times pad
-friction decides whether it holds or turns a leg. Both are checked on the
-gripper alone, closing on a free 90 mm cylinder with gravity off, so the numbers
-belong to the gripper and not to an arm or a leg.
+Stroke decides whether a gripper fits round a piece at all; grip force times pad
+friction decides whether it holds or turns it; pad reach decides how low the
+tool may go before the pads foul the belt. All are checked on the gripper alone,
+closing on a free 90 mm cylinder with gravity off, so the numbers belong to the
+gripper and not to an arm or a product. The wide jaw is a placeholder for a
+loin-class gripper (its asset says why); it is measured like the others.
 """
 
 import mujoco
@@ -22,16 +24,27 @@ CYLINDER_RADIUS_M = 0.045
 PAD_FRICTION = 0.5  # both assets; an assumption for wet meat, see the asset comments
 
 # Datasheet opening ranges, metres: Zimmer GEH6180IL 80 mm per jaw from a 20 mm
-# rest gap (the rest gap is this model's choice); OnRobot 3FG25 18 to 155 mm.
+# rest gap (the rest gap is this model's choice); OnRobot 3FG25 18 to 155 mm;
+# the wide jaw placeholder 150 mm per jaw, the Schunk PFH 150's stroke.
 OPENING_RANGE_M = {
     GripperModel.JAW_GEH6180: (0.020, 0.180),
     GripperModel.THREE_FINGER_3FG25: (0.018, 0.155),
+    GripperModel.WIDE_JAW: (0.020, 0.320),
 }
-# The cylinder's axis: across the jaws' long pads for the parallel jaw, along the
+# How far the pad tip reaches past the tool centre point along the approach:
+# the jaw's pads are 90 mm tall with the tip 35 mm below the TCP, sized to a
+# shank; the wide jaw's are 100 mm tall with the tip 40 mm below, sized to a
+# loin's section.
+PAD_REACH_M = {
+    GripperModel.JAW_GEH6180: 0.035,
+    GripperModel.WIDE_JAW: 0.040,
+}
+# The cylinder's axis: across the jaws' long pads for the parallel jaws, along the
 # tool axis for the centric three-finger gripper.
 CYLINDER_QUAT = {
     GripperModel.JAW_GEH6180: [0.7071068, 0.0, 0.7071068, 0.0],
     GripperModel.THREE_FINGER_3FG25: [1.0, 0.0, 0.0, 0.0],
+    GripperModel.WIDE_JAW: [0.7071068, 0.0, 0.7071068, 0.0],
 }
 # Shank shape per gripper. The flat jaw pads close on a capsule, not a cylinder:
 # MuJoCo's box-cylinder contact under a steady pull along the cylinder axis
@@ -44,8 +57,9 @@ CYLINDER_QUAT = {
 SHANK_GEOM = {
     GripperModel.JAW_GEH6180: mujoco.mjtGeom.mjGEOM_CAPSULE,
     GripperModel.THREE_FINGER_3FG25: mujoco.mjtGeom.mjGEOM_CYLINDER,
+    GripperModel.WIDE_JAW: mujoco.mjtGeom.mjGEOM_CAPSULE,
 }
-LEG_GRIPPERS = [GripperModel.JAW_GEH6180, GripperModel.THREE_FINGER_3FG25]
+LEG_GRIPPERS = [GripperModel.JAW_GEH6180, GripperModel.THREE_FINGER_3FG25, GripperModel.WIDE_JAW]
 
 
 def _gripper_on_a_cylinder(gripper: GripperModel) -> tuple[mujoco.MjModel, mujoco.MjData]:
@@ -108,6 +122,14 @@ def test_opening_range_matches_the_datasheet(gripper: GripperModel) -> None:
     low, high = OPENING_RANGE_M[gripper]
     assert geometry.rest_gap_m == pytest.approx(low, rel=0.05)
     assert geometry.max_opening_m == pytest.approx(high, rel=0.05)
+
+
+@pytest.mark.parametrize("gripper", list(PAD_REACH_M), ids=lambda g: g.value)
+def test_the_pad_tip_reaches_the_stated_distance_past_the_tool_point(gripper: GripperModel) -> None:
+    """A grasp height is set from this number; a pad that reaches further than stated jams on the belt."""
+    model, _ = _gripper_on_a_cylinder(gripper)
+    geometry = measure_geometry(model, GRIPPER_SPECS[gripper])
+    assert geometry.pad_reach_m == pytest.approx(PAD_REACH_M[gripper], abs=0.001)
 
 
 @pytest.mark.parametrize("gripper", LEG_GRIPPERS, ids=lambda g: g.value)

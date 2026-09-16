@@ -22,7 +22,8 @@ src/
     hardware/                       MuJoCo models of hardware any cell can be built from
       arms.py                       UR5e, UR20, FANUC SR-20iA: an ArmSpec and a builder each
       ik.py                         tool pose to joint values; raises UnreachableError
-      grippers.py, assets/          pinch, jaw and three-finger grippers
+      grippers.py, assets/          pinch, jaw and three-finger grippers, and a wide-jaw placeholder for
+                                    a loin-class gripper (its asset says what is assumed and why)
       cameras.py                    Gemini 335L and D455 depth cameras from their datasheets
       image_degradation.py          controlled damage to rendered images, each with its cause
     perception/                     what a depth camera says about whatever is on the belt
@@ -34,13 +35,18 @@ src/
       learned_centre_of_gravity.py  learned offset on top of the column centroid
       tracking.py                   a pose carried forward in belt coordinates
   applications/
-    pork_leg_alignment/             legs ride a belt to a saw that takes the trotter off at the hock
+    pork_leg_alignment/             this plant's two cells: legs ride a belt to a saw that takes the
+                                    trotter off at the hock; loins are set down square for the loin
+                                    puller's infeed (the second cell, added 2026-09-16, see known gaps)
       sim/                          this line in MuJoCo: scene.py (CellConfig), cell.py, sensing.py,
-                                    product.py (leg and slab), saw.py, hold_down.py, assets/cell.xml
+                                    product.py (leg and slab), loin.py, saw.py, hold_down.py,
+                                    infeed_fixture.py (the loin cell's judge), assets/cell.xml
       perception/                   leg_segmentation.py, learned_leg_segmentation.py, perceive_leg.py
       grasping/                     numpy only: leg_perception.py, shank_grasp_rule.py,
                                     learned_grasp_policy.py
-      skills/                       shank_grasp.py, trotter_grasp.py
+      skills/                       leg_estimate.py, shank_grasp.py, trotter_grasp.py, rotate_on_belt.py;
+                                    the loin's estimate, grasp station and alignment target in
+                                    loin_estimate.py and loin_infeed.py
 tests/                              mirrors src/: tests/robotics/core/test_frames.py tests frames.py
 scripts/measure/, train/, view/     entry points, run from the repo root
 ros2/src/                           meat_cell_msgs, meat_cell_ros: ROS 2 nodes over core and grasping/
@@ -139,6 +145,13 @@ whatever does not need to know the product becomes reusable infrastructure by mo
 
 ## Known gaps
 
+- The loin puller infeed lives inside `applications/pork_leg_alignment/` rather than in its own
+  `applications/<cell>/`, because it reuses this package's `Cell`, `CellConfig` and grasp and turn
+  skills and the dependency rule forbids one application importing another. Section 14 of the plan
+  designed the transfer that way (re-parameterise `CellConfig` and the skills, touch nothing under
+  `robotics/`), and `experiments/2026-09-16-loin-infeed-transfer.md` counts what it touched. The
+  package holds one customer's two cells and wants a customer-level name; renaming it touches the
+  ROS 2 packages, every test path and the scripts, so it waits for a quiet moment.
 - `sim/sensing.py`: `Sensors` reads cell.xml names (`slab_free`, `belt_encoder`, `g_grip_pos`) and the
   product bodies directly. Passing them in would let it move to `robotics/hardware/`.
 - `robotics/hardware/cameras.py` mounts depth cameras on `overhead_cam_mount`, a body in this cell's XML.
