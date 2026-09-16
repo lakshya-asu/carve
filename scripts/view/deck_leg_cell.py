@@ -315,7 +315,7 @@ class Pig(Scene):
             FadeOut(each),
             run_time=1.2,
         )
-        ours = line("This cell works on the leg, sold as ham.", size=BODY, color=BLUE)
+        ours = line("This cell works on the leg, which is sold as ham.", size=BODY, color=BLUE)
         ours.next_to(heading, DOWN, buff=0.3)
         self.play(FadeIn(ours), run_time=1.0)
         self.wait(1.2)
@@ -335,7 +335,7 @@ class Anatomy(Scene):
         # The bounding box is centred at half the length; the centre of gravity is short of that.
         base = piece.get_center() + RIGHT * (COG_FRACTION - 0.5) * length
         self.play(FadeIn(piece), run_time=0.9)
-        heading = line("One leg: 722 mm, 11 kg, the shape the simulator uses.", size=HEAD)
+        heading = line("The simulated leg is 722 mm long and weighs 11 kg.", size=HEAD)
         heading.to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=1.0)
 
@@ -377,7 +377,7 @@ class Anatomy(Scene):
         hock_x = (leg_point(length, HOCK_FRACTION) + base)[0]
         hock = Dot([hock_x, base[1], 0], radius=0.09, color=WARN)
         hock_line = Line([hock_x, base[1] + 1.0, 0], [hock_x, base[1] - 0.9, 0], color=WARN, stroke_width=3)
-        hock_name = annot("the hock joint, 76 percent along", WARN).move_to([hock_x - 1.4, top_band, 0])
+        hock_name = annot("the hock joint, at 76 percent of the length", WARN).move_to([hock_x - 1.4, top_band, 0])
         hock_stem = leader(np.array([hock_x, base[1] + 1.0, 0.0]), hock_name, WARN)
         self.play(Create(hock_line), FadeIn(hock), Create(hock_stem), FadeIn(hock_name), run_time=1.2)
         self.wait(1.0)
@@ -440,8 +440,8 @@ class Handle(Scene):
             else:
                 self.play(FadeOut(span), FadeOut(what_name), FadeOut(laid), FadeOut(why_name), run_time=0.5)
 
-        held = line("So the cell holds the shank, seven tenths along.", size=BODY, color=BLUE)
-        held.move_to([6.8, -3.45, 0], aligned_edge=RIGHT)
+        held = line("So the cell grips the shank, 70 percent of the way along.", size=BODY, color=BLUE)
+        held.move_to([0, -3.5, 0])
         self.play(FadeIn(held), run_time=1.0)
         self.wait(2.2)
 
@@ -453,7 +453,7 @@ class WhySkills(Scene):
         """Show the fixture that solves this job, then what it cannot be carried to."""
         self.add(belt())
         bar = Line([0.2, BELT_TOP + 0.15, 0], [3.1, BELT_BOTTOM - 0.15, 0], color=BLUE, stroke_width=7)
-        heading = line("A crossbar could square these.", size=HEAD).to_edge(UP, buff=0.5)
+        heading = line("A fixed crossbar could line these up on its own.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(Create(bar, rate_func=EASE), FadeIn(heading, shift=DOWN * 0.15), run_time=1.2)
 
         skewed = VGroup(*[leg(1.9).rotate(y * DEGREES) for y in (-30, 18, -14)])
@@ -472,7 +472,7 @@ class WhySkills(Scene):
         self.clear()
 
         # What the arm is actually for.
-        mission = line("Squaring a leg is one job.", size=HEAD).shift(UP * 0.9)
+        mission = line("Lining up a leg is only one job on this line.", size=HEAD).shift(UP * 0.9)
         rest = VGroup(
             line("I am building a physical system that learns a job", size=HEAD),
             line("and carries what it learned to the next one.", size=HEAD),
@@ -510,7 +510,7 @@ class WhySkills(Scene):
             ]
         )
         self.play(LaggedStart(*[Create(d) for d in drops], lag_ratio=0.3), run_time=1.4)
-        same = line("The same skill, written once, run on either.", size=BODY, color=BLUE)
+        same = line("I write the skill once and run it on either arm.", size=BODY, color=BLUE)
         same.move_to([0, -3.5, 0])
         self.play(FadeIn(same), run_time=1.0)
         self.wait(2.2)
@@ -530,15 +530,16 @@ class Definition(Scene):
         self.play(Create(outer, rate_func=EASE), FadeIn(title), run_time=1.2)
 
         slots = (
-            ("what it needs", "the chosen grasp on the moving shank"),
-            ("what must be true first", "the jaws open 40 mm wider than the shank"),
-            ("what it does", "a rule, a planner, or a trained model"),
-            ("what it gives back", "the opening it closed to, and the lift"),
-            ("how it knows it worked", "the piece rose with the tool, within 2 mm"),
+            ("inputs", "the chosen grasp on the moving shank"),
+            ("preconditions", "the jaws open at least 40 mm wider than the shank"),
+            ("implementation", "a rule, a planner, or a trained model"),
+            ("outputs", "the jaw opening it closed to, and the lift proof"),
+            ("success check", "the leg rose with the tool, within 2 mm"),
+            ("failure modes", "unreachable, closed on nothing, slipped, no lift"),
         )
         rows = VGroup()
         for index, (name, meaning) in enumerate(slots):
-            y = 1.3 - index * 0.72
+            y = 1.2 - index * 0.62
             left = figure(name, size=ANNOT, color=INK).move_to([-6.0, y, 0], aligned_edge=LEFT)
             right = line(meaning, size=ANNOT, color=INK_2).move_to([-0.7, y, 0], aligned_edge=LEFT)
             rows.add(VGroup(left, right))
@@ -547,7 +548,7 @@ class Definition(Scene):
         self.wait(1.6)
 
         self.play(Indicate(rows[4][0], color=BLUE, scale_factor=1.08), run_time=0.9)
-        test = line("The success test is what separates a skill from a function.", size=BODY, color=BLUE)
+        test = line("The success check lets the graph trust the result without looking inside.", size=BODY, color=BLUE)
         test.move_to([0, -3.15, 0])
         self.play(FadeIn(test), run_time=1.1)
         self.wait(2.0)
@@ -564,8 +565,8 @@ class Definition(Scene):
         )
         same = (
             VGroup(
-                line("Any of these can sit inside. The contract does not change,", size=BODY, color=INK_2),
-                line("so nothing downstream has to be rewritten.", size=BODY, color=INK_2),
+                line("Swap the implementation and the contract stays the same,", size=BODY, color=INK_2),
+                line("so nothing downstream needs rewriting.", size=BODY, color=INK_2),
             )
             .arrange(DOWN, buff=0.18)
             .move_to([0, -3.25, 0])
@@ -586,7 +587,7 @@ class Fuse(Scene):
             frame = Rectangle(width=3.6, height=1.0, color=RULE, stroke_width=2)
             boxes.add(VGroup(frame, figure(text, size=ANNOT, color=INK).move_to(frame.get_center())))
         boxes.arrange(RIGHT, buff=0.55).move_to([0, 2.2, 0])
-        heading = line("In a match all three run at once.", size=HEAD).to_edge(UP, buff=0.5)
+        heading = line("In a match a player uses all three at once.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=0.9)
         self.play(LaggedStart(*[FadeIn(b, shift=DOWN * 0.2) for b in boxes], lag_ratio=0.2), run_time=1.3)
         self.wait(0.6)
@@ -609,15 +610,15 @@ class Fuse(Scene):
         )
         self.play(LaggedStart(*[Create(f) for f in feeds], lag_ratio=0.15), run_time=1.2)
         self.play(Create(fused, rate_func=EASE), FadeIn(fused_name), run_time=1.1)
-        taught = line("A skill of its own, made from the three during play.", size=BODY, color=INK_2)
+        taught = line("Beating a defender at speed is a new skill built from those three.", size=BODY, color=INK_2)
         taught.move_to([0, -1.9, 0])
         self.play(FadeIn(taught), run_time=1.0)
         self.wait(1.6)
 
         works = (
             VGroup(
-                line("It works because each drill has its own standard of done,", size=ANNOT, color=INK_2),
-                line("and all three read and change the same things: the ball and the body.", size=ANNOT, color=INK_2),
+                line("Each drill has a clear standard of done,", size=ANNOT, color=INK_2),
+                line("and all three act on the same ball and the same body.", size=ANNOT, color=INK_2),
             )
             .arrange(DOWN, buff=0.16)
             .move_to([0, -3.1, 0])
@@ -627,7 +628,7 @@ class Fuse(Scene):
         self.play(*[FadeOut(m) for m in (boxes, feeds, fused, fused_name, taught, works, heading)], run_time=0.8)
 
         # A skill learned over variation carries to conditions it was not drilled on.
-        carry = line("Learned over enough variation, a skill carries.", size=HEAD).to_edge(UP, buff=0.5)
+        carry = line("A skill practised in enough conditions works in new ones.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(carry, shift=DOWN * 0.15), run_time=1.0)
         core = Rectangle(width=4.0, height=1.1, color=BLUE, stroke_width=3).move_to([0, 0.2, 0])
         core_name = figure("close control", size=BODY, color=BLUE).move_to(core.get_center())
@@ -657,9 +658,9 @@ class Fuse(Scene):
 
         # The same claim, on this cell's own measurements.
         ours = (
-            ("legs it never saw", "centre of gravity 1.2 mm median, on 20 held-out legs"),
-            ("a different arm", "one turn skill on the UR20 and the SR-20iA"),
-            ("a different piece", "the same skills on a loin, 20 of 20 near square"),
+            ("legs it never saw", "the centre of gravity is found within 1.2 mm median on 20 unseen legs"),
+            ("a different arm", "the same turn skill runs on both the UR20 and the SR-20iA"),
+            ("a different piece", "the same skills aligned all 20 loins that arrived near square"),
         )
         swapped = VGroup()
         for index, (label_text, _) in enumerate(ours):
@@ -672,7 +673,7 @@ class Fuse(Scene):
             FadeOut(spokes[3]),
             run_time=1.3,
         )
-        evidence = VGroup(*[figure(proof, size=ANNOT, color=INK) for _, proof in ours]).arrange(DOWN, buff=0.22)
+        evidence = VGroup(*[line(proof, size=ANNOT, color=INK) for _, proof in ours]).arrange(DOWN, buff=0.18)
         evidence.move_to([0, -2.6, 0])
         self.play(LaggedStart(*[FadeIn(e) for e in evidence], lag_ratio=0.3), run_time=1.6)
         self.wait(2.6)
@@ -683,7 +684,7 @@ class Compose(Scene):
 
     def construct(self) -> None:
         """The cell's own composition, then the ladder of sizes."""
-        heading = line("Four skills align one leg.", size=HEAD).to_edge(UP, buff=0.5)
+        heading = line("Aligning a leg is built from four smaller skills.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=0.9)
 
         parts = ["perceive the piece", "find where to hold it", "hold it", "turn it"]
@@ -714,7 +715,7 @@ class Compose(Scene):
         self.wait(1.6)
         self.play(*[FadeOut(m) for m in (boxes, joins, composed, composed_name, heading)], run_time=0.8)
 
-        ladder_heading = line("How big a skill can be.", size=HEAD).to_edge(UP, buff=0.5)
+        ladder_heading = line("Skills come in every size.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(ladder_heading, shift=DOWN * 0.15), run_time=0.9)
         rungs = [
             ("move one joint", False),
@@ -729,16 +730,16 @@ class Compose(Scene):
             ladder.add(
                 VGroup(frame, figure(text, size=ANNOT, color=INK if is_skill else INK_3).move_to(frame.get_center()))
             )
-        ladder.arrange(DOWN, buff=0.2).move_to([-1.5, 0.15, 0])
-        command = line("a command, no test of its own", size=ANNOT, color=INK_3)
+        ladder.arrange(DOWN, buff=0.2).move_to([-2.4, 0.15, 0])
+        command = line("a joint command checks nothing", size=ANNOT, color=INK_3)
         command.next_to(ladder[0], RIGHT, buff=0.3)
         self.play(LaggedStart(*[FadeIn(r, shift=UP * 0.15) for r in ladder], lag_ratio=0.15), run_time=1.8)
         self.play(FadeIn(command), run_time=0.7)
         self.wait(1.0)
         answer = (
             VGroup(
-                line("Any size that states what it needs", size=BODY, color=BLUE),
-                line("and tests whether it worked.", size=BODY, color=BLUE),
+                line("Anything that states what it needs and checks its own result", size=BODY, color=BLUE),
+                line("counts as a skill, whatever its size.", size=BODY, color=BLUE),
             )
             .arrange(DOWN, buff=0.18)
             .move_to([0, -3.1, 0])
@@ -775,7 +776,7 @@ class Plan(Scene):
 
     def construct(self) -> None:
         """Run down the chain of skills, showing what each one can return."""
-        heading = line("Four skills and a judge, camera to cut.", size=HEAD).to_edge(UP, buff=0.5)
+        heading = line("These skills take a leg from the camera to the saw.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=0.9)
 
         # Each row is a skill in src/applications/pork_leg_alignment/skills/.
@@ -821,7 +822,7 @@ class Plan(Scene):
         self.wait(0.8)
 
         # Each skill declares what it can return, and every one of those is routed.
-        says = line("Each skill declares what it can return.", size=ANNOT, color=INK_2)
+        says = line("Each skill lists the outcomes it can return.", size=ANNOT, color=INK_2)
         says.move_to([3.4, 2.6, 0])
         self.play(FadeIn(says), run_time=0.9)
 
@@ -858,10 +859,10 @@ class Plan(Scene):
             self.wait(0.5)
 
         routed = VGroup(
-            line("Every outcome is routed.", size=ANNOT, color=BLUE),
-            line("The runner adds two to every skill:", size=ANNOT, color=BLUE),
+            line("Every outcome has a route to the next step.", size=ANNOT, color=BLUE),
+            line("The runner also adds two outcomes to every skill:", size=ANNOT, color=BLUE),
         ).arrange(DOWN, buff=0.14)
-        routed_2 = line("precondition failed, success not verified.", size=ANNOT, color=BLUE)
+        routed_2 = line("precondition failed and success not verified.", size=ANNOT, color=BLUE)
         VGroup(routed, routed_2).arrange(DOWN, buff=0.14).move_to([3.4, -2.85, 0])
         self.play(FadeIn(routed), FadeIn(routed_2), run_time=1.1)
         self.wait(1.6)
@@ -871,17 +872,17 @@ class Plan(Scene):
         highlight = Rectangle(width=6.2, height=1.08, color=BLUE, stroke_width=3).move_to(boxes[3][0].get_center())
         a_text = VGroup(
             figure("pick_and_place", size=ANNOT, color=BLUE),
-            line("lift the shank 100 mm and carry the leg", size=18, color=INK_2),
+            line("lifts the shank 100 mm and carries the leg", size=18, color=INK_2),
         ).arrange(DOWN, buff=0.14)
         b_text = VGroup(
             figure("rotate_on_belt", size=ANNOT, color=BLUE),
-            line("raise the shank 20 mm and swing the leg", size=18, color=INK_2),
+            line("raises the shank 20 mm and swings the leg", size=18, color=INK_2),
         ).arrange(DOWN, buff=0.14)
         VGroup(a_text, b_text).arrange(DOWN, buff=0.75).move_to([3.4, 0.4, 0])
         self.play(Create(highlight, rate_func=EASE), run_time=0.8)
         self.play(LaggedStart(FadeIn(a_text), FadeIn(b_text), lag_ratio=0.4), run_time=1.5)
-        built = line("I built both, and ran both on the", size=ANNOT, color=BLUE)
-        built_2 = line("same 20 legs.", size=ANNOT, color=BLUE)
+        built = line("I built both and ran them on", size=ANNOT, color=BLUE)
+        built_2 = line("the same 20 legs.", size=ANNOT, color=BLUE)
         VGroup(built, built_2).arrange(DOWN, buff=0.16).move_to([3.4, -2.6, 0])
         self.play(FadeIn(built), FadeIn(built_2), run_time=1.0)
         self.wait(2.2)
@@ -904,7 +905,7 @@ class Cameras(Scene):
             fill_opacity=0.5,
             stroke_width=0,
         )
-        heading = line("A depth camera, 950 mm over the belt.", size=HEAD).to_edge(UP, buff=0.5)
+        heading = line("A depth camera hangs 950 mm above the belt.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), FadeIn(camera), run_time=1.0)
         self.play(FadeIn(cone), run_time=0.9)
         piece = leg(2.4).rotate(20 * DEGREES).move_to([-0.4, 0.1, 0])
@@ -915,7 +916,7 @@ class Cameras(Scene):
             line("Two infrared eyes a fixed distance apart. The shift between", size=ANNOT, color=INK_2),
             line("them gives the range, so the error grows with the square of it:", size=ANNOT, color=INK_2),
             figure("depth error  =  Z squared  x  subpixel  /  ( focal x baseline )", size=ANNOT, color=INK),
-            figure("at Z = 0.95 m,  about 1.2 mm on the belt", size=ANNOT, color=BLUE),
+            figure("At 0.95 m that comes to about 1.2 mm on the belt.", size=ANNOT, color=BLUE),
         ).arrange(DOWN, buff=0.16)
         maths.move_to([0, -3.15, 0])
         self.play(FadeIn(maths[0]), FadeIn(maths[1]), run_time=1.1)
@@ -955,8 +956,8 @@ class Cameras(Scene):
         self.wait(1.4)
 
         chosen = VGroup(
-            line("The noise is 6 percent apart, too close to choose on.", size=ANNOT, color=INK_2),
-            line("I took the Gemini 335L for its IP65 rating and hardware sync.", size=BODY, color=BLUE),
+            line("Their depth noise differs by 6 percent, too little to decide on.", size=ANNOT, color=INK_2),
+            line("I chose the Gemini 335L for its IP65 rating and hardware sync.", size=BODY, color=BLUE),
         ).arrange(DOWN, buff=0.2)
         chosen.move_to([0, -3.1, 0])
         self.play(FadeIn(chosen), run_time=1.0)
@@ -968,7 +969,7 @@ class Segment(Scene):
 
     def construct(self) -> None:
         """Height above the belt, then what it cannot do, then the learned answer."""
-        heading = line("First, which pixels are leg.", size=HEAD).to_edge(UP, buff=0.5)
+        heading = line("The first job is finding which pixels belong to the leg.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=0.9)
 
         frame = Rectangle(width=6.4, height=3.6, color=RULE, stroke_width=2).move_to([-3.4, 0.2, 0])
@@ -984,7 +985,7 @@ class Segment(Scene):
         self.play(FadeIn(rule_text), run_time=1.2)
         outline = piece.copy().set_fill(opacity=0).set_stroke(BLUE, width=3)
         self.play(Create(outline, rate_func=EASE), run_time=1.2)
-        fast = figure("no training, 93 to 105 ms a frame", size=ANNOT, color=BLUE).move_to([3.6, -0.9, 0])
+        fast = figure("No training, and 93 to 105 ms a frame.", size=ANNOT, color=BLUE).move_to([3.6, -0.9, 0])
         self.play(FadeIn(fast), run_time=0.8)
         self.wait(1.6)
 
@@ -992,21 +993,21 @@ class Segment(Scene):
         self.play(FadeOut(rule_text), FadeOut(fast), run_time=0.5)
         second = leg(4.0).rotate(-8 * DEGREES).move_to(frame.get_center() + RIGHT * 0.55 + DOWN * 0.75)
         self.play(FadeIn(second), run_time=0.7)
-        joined = figure("two legs touching read as one", size=ANNOT, color=WARN).move_to([3.6, 0.6, 0])
+        joined = figure("Touching legs look like one piece.", size=ANNOT, color=WARN).move_to([3.6, 0.6, 0])
         self.play(FadeIn(joined), Indicate(outline, color=WARN, scale_factor=1.02), run_time=1.1)
         self.wait(1.2)
 
         learned = VGroup(
             line("On plant footage a colour rule found", size=BODY, color=INK_2),
-            figure("14 of 55 legs whole", size=BODY, color=WARN),
-            line("Segment Anything plus the colour rule:", size=BODY, color=INK_2),
-            figure("36 of 55", size=BODY, color=BLUE),
+            figure("14 of 55 legs whole,", size=BODY, color=WARN),
+            line("and Segment Anything with it found", size=BODY, color=INK_2),
+            figure("36 of 55.", size=BODY, color=BLUE),
         ).arrange(DOWN, buff=0.22)
         learned.move_to([3.6, -1.0, 0])
         self.play(LaggedStart(*[FadeIn(x) for x in learned], lag_ratio=0.25), run_time=2.0)
         self.wait(1.6)
 
-        keep = line("So the U-Net segments, and geometry checks it every frame.", size=BODY, color=BLUE)
+        keep = line("So a U-Net does the segmenting and geometry checks it on every frame.", size=BODY, color=BLUE)
         keep.move_to([0, -3.3, 0])
         self.play(FadeIn(keep), run_time=1.1)
         self.wait(2.2)
@@ -1021,7 +1022,7 @@ class CentreOfGravity(Scene):
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=1.0)
 
         length = 6.6
-        piece = leg(length).move_to([-2.9, 1.2, 0])
+        piece = leg(length).move_to([-3.4, 1.2, 0])
         # The bounding box is centred at half the length; the centre of gravity is short of that.
         base = piece.get_center() + RIGHT * (COG_FRACTION - 0.5) * length
         self.play(FadeIn(piece), run_time=0.7)
@@ -1039,8 +1040,8 @@ class CentreOfGravity(Scene):
         column = Dot(base + RIGHT * 7.9 / 722 * length, radius=0.1, color=BLUE)
         column_entry = entry(BLUE, "column centroid: 7.9 mm off")
         legend = VGroup(truth_entry, outline_entry, column_entry).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
-        legend.move_to([1.3, 1.55, 0], aligned_edge=LEFT)
-        scale_note = annot("dots at median error").next_to(legend, DOWN, buff=0.35).align_to(legend, LEFT)
+        legend.move_to([0.75, 1.55, 0], aligned_edge=LEFT)
+        scale_note = annot("Dots sit at their median error.").next_to(legend, DOWN, buff=0.35).align_to(legend, LEFT)
 
         self.play(FadeIn(truth), FadeIn(truth_entry), run_time=0.9)
         self.play(FadeIn(outline_centre), FadeIn(outline_entry), FadeIn(scale_note), run_time=1.0)
@@ -1063,10 +1064,10 @@ class CentreOfGravity(Scene):
         self.play(FadeOut(maths), run_time=0.6)
         correction = (
             VGroup(
-                line("A small network, 208,000 weights, three minutes to train,", size=ANNOT, color=INK_2),
+                line("A small network with 208,000 weights, trained in three minutes,", size=ANNOT, color=INK_2),
                 line("learns what the geometry misses and moves the answer:", size=ANNOT, color=INK_2),
                 figure("estimate  =  column centroid  +  network( height map )", size=ANNOT, color=INK),
-                figure("1.2 mm on the median frame, 4.6 mm at worst", size=BODY, color=BLUE),
+                figure("That brings the error down to 1.2 mm median and 4.6 mm at worst.", size=BODY, color=BLUE),
             )
             .arrange(DOWN, buff=0.18)
             .move_to([0, -2.35, 0])
@@ -1079,7 +1080,9 @@ class CentreOfGravity(Scene):
             run_time=1.2,
         )
         self.wait(1.4)
-        why = line("Zero output is the geometry exactly, so a bad model falls back to it.", size=ANNOT, color=INK_2)
+        why = line(
+            "A zero output gives the geometry back, so a bad model cannot do worse than it.", size=ANNOT, color=INK_2
+        )
         why.move_to([0, -3.55, 0])
         self.play(FadeIn(why), run_time=1.0)
         self.wait(2.2)
@@ -1175,8 +1178,8 @@ class Grippers(Scene):
         self.play(FadeIn(jaw), Create(ring), FadeIn(fingers), FadeIn(names), run_time=1.2)
 
         holds = VGroup(
-            figure("held 918 N, needed 720 N", size=ANNOT, color=INK_2).next_to(names[0], DOWN, buff=0.3),
-            figure("held 229 N, needed 180 N", size=ANNOT, color=INK_2).next_to(names[1], DOWN, buff=0.3),
+            figure("held 918 N against 720 N needed", size=ANNOT, color=INK_2).next_to(names[0], DOWN, buff=0.3),
+            figure("held 229 N against 180 N needed", size=ANNOT, color=INK_2).next_to(names[1], DOWN, buff=0.3),
         )
         self.play(FadeIn(holds), run_time=0.9)
         both = line("Both pass the pull test.", size=BODY, color=INK_2).move_to([0, -2.1, 0])
@@ -1210,7 +1213,7 @@ class Grippers(Scene):
             line("Two of its fingers sit half the open radius from the axis.", size=ANNOT, color=INK_2),
             line("So it fits a shank only as wide as half its opening:", size=ANNOT, color=INK_2),
             figure("shank width  <=  opening / 2  =  77.5 mm", size=BODY, color=INK),
-            figure("shanks here are 78 to 110 mm", size=BODY, color=WARN),
+            figure("and the shanks here measure 78 to 110 mm", size=BODY, color=WARN),
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.24)
         rule.move_to([0.2, 0.7, 0], aligned_edge=LEFT)
         if rule.get_right()[0] > 6.8:
@@ -1223,8 +1226,10 @@ class Grippers(Scene):
 
         outcome = (
             VGroup(
-                line("It refuses before the arm moves. It works end-on at the trotter,", size=ANNOT, color=INK_2),
-                line("which needs a tool that tilts: the UR20 can, the SR-20iA cannot.", size=ANNOT, color=INK_2),
+                line("So it refuses before the arm moves. It can take the trotter end-on,", size=ANNOT, color=INK_2),
+                line(
+                    "but that needs a tilting tool, which the UR20 has and the SR-20iA lacks.", size=ANNOT, color=INK_2
+                ),
                 line("So the cell uses the parallel jaw on the shank.", size=BODY, color=BLUE),
             )
             .arrange(DOWN, buff=0.18)
@@ -1239,7 +1244,7 @@ class Arms(Scene):
 
     def construct(self) -> None:
         """Reach counts by height, then the wrist rating a carried leg exceeds."""
-        heading = line("A six-axis arm and a SCARA, on the same reach test.", size=HEAD).to_edge(UP, buff=0.5)
+        heading = line("I put a six-axis arm and a SCARA through the same reach test.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=1.0)
 
         arms = VGroup(six_axis(3.0), scara(3.0)).arrange(RIGHT, buff=0.8, aligned_edge=DOWN).move_to([-3.55, 0.25, 0])
@@ -1249,7 +1254,7 @@ class Arms(Scene):
         )
         self.play(FadeIn(arms), FadeIn(arm_names), run_time=1.1)
 
-        grid_note = line("120 belt points, tool pointing down, three heights", size=ANNOT, color=INK_2)
+        grid_note = line("I tested 120 points on the belt at three heights.", size=ANNOT, color=INK_2)
         grid_note.move_to([0.45, 2.6, 0], aligned_edge=LEFT)
         legend = VGroup(
             Rectangle(width=0.32, height=0.22, fill_color=BLUE, fill_opacity=1, stroke_width=0),
@@ -1287,7 +1292,7 @@ class Arms(Scene):
         wrist = (
             VGroup(
                 line("Carrying a leg loads the SCARA's wrist past its rating:", size=ANNOT, color=INK_2),
-                figure("0.6 to 1.6 kg m^2 measured, 0.45 kg m^2 rated", size=BODY, color=WARN),
+                figure("it measured 0.6 to 1.6 kg m^2 against a 0.45 kg m^2 rating", size=BODY, color=WARN),
                 line("The SCARA is 0.2 to 0.5 s faster per leg where it reaches.", size=ANNOT, color=INK_2),
             )
             .arrange(DOWN, buff=0.18)
@@ -1302,7 +1307,7 @@ class Method(Scene):
 
     def construct(self) -> None:
         """One leg, start to finish, drawn to scale with the belt as the code has it."""
-        heading = line("One leg through the cell, drawn to scale.", size=HEAD).to_edge(UP, buff=0.5)
+        heading = line("Here is one leg going through the cell, drawn to scale.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=0.9)
         cell = cell_belt()
         self.play(FadeIn(cell), run_time=1.0)
@@ -1331,7 +1336,7 @@ class Method(Scene):
         def say(text: str) -> Text:
             return line(text, size=ANNOT, color=INK_2).move_to([0, -3.35, 0])
 
-        caption = say("1. Perceive: the outline, its axis and the centre of gravity.")
+        caption = say("1. The camera finds the outline, its axis and the centre of gravity.")
         direction = np.array([np.cos(yaw), np.sin(yaw), 0.0])
         axis = DashedLine(
             cog_start - direction * COG_FRACTION * length,
@@ -1345,14 +1350,14 @@ class Method(Scene):
 
         grasp_point = cog_start + direction * (GRASP_FRACTION - COG_FRACTION) * length
         grasp_dot = Dot(grasp_point, radius=0.07, color=BLUE)
-        new_caption = say("2. Choose the grip: the shank, seven tenths along the axis.")
+        new_caption = say("2. The grip goes on the shank, 70 percent of the way along.")
         self.play(ReplacementTransform(caption, new_caption), FadeIn(grasp_dot), run_time=0.9)
         caption = new_caption
         self.wait(0.6)
 
         # The belt carries the leg while the arm reaches for a point that keeps moving.
         travel = 0.3 * CELL_SCALE
-        new_caption = say("3. Intercept: meet the grip point where the belt will have carried it.")
+        new_caption = say("3. The arm meets the grip point where the belt will have carried it.")
         maths = figure("meet at  p(t)  =  p0  +  v t", size=ANNOT, color=INK).move_to([3.9, -2.45, 0])
         moving = VGroup(piece, cog, axis, grasp_dot)
         self.play(ReplacementTransform(caption, new_caption), FadeIn(maths), run_time=0.8)
@@ -1361,13 +1366,13 @@ class Method(Scene):
         self.play(moving.animate.shift(RIGHT * travel), FadeIn(grip), run_time=1.3, rate_func=rate_functions.linear)
         self.play(grip.animate.move_to(grasp_dot.get_center()), run_time=0.6, rate_func=EASE)
         self.play(jaws_close(grip), run_time=0.5)
-        met = figure("met within 1 mm at 0.30 m/s", size=18, color=BLUE).next_to(maths, DOWN, buff=0.15)
+        met = figure("the jaws meet it within 1 mm at 0.30 m/s", size=18, color=BLUE).next_to(maths, DOWN, buff=0.15)
         self.play(FadeIn(met), run_time=0.6)
         self.wait(0.6)
         self.play(FadeOut(maths), FadeOut(met), FadeOut(axis), FadeOut(grasp_dot), run_time=0.5)
 
         # The turn: square across the belt, hock on the blade plane.
-        new_caption = say("4. Turn about the centre of gravity until the hock sits on the blade plane.")
+        new_caption = say("4. It turns the leg about its centre of gravity until the hock sits on the blade plane.")
         goal = (
             VGroup(
                 figure("heading after the turn  =  -90 degrees", size=18, color=INK),
@@ -1394,13 +1399,13 @@ class Method(Scene):
         hock_mark = Dot(target_centre + DOWN * hock_offset, radius=0.07, color=WARN)
         self.play(FadeIn(hock_mark), Flash(hock_mark.get_center(), color=BLUE, line_length=0.18), run_time=0.7)
 
-        new_caption = say("5. Look again. More than 3 mm or 1 degree off, and it turns again.")
+        new_caption = say("5. It looks again and turns once more if it is off by more than 3 mm or 1 degree.")
         self.play(ReplacementTransform(caption, new_caption), FadeOut(goal), run_time=0.8)
         caption = new_caption
         self.wait(0.9)
 
         # Release, and the belt carries the leg into the saw, which takes the foot off at the hock.
-        new_caption = say("6. Let go. The saw cuts the plane, and the foot comes off at the joint.")
+        new_caption = say("6. It lets go, and the saw takes the foot off at the joint.")
         self.play(ReplacementTransform(caption, new_caption), FadeOut(grip), run_time=0.8)
         caption = new_caption
         to_saw = cell_point(SAW_X_M, 0)[0] - target_centre[0]
@@ -1412,7 +1417,9 @@ class Method(Scene):
         self.play(Create(cut), run_time=0.4)
         self.play(piece[1].animate.shift(DOWN * 0.55).set_opacity(0.45), FadeOut(cut), run_time=0.9, rate_func=EASE)
 
-        result = figure("any heading, UR20:  hock 1.1 mm median, 1.7 mm worst", size=ANNOT, color=BLUE)
+        result = line(
+            "At any heading the UR20 set the hock within 1.1 mm median and 1.7 mm at worst.", size=ANNOT, color=BLUE
+        )
         result.move_to(caption.get_center())
         self.play(ReplacementTransform(caption, result), run_time=0.9)
         self.wait(2.4)
@@ -1423,7 +1430,7 @@ class Teach(Scene):
 
     def construct(self) -> None:
         """Learned parts on rules, the teaching path step by step, then where labels come from."""
-        heading = line("Three learned parts, two trained so far.", size=HEAD).to_edge(UP, buff=0.5)
+        heading = line("Three parts of the cell learn, and two are trained so far.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=0.9)
 
         parts = (
@@ -1510,7 +1517,7 @@ class Reinforce(Scene):
 
     def construct(self) -> None:
         """Why only the turn, the residual on a scripted base, the reward, and the budget."""
-        heading = line("Reinforcement learning goes in one place: the turn.", size=HEAD).to_edge(UP, buff=0.5)
+        heading = line("I would use reinforcement learning in one place, the turn.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=1.0)
         why = (
             VGroup(
@@ -1519,7 +1526,7 @@ class Reinforce(Scene):
                     size=ANNOT,
                     color=INK_2,
                 ),
-                line("The turn is contact, a draping trotter, and 20 different legs.", size=ANNOT, color=INK_2),
+                line("The turn involves contact, a draping trotter and 20 different legs.", size=ANNOT, color=INK_2),
             )
             .arrange(DOWN, buff=0.16)
             .move_to([0, 2.45, 0])
@@ -1565,25 +1572,22 @@ class Reinforce(Scene):
         )
         self.play(Write(maths[0]), run_time=1.3)
         self.play(Write(maths[1]), run_time=1.3)
-        same = line("The reward is the evaluator, so the two cannot disagree.", size=ANNOT, color=BLUE)
+        same = line("The reward and the evaluation use the same check, so they always agree.", size=ANNOT, color=BLUE)
         same.move_to([0, -1.9, 0])
         self.play(FadeIn(same), run_time=0.8)
         self.wait(1.2)
         budget = (
             VGroup(
-                line(
-                    "To be trained over friction 0.15 to 0.5, belt 0.20 to 0.40 m/s, and yaw up to 35 degrees.",
-                    size=ANNOT,
-                    color=INK_2,
-                ),
+                line("Training would vary friction from 0.15 to 0.5,", size=ANNOT, color=INK_2),
+                line("belt speed from 0.20 to 0.40 m/s, and yaw up to 35 degrees.", size=ANNOT, color=INK_2),
                 line(
                     "One CPU runs about 21 policy steps a second, so 160,000 steps take about 2.1 hours.",
                     size=ANNOT,
                     color=INK_2,
                 ),
             )
-            .arrange(DOWN, buff=0.18)
-            .move_to([0, -2.95, 0])
+            .arrange(DOWN, buff=0.14)
+            .move_to([0, -3.05, 0])
         )
         self.play(FadeIn(budget), run_time=1.1)
         self.wait(2.6)
@@ -1594,7 +1598,9 @@ class Foundation(Scene):
 
     def construct(self) -> None:
         """Gains, costs in belt millimetres, and the contract wrapped around it."""
-        heading = line("A foundation model as a base for new skills.", size=HEAD).to_edge(UP, buff=0.5)
+        heading = line("A foundation model could be the starting point for new skills.", size=HEAD).to_edge(
+            UP, buff=0.5
+        )
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=1.0)
 
         gives = VGroup(
@@ -1607,14 +1613,16 @@ class Foundation(Scene):
         self.wait(1.2)
 
         # Its latency, drawn as the belt it lets go by.
-        mm = 0.048
+        mm = 0.034
         belt_line = Line([-5.8, -0.25, 0], [5.8, -0.25, 0], color=RULE, stroke_width=2)
         pi0 = Rectangle(width=22 * mm, height=0.36, fill_color=BLUE, fill_opacity=1, stroke_width=0)
         oft = Rectangle(width=96 * mm, height=0.36, fill_color=WARN, fill_opacity=1, stroke_width=0)
         pi0.move_to([-5.8, 0.25, 0], aligned_edge=LEFT)
         oft.move_to([-5.8, -0.75, 0], aligned_edge=LEFT)
-        pi0_name = figure("22 mm: one pi0 inference on a 4090", size=18, color=INK).next_to(pi0, RIGHT, buff=0.3)
-        oft_name = figure("96 mm: one OpenVLA-OFT chunk, three cameras", size=18, color=INK).next_to(
+        pi0_name = figure("the belt moves 22 mm during one pi0 inference on a 4090", size=18, color=INK).next_to(
+            pi0, RIGHT, buff=0.3
+        )
+        oft_name = figure("and 96 mm during one three-camera OpenVLA-OFT chunk", size=18, color=INK).next_to(
             oft, RIGHT, buff=0.3
         )
         belt_note = annot("belt travel at 0.30 m/s").move_to([-5.8, 0.75, 0], aligned_edge=LEFT)
@@ -1653,7 +1661,7 @@ class Hierarchy(Scene):
 
     def construct(self) -> None:
         """Build the tree from primitives up, then light one sub-goal's path."""
-        heading = line("The whole plant as one graph of sub-goals.", size=HEAD).to_edge(UP, buff=0.5)
+        heading = line("The whole plant can run as one graph of sub-goals.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=0.9)
         option = (
             VGroup(
@@ -1712,7 +1720,7 @@ class Hierarchy(Scene):
         self.play(Create(path[0]), composed[0].animate.set_stroke(BLUE, width=4), run_time=0.6)
         self.play(Create(path[1]), primitives[3][0].animate.set_stroke(BLUE, width=4), FadeIn(goal_text), run_time=0.8)
         self.wait(1.2)
-        up_text = figure("each level judges the one below by its declared outcome", size=ANNOT, color=INK_2)
+        up_text = figure("Each level judges the one below only by its declared outcome.", size=ANNOT, color=INK_2)
         up_text.move_to([0, -3.45, 0])
         self.play(FadeIn(up_text), run_time=0.9)
         self.wait(2.4)
@@ -1723,7 +1731,7 @@ class Numbers(Scene):
 
     def construct(self) -> None:
         """Two panels of bars, one per arrival set, then the two causes of loss."""
-        heading = line("220 runs in simulation, 20 legs a condition, judged by the saw.", size=HEAD)
+        heading = line("The saw judged every one of 220 simulated runs.", size=HEAD)
         heading.to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=1.0)
 
@@ -1798,7 +1806,7 @@ class Numbers(Scene):
                     color=INK_2,
                 ),
                 line(
-                    "10 of the SR-20iA's 11 misses at any heading are reach: 5 picks, 5 set-downs.",
+                    "10 of the SR-20iA's 11 misses at any heading were out of reach, 5 at the pick and 5 at the set-down.",
                     size=ANNOT,
                     color=INK_2,
                 ),
@@ -1839,7 +1847,7 @@ class Transfer(Scene):
                 for i in range(len(nodes) - 1)
             ]
         )
-        heading = line("The second cell runs the same chain.", size=HEAD).to_edge(UP, buff=0.5)
+        heading = line("The loin puller infeed runs the same chain of skills.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=1.0)
         self.play(FadeIn(nodes), Create(links), run_time=1.4)
 
@@ -1858,7 +1866,7 @@ class Transfer(Scene):
             run_time=1.6,
             rate_func=EASE,
         )
-        kept = line("The skills took new targets. The piece and the gripper changed.", size=BODY, color=BLUE).to_edge(
+        kept = line("Only the targets, the piece and the gripper change.", size=BODY, color=BLUE).to_edge(
             DOWN, buff=0.55
         )
         self.play(FadeIn(kept, shift=UP * 0.15), run_time=1.0)
@@ -1868,7 +1876,7 @@ class Transfer(Scene):
         # The gripper decides the first run before the arm moves.
         self.play(loin.animate.move_to([0, -0.1, 0]).scale(1.25), run_time=1.0)
         width = Line(loin.get_left(), loin.get_right(), color=INK, stroke_width=2).shift(DOWN * 1.25)
-        width_name = figure("164 to 211 mm across", size=BODY).next_to(width, DOWN, buff=0.22)
+        width_name = figure("the loin is 164 to 211 mm wide", size=BODY).next_to(width, DOWN, buff=0.22)
         self.play(Create(width, rate_func=EASE), FadeIn(width_name), run_time=1.0)
 
         # 180 mm of jaw against the widest 211 mm loin, to the same scale.
@@ -1883,10 +1891,10 @@ class Transfer(Scene):
             grip[1].animate.shift(LEFT * 0.32),
             run_time=0.5,
         )
-        refused = figure("Refused, all 80 runs", size=HEAD, color=WARN).to_edge(DOWN, buff=0.5)
+        refused = figure("The fit check refused all 80 runs", size=HEAD, color=WARN).to_edge(DOWN, buff=0.5)
         self.play(FadeIn(refused, scale=1.15), run_time=0.9)
         self.wait(1.2)
-        checked = line("The fit check caught it before the arm moved.", size=BODY, color=INK_2)
+        checked = line("and stopped each one before the arm moved.", size=BODY, color=INK_2)
         checked.next_to(refused, UP, buff=0.3)
         self.play(FadeIn(checked), run_time=0.9)
         self.wait(1.6)
@@ -1896,11 +1904,11 @@ class Transfer(Scene):
 
         # With a gripper that fits.
         wider = VGroup(
-            line("Run two: a wider jaw on the same skills.", size=BODY, color=INK_2),
-            figure("20 of 20 on both arms, arriving near square", size=HEAD, color=BLUE),
-            figure("4 and 10 of 20 at any heading", size=HEAD, color=WARN),
+            line("In run two I gave the same skills a wider jaw.", size=BODY, color=INK_2),
+            figure("It aligned all 20 near-square loins on both arms", size=HEAD, color=BLUE),
+            figure("and 4 and 10 of 20 at any heading.", size=HEAD, color=WARN),
             line(
-                "Past 40 degrees of turn the loin's ends hit the far rail. The fix is layout or planning.",
+                "On turns past 40 degrees the loin's ends hit the far rail, which layout or planning can fix.",
                 size=ANNOT,
                 color=INK_2,
             ),

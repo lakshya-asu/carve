@@ -308,6 +308,57 @@ def loft_mesh(ring: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return vertices, np.array(faces, dtype=np.int32)
 
 
+# Standard deviation, in cross sections, of the blend along the leg that the
+# drawn skin's normals get. `LEG_PROFILE` is interpolated linearly, so the
+# surface has a crease at every row: 6 to 16 deg between neighbouring sections
+# at 0.10, 0.28, 0.45 and 0.55 of the length and 38 deg at 0.93, against under
+# 1 deg elsewhere. With per-vertex normals each crease lights as a one-section
+# band across the ham, which reads as a leg already sliced. Three sections is
+# about 40 mm on a 722 mm leg; at two the ham's highlight still had an edge in a
+# still render (2026-09-16). The creases stay in the vertices, so the collision
+# parts, the depth image and the mask are untouched.
+SKIN_NORMAL_BLEND_STATIONS = 3.0
+
+
+def loft_normals(vertices: np.ndarray, faces: np.ndarray, stations: int, around: int) -> np.ndarray:
+    """Vertex normals for a `loft_mesh` surface, blended along its length so its creases shade smoothly.
+
+    Only the shading changes: the vertices, and so the silhouette, the depth
+    image and the segmentation mask, stay exactly as built. The two end rings
+    and the cap centres keep their unblended normals, so the cap edges stay as
+    sharp as MuJoCo's own normals draw them.
+
+    Args:
+        vertices: (stations * around + 2, 3) from `loft_mesh`.
+        faces: (M, 3) triangle indices from `loft_mesh`.
+        stations: Cross sections the mesh was lofted from.
+        around: Vertices around each cross section.
+
+    Returns:
+        (stations * around + 2, 3) unit normals, one per vertex.
+    """
+    corner = vertices[faces]  # (M, 3, 3)
+    # Unnormalised cross products weight each face by its area.
+    face_normal = np.cross(corner[:, 1] - corner[:, 0], corner[:, 2] - corner[:, 0])
+    normals = np.zeros_like(vertices)
+    for column in range(3):
+        np.add.at(normals, faces[:, column], face_normal)
+    normals /= np.linalg.norm(normals, axis=1, keepdims=True)
+
+    ring = normals[: stations * around].reshape(stations, around, 3)
+    reach = int(np.ceil(3.0 * SKIN_NORMAL_BLEND_STATIONS))
+    offsets = np.arange(-reach, reach + 1)
+    weights = np.exp(-0.5 * (offsets / SKIN_NORMAL_BLEND_STATIONS) ** 2)
+    blended = ring.copy()
+    for station in range(1, stations - 1):
+        neighbours = station + offsets
+        inside = (neighbours >= 1) & (neighbours <= stations - 2)
+        blended[station] = np.tensordot(weights[inside], ring[neighbours[inside]], axes=1)
+    blended /= np.linalg.norm(blended, axis=2, keepdims=True)
+    normals[: stations * around] = blended.reshape(-1, 3)
+    return normals
+
+
 def _mesh_volume_m3(vertices: np.ndarray, faces: np.ndarray) -> float:
     """Enclosed volume of a closed triangle mesh, by the divergence theorem."""
     a, b, c = vertices[faces[:, 0]], vertices[faces[:, 1]], vertices[faces[:, 2]]
@@ -341,7 +392,8 @@ def add_leg_geoms(spec: mujoco.MjSpec, config: LegConfig) -> None:
     total_volume = sum(volumes) + trotter_volume
     trotter_mass = config.mass_kg * trotter_volume / total_volume
 
-    skin_vertices, skin_faces = leg_mesh(config)
+    skin_stations, skin_around = 56, 40
+    skin_vertices, skin_faces = leg_mesh(config, stations=skin_stations, around=skin_around)
     for mesh_name, vertices, faces in (
         *((f"{config.name}_{name}", vertices, faces) for name, vertices, faces in sections),
         (f"{config.name}_trotter", trotter_vertices, trotter_faces),
@@ -351,6 +403,8 @@ def add_leg_geoms(spec: mujoco.MjSpec, config: LegConfig) -> None:
         mesh.name = mesh_name
         mesh.uservert = vertices.flatten().tolist()
         mesh.userface = faces.flatten().tolist()
+    skin_normals = loft_normals(skin_vertices, skin_faces, skin_stations, skin_around)
+    spec.mesh(f"{config.name}_skin").usernormal = skin_normals.flatten().tolist()
 
     # Until the saw cuts, the camera and the video see one unbroken leg: the skin
     # is drawn and the collision parts are not. Parts meeting at the hock draw a

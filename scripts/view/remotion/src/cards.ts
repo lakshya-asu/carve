@@ -38,40 +38,40 @@ const anyHeading: Source = {
 // Headings and captions are cut down from the figure captions in plan/leg-cell-plan.html.
 export const CARDS: Record<string, CardProps> = {
   CameraFeed: {
-    heading: 'Two depth cameras, one leg.',
+    heading: 'Both depth cameras looking at the same leg.',
     caption: [
-      ['Gemini 335L on top, D455 below: colour with the true outline, height above the belt,'],
-      ["and the error against the simulator's exact depth, at three arrival angles."],
+      ['The Gemini 335L is on top and the D455 below. Each shows colour with the true outline,'],
+      ["the height it reads above the belt, and its error against the simulator's exact depth."],
     ],
     clips: [{source: clip('depth-cameras.mp4', 1920, 944, 255, 30, BAND.depthCameras)}],
   },
   Segmentation: {
-    heading: 'Finding the leg by height.',
+    heading: 'The geometric segmenter finds the leg by its height.',
     caption: [
-      ['The geometric segmenter on simulated legs: the found outline against the true one,'],
-      ['the height it reads, and matched, extra and missed pixels. ', {warn: 'Datasheet noise, no edge effects.'}],
+      ['The outline it finds is drawn against the true one, with matched, extra and missed pixels.'],
+      ['This run uses datasheet noise ', {warn: 'without edge effects'}, '.'],
     ],
     clips: [{source: {...clip('leg-segmentation.mp4', 1920, 466, 357, 30, BAND.legSegmentation), cropBottom: BAND.legSegmentationReadout}}],
   },
   RealFootageSegmentation: {
-    heading: 'Real footage, all 21 frames.',
-    caption: [['Two per second: the frame, the colour rule, and Segment Anything plus the colour rule.']],
+    heading: 'The same idea on real plant footage.',
+    caption: [['Each frame shows the original, the colour rule, and Segment Anything with the colour rule.']],
     clips: [{source: clip('real-footage-segmentation.mp4', 1080, 640, 21, 2, BAND.realFootage)}],
   },
   CentreOfGravityClip: {
-    heading: 'Where the mass is.',
+    heading: 'Finding where the mass is on a moving leg.',
     caption: [
-      ['Three legs through the camera model with edge effects. White cross: centre of mass.'],
-      ['Orange: outline centre. Green: column centroid.'],
+      ['The white cross is the true centre of mass, orange is the outline centre'],
+      ["and green is the column centroid, with the camera's edge effects modelled."],
 
     ],
     clips: [{source: {...clip('centre-of-gravity.mp4', 1920, 672, 357, 30, BAND.centreOfGravity), cropBottom: BAND.centreOfGravityReadout}}],
   },
   GripperAlone: {
-    heading: 'Jaw gripper, three-finger gripper, on their own.',
+    heading: 'Each gripper pulled on its own.',
     caption: [
-      ['Jaw: ', {blue: 'held to 918 N'}, ' against the 720 N it needed.'],
-      ['Three-finger: ', {blue: 'held to 229 N'}, ' against the 180 N it needed.'],
+      ['The jaw ', {blue: 'held to 918 N'}, ' where it needed 720 N.'],
+      ['The three-finger gripper ', {blue: 'held to 229 N'}, ' where it needed 180 N.'],
     ],
     clips: [
       {source: clip('05-gripper-jaw-alone.mp4', 960, 540, 199, 30, BAND.gripperAlone), label: 'jaw'},
@@ -79,10 +79,10 @@ export const CARDS: Record<string, CardProps> = {
     ],
   },
   GripShank: {
-    heading: 'Jaw gripper, shank from above, stopped belt.',
+    heading: 'The jaw gripping the shank from above on a stopped belt.',
     caption: [
-      ['UR20: ', {blue: 'success'}, ', the shank rose with the tool.'],
-      ['SR-20iA: ', {blue: 'success'}, ', using a lower approach height.'],
+      ['On the UR20 it ', {blue: 'succeeded'}, ' and the shank rose with the tool.'],
+      ['On the SR-20iA it ', {blue: 'succeeded'}, ' from a lower approach height.'],
     ],
     clips: [
       {source: clip('07-ur20-jaw-grips-the-shank-from-above.mp4', 960, 540, 228, 30, BAND.shankTest), label: 'UR20'},
@@ -90,10 +90,10 @@ export const CARDS: Record<string, CardProps> = {
     ],
   },
   ThreeFingerShank: {
-    heading: 'Three-finger gripper, shank from above, stopped belt.',
+    heading: 'The three-finger gripper trying the shank from above.',
     caption: [
-      ['UR20: ', {warn: 'refused before moving'}, ', 38 mm of spare opening, 40 mm required.'],
-      ['SR-20iA: ', {warn: 'refused before moving'}, ', same check.'],
+      ['On the UR20 it ', {warn: 'refused before moving'}, ' with 38 mm of spare opening where 40 mm is required.'],
+      ['The SR-20iA ', {warn: 'refused'}, ' on the same check.'],
     ],
     clips: [
       {source: clip('09-ur20-three-finger-tries-the-shank-from-above.mp4', 960, 540, 122, 30, BAND.shankTest), label: 'UR20'},
@@ -101,10 +101,10 @@ export const CARDS: Record<string, CardProps> = {
     ],
   },
   TrotterEndOn: {
-    heading: 'Three-finger gripper, trotter end-on, stopped belt.',
+    heading: 'The three-finger gripper taking the trotter end-on.',
     caption: [
-      ['UR20: ', {blue: 'success'}, ' with the tool horizontal along the leg.'],
-      ['SR-20iA: ', {warn: 'refused before moving'}, ', the arm cannot tilt its tool.'],
+      ['The UR20 ', {blue: 'succeeded'}, ' with its tool lying along the leg.'],
+      ['The SR-20iA ', {warn: 'refused before moving'}, ' because it cannot tilt its tool.'],
     ],
     clips: [
       {source: clip('11-ur20-three-finger-grips-the-trotter-end-on.mp4', 960, 540, 243, 30, BAND.trotterTest), label: 'UR20'},
@@ -112,10 +112,10 @@ export const CARDS: Record<string, CardProps> = {
     ],
   },
   Reach: {
-    heading: 'Reach, tool pointing down, a leg upstream for scale.',
+    heading: 'How far each arm reaches with the tool pointing down.',
     caption: [
-      ['UR20: ', {blue: 'all 120 grid points reached'}, ' at all three heights.'],
-      ['SR-20iA: 101 of 120 at 50 and 180 mm, ', {warn: 'none at 350 mm'}, '.'],
+      ['The UR20 ', {blue: 'reached all 120 grid points'}, ' at all three heights.'],
+      ['The SR-20iA reached 101 of 120 at 50 and 180 mm and ', {warn: 'none at 350 mm'}, '.'],
     ],
     clips: [
       {source: clip('reach-ur20-leg.mp4', 960, 540, 534, 30, BAND.reach), label: 'UR20'},
@@ -123,20 +123,20 @@ export const CARDS: Record<string, CardProps> = {
     ],
   },
   ApproachAandB: {
-    heading: 'Square set, UR20 close-up, three legs.',
-    caption: [['A: shank lifted 100 mm. B: shank lifted 20 mm.']],
+    heading: 'Approach A and approach B on the same three legs.',
+    caption: [['A lifts the shank 100 mm and carries the leg. B lifts it 20 mm and swings it.']],
     clips: [
-      {source: clip('approach-a-closeup-ur20-tilt0.mp4', 960, 540, 731, 25, BAND.approach), label: 'A, carried'},
-      {source: clip('approach-b-closeup-ur20-tilt0.mp4', 960, 540, 759, 25, BAND.approach), label: 'B, turned'},
+      {source: clip('approach-a-closeup-ur20-tilt0.mp4', 960, 540, 731, 25, BAND.approach), label: 'A'},
+      {source: clip('approach-b-closeup-ur20-tilt0.mp4', 960, 540, 759, 25, BAND.approach), label: 'B'},
     ],
   },
   BestPick: {
-    heading: 'Approach B on the UR20, any-orientation set.',
-    caption: [['Leg 14 of 20, camera tracking the leg.']],
+    heading: 'A leg arriving nearly backwards, turned and cut.',
+    caption: [['This is leg 14 of 20 on the UR20, with the camera following it.']],
     clips: [{source: clip('approach-b-closeup-ur20-tilt0-any-leg13.mp4', 960, 540, 278, 25, BAND.approach)}],
   },
   AnyHeading: {
-    heading: 'Any orientation, approach B, UR20, tool vertical.',
+    heading: 'Twenty legs arriving at any heading.',
     caption: [
       ['Every leg arrives at a different heading. The arm reads the heading, grips the shank across it,'],
       ['turns the leg by whatever it needs, ', {blue: 'up to 180°'}, ', checks the result and corrects it.'],
@@ -145,10 +145,10 @@ export const CARDS: Record<string, CardProps> = {
     note: 'played at double speed',
   },
   LoinTransfer: {
-    heading: "The leg cell's turn skill on a loin.",
+    heading: "The leg cell's turn skill working on a loin.",
     caption: [
-      ['UR20, wide-jaw placeholder, camera tracking the piece: gripped at its centre of gravity, turned,'],
-      ['set with the bone edge ', {blue: '0.2 mm from the datum at 0.4°'}, '.'],
+      ['The UR20 grips the loin at its centre of gravity with a wider jaw, turns it'],
+      ['and sets the bone edge ', {blue: '0.2 mm from the datum at 0.4°'}, '.'],
     ],
     clips: [{source: clip('loin-approach-b-closeup-ur20-tilt0-leg0.mp4', 960, 540, 250, 25, BAND.approach)}],
   },

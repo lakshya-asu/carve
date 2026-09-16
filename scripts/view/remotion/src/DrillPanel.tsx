@@ -32,7 +32,7 @@ export const DrillPanel: React.FC = () => {
   return (
     <AbsoluteFill style={{backgroundColor: PAPER, fontFamily: FONT, color: INK}}>
       <div style={{position: 'absolute', top: 58, width: '100%', textAlign: 'center', fontSize: HEAD, ...entrance(frame, 0)}}>
-        Three drills, one skill each.
+        Three drills, each one a separate skill.
       </div>
       <div
         style={{

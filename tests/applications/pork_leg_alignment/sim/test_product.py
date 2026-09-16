@@ -249,3 +249,30 @@ def test_handedness_mirrors_the_bend() -> None:
 def test_a_straight_leg_has_no_bend_either_way() -> None:
     vertices, _ = leg_mesh(LegConfig(bend_m=0.0))
     assert vertices[:, 1].mean() == pytest.approx(0.0, abs=1e-9)
+
+
+def test_the_drawn_skin_shades_without_bands_at_the_profile_rows(leg_cell) -> None:
+    """The profile is linear between rows, so the skin creases 6 to 38 deg at each
+    row. MuJoCo's own vertex normals lit each crease as a band across the ham,
+    and the talk footage read as a leg already cut into sections. The normals
+    the renderer uses must turn gently from one cross section to the next, and
+    the vertices the depth camera and the segmentation see must not move.
+    """
+    model, _, config = leg_cell
+    assert config.leg is not None
+    stations, around = 56, 40
+    skin = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_MESH, f"{config.leg.name}_skin")
+    normal_start = model.mesh_normaladr[skin]
+    normals = model.mesh_normal[normal_start : normal_start + model.mesh_normalnum[skin]]
+    assert len(normals) == stations * around + 2
+    ring = normals[: stations * around].reshape(stations, around, 3)
+    turn_deg = np.degrees(np.arccos(np.clip((ring[2:-1] * ring[1:-2]).sum(axis=-1), -1.0, 1.0)))
+    assert turn_deg.max() < 6.0, f"normals turn {turn_deg.max():.1f} deg between neighbouring sections"
+
+    built, _ = leg_mesh(config.leg, stations=stations, around=around)
+    vertex_start = model.mesh_vertadr[skin]
+    compiled = model.mesh_vert[vertex_start : vertex_start + model.mesh_vertnum[skin]]
+    # MuJoCo moves a mesh into its inertial frame, so compare distances, which a rigid move keeps.
+    assert np.allclose(
+        np.linalg.norm(compiled - compiled[0], axis=1), np.linalg.norm(built - built[0], axis=1), atol=1e-6
+    )
