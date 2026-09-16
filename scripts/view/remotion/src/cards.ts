@@ -130,6 +130,15 @@ export const CARDS: Record<string, CardProps> = {
       {source: clip('approach-b-closeup-ur20-tilt0.mp4', 960, 540, 759, 25, BAND.approach), label: 'B'},
     ],
   },
+  MessiGame: {
+    heading: 'In a game Messi runs and dribbles while anticipating the defenders.',
+    caption: [
+      ['Reading what an opponent will do next is a skill the drills never practised.'],
+      ['He composes it with running and dribbling as the play unfolds.'],
+    ],
+    // The broadcast score bug sits in the top 70 rows.
+    clips: [{source: clip('messi-game.webm', 778, 586, 151, 30, 70)}],
+  },
   BestPick: {
     heading: 'A leg arriving nearly backwards, turned and cut.',
     caption: [['This is leg 14 of 20 on the UR20, with the camera following it.']],

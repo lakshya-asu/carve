@@ -43,7 +43,6 @@ scripts/view/remotion/node_modules/
 scripts/view/remotion/out/
 scripts/view/remotion/public/
 
-# kept out of the public repo: personal assistant memory and raw customer messages
 memory/
 field-notes/customer/meat-men/
 field-notes/customer/neil-requirements.md

@@ -7,16 +7,16 @@ export const DRILL_FRAMES = 8 * FPS;
 const DRILLS: {source: Source; skill: string}[] = [
   {
     source: {file: 'drill-first-touch.webm', width: 471, height: 575, frames: DRILL_FRAMES, trimBeforeFrames: 2 * FPS},
-    skill: 'first touch',
+    skill: 'running and dribbling',
   },
   {
     source: {file: 'drill-close-control.webm', width: 472, height: 521, frames: DRILL_FRAMES, trimBeforeFrames: 2 * FPS},
-    skill: 'close control',
+    skill: 'dribbling',
   },
   {
     // The top 24 rows carry a text sticker from the original post.
     source: {file: 'drill-carrying.webm', width: 472, height: 521, cropTop: 24, frames: DRILL_FRAMES, trimBeforeFrames: 3 * FPS},
-    skill: 'carrying at speed',
+    skill: 'running',
   },
 ];
 
@@ -32,7 +32,7 @@ export const DrillPanel: React.FC = () => {
   return (
     <AbsoluteFill style={{backgroundColor: PAPER, fontFamily: FONT, color: INK}}>
       <div style={{position: 'absolute', top: 58, width: '100%', textAlign: 'center', fontSize: HEAD, ...entrance(frame, 0)}}>
-        Three drills, each one a separate skill.
+        Two drills, and a third that combines them.
       </div>
       <div
         style={{
@@ -63,7 +63,7 @@ export const DrillPanel: React.FC = () => {
         ))}
       </div>
       <div style={{position: 'absolute', top: 976, width: '100%', textAlign: 'center', fontSize: HEAD, color: BLUE, ...entrance(frame, Math.round(3.5 * FPS))}}>
-        Learned at different times.
+        Running and dribbling are drilled apart, then together.
       </div>
     </AbsoluteFill>
   );

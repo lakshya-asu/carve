@@ -41,6 +41,7 @@ from manim import (
     Rectangle,
     ReplacementTransform,
     Scene,
+    SurroundingRectangle,
     SVGMobject,
     Text,
     Transform,
@@ -250,11 +251,11 @@ class Title(Scene):
     def construct(self) -> None:
         """Hold one title while a leg crosses behind it."""
         self.add(belt())
-        piece = leg().rotate(28 * DEGREES).move_to([BELT_LEFT - 1.0, -1.15, 0])
+        piece = leg().rotate(12 * DEGREES).move_to([BELT_LEFT - 1.0, -1.45, 0])
         self.add(piece)
 
-        name = line("Aligning pork legs to the trotter saw", size=DISPLAY).shift(UP * 0.55)
-        who = line("Synphony Robotics, for Prestage Foods of Iowa", size=BODY, color=INK_2)
+        name = line("Synphony Robotics", size=DISPLAY).shift(UP * 0.55)
+        who = line("Factory: Prestage Foods of Iowa, pork meat processing", size=BODY, color=INK_2)
         who.next_to(name, DOWN, buff=0.45)
         self.play(
             piece.animate.shift(RIGHT * 9.0).set_rate_func(rate_functions.linear),
@@ -577,24 +578,23 @@ class Definition(Scene):
 
 
 class Fuse(Scene):
-    """The three drills fused into play, and what makes a learned skill carry to new ground."""
+    """Running and dribbling, drilled apart, combine into running while dribbling."""
 
     def construct(self) -> None:
-        """Fuse the drills, then show one skill carried across conditions, ending on our own evidence."""
-        drills = ("first touch", "close control", "carrying at speed")
-        boxes = VGroup()
-        for text in drills:
-            frame = Rectangle(width=3.6, height=1.0, color=RULE, stroke_width=2)
-            boxes.add(VGroup(frame, figure(text, size=ANNOT, color=INK).move_to(frame.get_center())))
-        boxes.arrange(RIGHT, buff=0.55).move_to([0, 2.2, 0])
-        heading = line("In a match a player uses all three at once.", size=HEAD).to_edge(UP, buff=0.5)
+        """Combine the two drills, then say what a game adds on top."""
+        heading = line("Running and dribbling combine into a third skill.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=0.9)
-        self.play(LaggedStart(*[FadeIn(b, shift=DOWN * 0.2) for b in boxes], lag_ratio=0.2), run_time=1.3)
+
+        boxes = VGroup()
+        for text in ("running", "dribbling"):
+            frame = Rectangle(width=3.8, height=1.0, color=RULE, stroke_width=2)
+            boxes.add(VGroup(frame, figure(text, size=ANNOT, color=INK).move_to(frame.get_center())))
+        boxes.arrange(RIGHT, buff=1.6).move_to([0, 2.0, 0])
+        self.play(LaggedStart(*[FadeIn(b, shift=DOWN * 0.2) for b in boxes], lag_ratio=0.25), run_time=1.2)
         self.wait(0.6)
 
-        fused = Rectangle(width=8.2, height=1.2, color=BLUE, stroke_width=3).move_to([0, -0.4, 0])
-        fused_name = figure("take the ball past a defender at speed", size=ANNOT, color=BLUE)
-        fused_name.move_to(fused.get_center())
+        fused = Rectangle(width=6.0, height=1.2, color=BLUE, stroke_width=3).move_to([0, -0.2, 0])
+        fused_name = figure("running while dribbling", size=BODY, color=BLUE).move_to(fused.get_center())
         feeds = VGroup(
             *[
                 Arrow(
@@ -608,30 +608,41 @@ class Fuse(Scene):
                 for b in boxes
             ]
         )
-        self.play(LaggedStart(*[Create(f) for f in feeds], lag_ratio=0.15), run_time=1.2)
+        self.play(LaggedStart(*[Create(f) for f in feeds], lag_ratio=0.15), run_time=1.0)
         self.play(Create(fused, rate_func=EASE), FadeIn(fused_name), run_time=1.1)
-        taught = line("Beating a defender at speed is a new skill built from those three.", size=BODY, color=INK_2)
-        taught.move_to([0, -1.9, 0])
-        self.play(FadeIn(taught), run_time=1.0)
-        self.wait(1.6)
-
         works = (
             VGroup(
                 line("Each drill has a clear standard of done,", size=ANNOT, color=INK_2),
-                line("and all three act on the same ball and the same body.", size=ANNOT, color=INK_2),
+                line("and both act on the same ball and the same body.", size=ANNOT, color=INK_2),
             )
             .arrange(DOWN, buff=0.16)
-            .move_to([0, -3.1, 0])
+            .move_to([0, -1.75, 0])
         )
-        self.play(FadeIn(works), run_time=1.1)
-        self.wait(2.2)
-        self.play(*[FadeOut(m) for m in (boxes, feeds, fused, fused_name, taught, works, heading)], run_time=0.8)
+        self.play(FadeIn(works), run_time=1.0)
+        self.wait(1.6)
 
+        game = (
+            VGroup(
+                line("In a game a player adds other skills, such as anticipating", size=BODY, color=INK),
+                line("what an opponent will do next, and composes them on the fly.", size=BODY, color=INK),
+            )
+            .arrange(DOWN, buff=0.18)
+            .move_to([0, -3.05, 0])
+        )
+        self.play(FadeIn(game, shift=UP * 0.12), run_time=1.2)
+        self.wait(2.4)
+
+
+class Carry(Scene):
+    """A skill practised in enough conditions carries, shown first on football and then on this cell."""
+
+    def construct(self) -> None:
+        """Spokes of new conditions around one skill, then the cell's own evidence."""
         # A skill learned over variation carries to conditions it was not drilled on.
         carry = line("A skill practised in enough conditions works in new ones.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(carry, shift=DOWN * 0.15), run_time=1.0)
         core = Rectangle(width=4.0, height=1.1, color=BLUE, stroke_width=3).move_to([0, 0.2, 0])
-        core_name = figure("close control", size=BODY, color=BLUE).move_to(core.get_center())
+        core_name = figure("dribbling", size=BODY, color=BLUE).move_to(core.get_center())
         self.play(Create(core, rate_func=EASE), FadeIn(core_name), run_time=1.0)
         contexts = (
             ("wet grass", [-4.6, 1.9, 0]),
@@ -1517,6 +1528,63 @@ class Reinforce(Scene):
 
     def construct(self) -> None:
         """Why only the turn, the residual on a scripted base, the reward, and the budget."""
+        # How reinforcement learning works, before where it goes in this cell.
+        intro_heading = line("Reinforcement learning improves a policy by trial and reward.", size=HEAD)
+        intro_heading.to_edge(UP, buff=0.5)
+        self.play(FadeIn(intro_heading, shift=DOWN * 0.15), run_time=0.9)
+        policy_box = Rectangle(width=4.2, height=1.3, color=BLUE, stroke_width=3).move_to([-4.2, 0.4, 0])
+        policy_name = VGroup(
+            figure("policy", size=BODY, color=BLUE), line("the skill being learned", size=18, color=INK_2)
+        )
+        policy_name.arrange(DOWN, buff=0.1).move_to(policy_box.get_center())
+        world_box = Rectangle(width=4.2, height=1.3, color=INK_2, stroke_width=2).move_to([4.2, 0.4, 0])
+        world_name = VGroup(
+            figure("the cell", size=BODY, color=INK), line("simulated, 20 different legs", size=18, color=INK_2)
+        )
+        world_name.arrange(DOWN, buff=0.1).move_to(world_box.get_center())
+        act = Arrow(
+            policy_box.get_right() + UP * 0.3,
+            world_box.get_left() + UP * 0.3,
+            buff=0.1,
+            color=INK_2,
+            stroke_width=3,
+            max_tip_length_to_length_ratio=0.06,
+        )
+        act_name = line("action: how to move the leg", size=ANNOT, color=INK_2).next_to(act, UP, buff=0.35)
+        back = Arrow(
+            world_box.get_left() + DOWN * 0.3,
+            policy_box.get_right() + DOWN * 0.3,
+            buff=0.1,
+            color=INK_2,
+            stroke_width=3,
+            max_tip_length_to_length_ratio=0.06,
+        )
+        back_name = line("new state and a reward", size=ANNOT, color=INK_2).next_to(back, DOWN, buff=0.35)
+        self.play(Create(policy_box), FadeIn(policy_name), Create(world_box), FadeIn(world_name), run_time=1.2)
+        self.play(Create(act), FadeIn(act_name), run_time=0.9)
+        self.play(Create(back), FadeIn(back_name), run_time=0.9)
+        loop = (
+            VGroup(
+                line(
+                    "The policy tries an action. The cell answers with where the leg ended up and a reward.",
+                    size=ANNOT,
+                    color=INK,
+                ),
+                line("Over many tries the policy shifts toward the actions that earned more.", size=ANNOT, color=INK),
+            )
+            .arrange(DOWN, buff=0.18)
+            .move_to([0, -2.4, 0])
+        )
+        self.play(FadeIn(loop), run_time=1.2)
+        self.wait(2.6)
+        cost = line(
+            "Every try costs a leg on a real line, so the trying happens in simulation.", size=ANNOT, color=WARN
+        )
+        cost.move_to([0, -3.45, 0])
+        self.play(FadeIn(cost), run_time=0.9)
+        self.wait(2.0)
+        self.play(*[FadeOut(m) for m in self.mobjects], run_time=0.8)
+
         heading = line("I would use reinforcement learning in one place, the turn.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=1.0)
         why = (
@@ -1598,6 +1666,73 @@ class Foundation(Scene):
 
     def construct(self) -> None:
         """Gains, costs in belt millimetres, and the contract wrapped around it."""
+        # What a vision-language-action model is, before what it would mean here.
+        intro_heading = line("A vision-language-action model turns sight and words into motion.", size=HEAD)
+        intro_heading.to_edge(UP, buff=0.5)
+        self.play(FadeIn(intro_heading, shift=DOWN * 0.15), run_time=0.9)
+        image = Rectangle(width=3.4, height=1.0, color=INK_2, stroke_width=2).move_to([-4.4, 1.2, 0])
+        image_name = figure("camera image", size=ANNOT, color=INK).move_to(image.get_center())
+        words = Rectangle(width=3.4, height=1.0, color=INK_2, stroke_width=2).move_to([-4.4, -0.4, 0])
+        words_name = figure("an instruction", size=ANNOT, color=INK).move_to(words.get_center())
+        model = Rectangle(width=4.0, height=2.6, color=BLUE, stroke_width=3).move_to([0.2, 0.4, 0])
+        model_name = VGroup(
+            figure("one model", size=BODY, color=BLUE), line("trained on many robots", size=18, color=INK_2)
+        )
+        model_name.arrange(DOWN, buff=0.12).move_to(model.get_center())
+        motion = Rectangle(width=2.9, height=1.0, color=INK_2, stroke_width=2).move_to([5.0, 0.4, 0])
+        motion_name = figure("arm actions", size=ANNOT, color=INK).move_to(motion.get_center())
+        links = VGroup(
+            Arrow(
+                image.get_right(),
+                model.get_left() + UP * 0.8,
+                buff=0.1,
+                color=INK_3,
+                stroke_width=3,
+                max_tip_length_to_length_ratio=0.12,
+            ),
+            Arrow(
+                words.get_right(),
+                model.get_left() + DOWN * 0.8,
+                buff=0.1,
+                color=INK_3,
+                stroke_width=3,
+                max_tip_length_to_length_ratio=0.12,
+            ),
+            Arrow(
+                model.get_right(),
+                motion.get_left(),
+                buff=0.1,
+                color=INK_3,
+                stroke_width=3,
+                max_tip_length_to_length_ratio=0.12,
+            ),
+        )
+        instruction = (
+            line('"turn the leg so the hock meets the blade"', size=ANNOT, color=INK_2)
+            .next_to(words, DOWN, buff=0.25)
+            .align_to(words, LEFT)
+        )
+        self.play(
+            Create(image), FadeIn(image_name), Create(words), FadeIn(words_name), FadeIn(instruction), run_time=1.1
+        )
+        self.play(Create(model, rate_func=EASE), FadeIn(model_name), Create(links[:2]), run_time=1.1)
+        self.play(Create(links[2]), Create(motion), FadeIn(motion_name), run_time=0.9)
+        how = (
+            VGroup(
+                line(
+                    "It is pretrained on episodes from many different robots, 970,000 of them for OpenVLA,",
+                    size=ANNOT,
+                    color=INK,
+                ),
+                line("then fine-tuned on demonstrations of the task it should do.", size=ANNOT, color=INK),
+            )
+            .arrange(DOWN, buff=0.16)
+            .move_to([0, -2.55, 0])
+        )
+        self.play(FadeIn(how), run_time=1.1)
+        self.wait(2.8)
+        self.play(*[FadeOut(m) for m in self.mobjects], run_time=0.8)
+
         heading = line("A foundation model could be the starting point for new skills.", size=HEAD).to_edge(
             UP, buff=0.5
         )
@@ -1661,6 +1796,63 @@ class Hierarchy(Scene):
 
     def construct(self) -> None:
         """Build the tree from primitives up, then light one sub-goal's path."""
+        # Hierarchical reinforcement learning, from a goal down to the policies that reach its sub-goals.
+        intro_heading = line("Hierarchical RL divides a goal into sub-goals, each with a policy.", size=HEAD)
+        intro_heading.to_edge(UP, buff=0.5)
+        self.play(FadeIn(intro_heading, shift=DOWN * 0.15), run_time=1.0)
+        goal = Rectangle(width=10.4, height=0.95, color=BLUE, stroke_width=3).move_to([0, 2.2, 0])
+        goal_name = line("goal: the saw cuts at the hock, within 10 mm and 5 degrees", size=BODY, color=BLUE)
+        goal_name.move_to(goal.get_center())
+        self.play(Create(goal, rate_func=EASE), FadeIn(goal_name), run_time=1.0)
+        subgoals = ("the shank is held", "the hock is on the blade plane", "the jaws open before the hold-down")
+        subs = VGroup()
+        for text in subgoals:
+            frame = Rectangle(width=4.35, height=0.85, color=INK_2, stroke_width=2)
+            label_text = line(text, size=ANNOT, color=INK)
+            if label_text.width > frame.width - 0.25:
+                label_text.scale_to_fit_width(frame.width - 0.25)
+            subs.add(VGroup(frame, label_text.move_to(frame.get_center())))
+        subs.arrange(RIGHT, buff=0.18).move_to([0, 0.55, 0])
+        down = VGroup(*[Line(goal.get_bottom(), sub.get_top(), color=INK_3, stroke_width=2) for sub in subs])
+        self.play(
+            Create(down), LaggedStart(*[FadeIn(sub, shift=DOWN * 0.15) for sub in subs], lag_ratio=0.2), run_time=1.4
+        )
+        policies = VGroup()
+        for sub, name in zip(subs, ("grasp policy", "turn policy", "release policy"), strict=True):
+            frame = Rectangle(width=3.4, height=0.75, color=BLUE, stroke_width=2).move_to(
+                sub.get_center() + DOWN * 1.55
+            )
+            policies.add(
+                VGroup(
+                    frame,
+                    figure(name, size=18, color=BLUE).move_to(frame.get_center()),
+                    Line(sub.get_bottom(), frame.get_top(), color=INK_3, stroke_width=2),
+                )
+            )
+        self.play(LaggedStart(*[FadeIn(pol, shift=DOWN * 0.15) for pol in policies], lag_ratio=0.2), run_time=1.3)
+        explain = (
+            VGroup(
+                line(
+                    "A higher-level policy picks the next sub-goal. A lower-level policy acts until that sub-goal",
+                    size=ANNOT,
+                    color=INK,
+                ),
+                line(
+                    "is reached or fails, then hands control back. Each small policy is easier to learn and to test,",
+                    size=ANNOT,
+                    color=INK,
+                ),
+                line("and the same one can be reused under a different goal.", size=ANNOT, color=INK),
+            )
+            .arrange(DOWN, buff=0.14)
+            .move_to([0, -2.6, 0])
+        )
+        self.play(FadeIn(explain), run_time=1.3)
+        highlight = SurroundingRectangle(VGroup(subs[1], policies[1][0]), color=BLUE, buff=0.12)
+        self.play(Create(highlight), run_time=0.8)
+        self.wait(3.0)
+        self.play(*[FadeOut(m) for m in self.mobjects], run_time=0.8)
+
         heading = line("The whole plant can run as one graph of sub-goals.", size=HEAD).to_edge(UP, buff=0.5)
         self.play(FadeIn(heading, shift=DOWN * 0.15), run_time=0.9)
         option = (

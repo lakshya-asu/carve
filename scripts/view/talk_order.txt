@@ -13,6 +13,8 @@ WhySkills
 Definition
 footage/DrillPanel.mp4
 Fuse
+footage/MessiGame.mp4
+Carry
 Compose
 
 # The workflow in code
@@ -43,12 +45,14 @@ footage/BestPick.mp4
 
 # Learning
 Teach
-Reinforce
-Foundation
-Hierarchy
 
 # Transfer and results
 Transfer
 footage/LoinTransfer.mp4
 footage/AnyHeading.mp4
 Numbers
+
+# Learning, at the end
+Reinforce
+Foundation
+Hierarchy
