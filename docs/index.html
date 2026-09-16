@@ -1249,51 +1249,50 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
 <!-- 9 BUILD ORDER -->
 <section class="ch" id="c9">
   <div class="chead"><span class="k">Section 9</span><h2>Build order and gates</h2></div>
-  <p class="plain">We build in a fixed order and move to the next step only when the current one passes its test. The chart shows which pieces are finished, which are due this week, and which are waiting on others.</p>
-  <p>We model the whole problem first, saw included. Then we add each sensor one at a time: choose it, place it, test it. Perception and learned policies come in where a gate fails. Work moves on only after its gate passes.</p>
+  <p class="plain">We build in a fixed order and move to the next step only when the current one passes its test. The chart shows what is finished and tested as of 2026-09-15, what comes next, and what waits on it.</p>
+  <p>The whole problem was modelled first, saw included, and both alignment approaches have now run end to end on both arms, 220 episodes judged by the saw. What the runs exposed sets the next column: the hold-down model causes most of the remaining losses, the camera's hock estimate failed its gate, and the learned policies have their A/B protocols written but not run. Perception and learned policies come in where a gate fails. Work moves on only after its gate passes.</p>
 
   <figure>
     <div class="scroll">
-    <svg viewBox="0 0 1000 330" role="img" aria-label="Dependencies between the next pieces of work. The servo sag fix blocks both alignment approaches, which block the 160-episode experiment and the arm decision. Depth keypoints block the perception skill, which blocks the closed loop on a moving belt. The orient skill blocks the two-arm demo.">
+    <svg viewBox="0 0 1000 400" role="img" aria-label="Three lanes, manipulation, perception, skills and learning, each with what is done and tested by 2026-09-15, what comes next in the week of 2026-09-21, and what follows. Done: saw, hold-down, arms and servo; both approaches over 220 episodes with the six-axis arm chosen; camera, segmenter and centre of gravity; eight skills with contracts and one scripted orient skill on both arms. Failed its gate: the hock from a fraction of the leg's length. Next: the hold-down as a belt, the hock as a landmark, the learned-versus-scripted grasp test.">
       <defs><marker id="d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-ink"/></marker></defs>
-      <text x="20" y="22" class="t2">DONE 2026-09-14</text>
-      <text x="270" y="22" class="t2">BY WED 2026-09-16</text>
-      <text x="520" y="22" class="t2">BY SUN 2026-09-20</text>
-      <text x="770" y="22" class="t2">WEEKS 2 TO 4 †</text>
+      <text x="20" y="22" class="t2">DONE AND TESTED, 2026-09-15</text>
+      <text x="350" y="22" class="t2">NEXT, WEEK OF 2026-09-21 †</text>
+      <text x="680" y="22" class="t2">AFTER †</text>
       <line x1="20" y1="30" x2="980" y2="30" class="s-ink"/>
-      <line x1="255" y1="36" x2="255" y2="320" class="s-rule dot"/>
-      <line x1="505" y1="36" x2="505" y2="320" class="s-rule dot"/>
-      <line x1="755" y1="36" x2="755" y2="320" class="s-rule dot"/>
-      <!-- lane 1: manipulation -->
-      <rect x="20" y="50" width="210" height="40" class="f-ink"/><text x="30" y="75" style="fill:var(--paper)">saw, hold-down, arms</text>
-      <rect x="270" y="50" width="210" height="40" class="f-paper s-ink" stroke-width="2"/><text x="280" y="68" class="b">fix servo sag (4b)</text><text x="280" y="83" class="t2">5 mm lift within 0.5 mm</text>
-      <rect x="270" y="104" width="210" height="40" class="f-paper s-ink"/><text x="280" y="122" class="b">approaches A and B</text><text x="280" y="137" class="t2">several legs, video</text>
-      <rect x="520" y="77" width="210" height="40" class="f-paper s-ink"/><text x="530" y="95" class="b">160-episode experiment</text><text x="530" y="110" class="t2">same 20 legs per condition</text>
-      <rect x="770" y="77" width="210" height="40" class="f-soft s-blue" stroke-width="1.5"/><text x="780" y="95" class="b">arm and approach chosen</text><text x="780" y="110" class="t2">for the pilot cell</text>
-      <line x1="230" y1="70" x2="268" y2="70" class="s-ink" marker-end="url(#d)"/>
-      <line x1="375" y1="90" x2="375" y2="102" class="s-ink" marker-end="url(#d)"/>
-      <path d="M 480 124 L 500 124 L 500 97 L 518 97" class="s-ink f-none" marker-end="url(#d)"/>
-      <line x1="730" y1="97" x2="768" y2="97" class="s-ink" marker-end="url(#d)"/>
-      <!-- lane 2: perception -->
-      <rect x="20" y="170" width="210" height="40" class="f-ink"/><text x="30" y="195" style="fill:var(--paper)">depth chain on slabs</text>
-      <rect x="270" y="170" width="210" height="40" class="f-paper s-ink"/><text x="280" y="188" class="b">hock keypoints from depth</text><text x="280" y="203" class="t2">error table, 20 legs</text>
-      <rect x="520" y="170" width="210" height="40" class="f-paper s-ink"/><text x="530" y="188" class="b">locate_leg skill in graph</text><text x="530" y="203" class="t2">replaces ground truth</text>
-      <rect x="770" y="170" width="210" height="40" class="f-paper s-ink"/><text x="780" y="188" class="b">closed loop, moving belt</text><text x="780" y="203" class="t2">intercept, touching legs</text>
-      <line x1="230" y1="190" x2="268" y2="190" class="s-ink" marker-end="url(#d)"/>
-      <line x1="480" y1="190" x2="518" y2="190" class="s-ink" marker-end="url(#d)"/>
-      <line x1="730" y1="190" x2="768" y2="190" class="s-ink" marker-end="url(#d)"/>
-      <path d="M 875 117 L 875 168" class="s-ink f-none" marker-end="url(#d)"/>
-      <!-- lane 3: skills and learning -->
-      <rect x="20" y="250" width="210" height="40" class="f-ink"/><text x="30" y="275" style="fill:var(--paper)">skill library, 4 skills</text>
-      <rect x="270" y="250" width="210" height="40" class="f-paper s-ink" stroke-width="2"/><text x="280" y="268" class="b">one orient skill, two arms</text><text x="280" y="283" class="t2">Wednesday demo</text>
-      <rect x="520" y="250" width="210" height="40" class="f-paper s-ink"/><text x="530" y="268" class="b">learned vs scripted orient</text><text x="530" y="283" class="t2">same 20 legs, same saw</text>
-      <rect x="770" y="250" width="210" height="40" class="f-paper s-ink"/><text x="780" y="268" class="b">lab cobot, teleop data</text><text x="780" y="283" class="t2">first real demonstrations</text>
-      <line x1="230" y1="270" x2="268" y2="270" class="s-ink" marker-end="url(#d)"/>
-      <line x1="480" y1="270" x2="518" y2="270" class="s-ink" marker-end="url(#d)"/>
-      <line x1="730" y1="270" x2="768" y2="270" class="s-ink" marker-end="url(#d)"/>
+      <line x1="335" y1="36" x2="335" y2="390" class="s-rule dot"/>
+      <line x1="665" y1="36" x2="665" y2="390" class="s-rule dot"/>
+      <text x="20" y="44" class="t3">manipulation</text>
+      <rect x="20" y="50" width="300" height="38" class="f-ink"/><text x="30" y="66" class="b" style="fill:var(--paper)">saw, hold-down, both arms, servo</text><text x="30" y="81" style="fill:var(--paper);font-size:11px">5 mm lift within 0.1 mm on both</text>
+      <rect x="20" y="96" width="300" height="38" class="f-ink"/><text x="30" y="112" class="b" style="fill:var(--paper)">approaches A and B, 220 episodes</text><text x="30" y="127" style="fill:var(--paper);font-size:11px">11 conditions, 2 sets: six-axis chosen</text>
+      <rect x="350" y="50" width="300" height="38" class="f-paper s-ink" stroke-width="2"/><text x="360" y="66" class="b">hold-down as a belt</text><text x="360" y="81" class="t2" style="font-size:11px">the rigid lead-in causes most losses</text>
+      <rect x="350" y="96" width="300" height="38" class="f-paper s-ink"/><text x="360" y="112" class="b">drooping leg, torque limits</text><text x="360" y="127" class="t2" style="font-size:11px">B pivots; an overloaded wrist fails</text>
+      <rect x="680" y="50" width="300" height="38" class="f-paper s-ink"/><text x="690" y="66" class="b">three-finger end-on, moving belt</text><text x="690" y="81" class="t2" style="font-size:11px">the condition not yet run</text>
+      <rect x="680" y="96" width="300" height="38" class="f-paper s-ink"/><text x="690" y="112" class="b">many legs on one belt, line rate</text><text x="690" y="127" class="t2" style="font-size:11px">3 arms or lanes at 2,000 legs/h</text>
+      <line x1="320" y1="92" x2="348" y2="92" class="s-ink" marker-end="url(#d)"/>
+      <line x1="650" y1="92" x2="678" y2="92" class="s-ink" marker-end="url(#d)"/>
+      <text x="20" y="164" class="t3">perception</text>
+      <rect x="20" y="170" width="300" height="38" class="f-ink"/><text x="30" y="186" class="b" style="fill:var(--paper)">camera, segmenter, CoG</text><text x="30" y="201" style="fill:var(--paper);font-size:11px">Gemini 335L; IoU 0.984; CoG 1.2 mm</text>
+      <rect x="20" y="216" width="300" height="38" class="f-code s-ink"/><text x="30" y="232" class="b">hock from a fraction of length</text><text x="30" y="247" class="t2" style="font-size:11px">20 to 25 mm off: gate failed, 3 legs</text>
+      <rect x="350" y="170" width="300" height="38" class="f-paper s-ink" stroke-width="2"/><text x="360" y="186" class="b">hock as a landmark, 20 legs</text><text x="360" y="201" class="t2" style="font-size:11px">gate: within 5 mm and 2 degrees</text>
+      <rect x="350" y="216" width="300" height="38" class="f-paper s-ink"/><text x="360" y="232" class="b">second look after the grasp</text><text x="360" y="247" class="t2" style="font-size:11px">camera over the pick zone</text>
+      <rect x="680" y="170" width="300" height="38" class="f-paper s-ink"/><text x="690" y="186" class="b">camera in the loop, moving belt</text><text x="690" y="201" class="t2" style="font-size:11px">the run of 11.6 from the camera, 20 legs</text>
+      <rect x="680" y="216" width="300" height="38" class="f-paper s-ink"/><text x="690" y="232" class="b">touching legs, real-frame U-Net</text><text x="690" y="247" class="t2" style="font-size:11px">SAM outlines train it</text>
+      <line x1="320" y1="212" x2="348" y2="212" class="s-ink" marker-end="url(#d)"/>
+      <line x1="650" y1="212" x2="678" y2="212" class="s-ink" marker-end="url(#d)"/>
+      <text x="20" y="284" class="t3">skills and learning</text>
+      <rect x="20" y="290" width="300" height="38" class="f-ink"/><text x="30" y="306" class="b" style="fill:var(--paper)">8 skills with contracts, one graph</text><text x="30" y="321" style="fill:var(--paper);font-size:11px">unrouted outcomes refuse to build</text>
+      <rect x="20" y="336" width="300" height="38" class="f-ink"/><text x="30" y="352" class="b" style="fill:var(--paper)">one turn skill on both arms</text><text x="30" y="367" style="fill:var(--paper);font-size:11px">scripted; each arm's own IK, 11.6</text>
+      <rect x="350" y="290" width="300" height="38" class="f-paper s-ink"/><text x="360" y="306" class="b">learned vs scripted grasp, 11.5</text><text x="360" y="321" class="t2" style="font-size:11px">paired by leg, 20 legs, same lift</text>
+      <rect x="350" y="336" width="300" height="38" class="f-paper s-ink"/><text x="360" y="352" class="b">parameter sweeps, 13.6</text><text x="360" y="367" class="t2" style="font-size:11px">carry height, thresholds, turn bound</text>
+      <rect x="680" y="290" width="300" height="38" class="f-paper s-ink"/><text x="690" y="306" class="b">residual RL on the turn, 13.3</text><text x="690" y="321" class="t2" style="font-size:11px">then the teaching interface, 13.5</text>
+      <rect x="680" y="336" width="300" height="38" class="f-paper s-ink"/><text x="690" y="352" class="b">loin puller infeed, section 14</text><text x="690" y="367" class="t2" style="font-size:11px">the same skills on the next cell</text>
+      <line x1="320" y1="332" x2="348" y2="332" class="s-ink" marker-end="url(#d)"/>
+      <line x1="650" y1="332" x2="678" y2="332" class="s-ink" marker-end="url(#d)"/>
+      <path d="M 640 254 L 640 288" class="s-ink f-none" marker-end="url(#d)"/>
     </svg>
     </div>
-    <figcaption><b>Figure 9.</b> What blocks what. Filled: done. Heavy outline: the two pieces that unblock the most for Wednesday. Arrows mean "must pass its gate first". Dates after Sunday are a proposal.</figcaption>
+    <figcaption><b>Figure 9.</b> What is done and what it unblocks, as of 2026-09-15 evening. Filled: done and tested, with the number that passed it. Grey: run and failed its gate. Heavy outline: the two pieces that unblock the most next week. Arrows mean "must pass its gate first"; the vertical one is the second look after the grasp feeding the grasp A/B, which needs the post-grasp pose it measures. Dates after this week are a proposal.</figcaption>
   </figure>
 
   <h3><span class="addr">9.1</span>The decisions, in order</h3>
@@ -1384,20 +1383,20 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
 <rect x="670" y="450" width="320" height="26" class="f-paper s-rule"/>
 <text x="680" y="467" class="b">no</text><text x="712" y="467" class="t2" style="font-size:11px">volume centroid feeds grip and turn</text>
 <line x1="179" y1="476" x2="179" y2="508" class="s-ink" marker-end="url(#dq)"/>
-<rect x="20.5" y="533.5" width="11" height="11" class="f-paper s-ink"/>
+<rect x="20" y="533" width="12" height="12" class="f-ink"/>
 <rect x="44" y="510" width="270" height="58" class="f-paper s-ink"/>
-<text x="56" y="534" class="b">6 Hock and trotter points</text><text x="56" y="554" class="t2">depth geometry, 20 legs</text>
+<text x="56" y="534" class="b">6 Hock and trotter points</text><text x="56" y="554" class="t2">depth geometry, 3 legs in the loop</text>
 <line x1="314" y1="539" x2="334" y2="539" class="s-ink" marker-end="url(#dq)"/>
 <polygon points="352,510 602,510 618,539 602,568 352,568 336,539" class="f-code s-ink"/>
 <text x="356" y="535" style="font-size:11px">hock within 5 mm and yaw</text><text x="356" y="553" style="font-size:11px">within 2 degrees? †</text>
 <path d="M618,539 H636 V523 H668" class="s-ink f-none" marker-end="url(#dq)"/>
 <path d="M636,539 V555 H668" class="s-ink f-none" marker-end="url(#dq)"/>
-<rect x="670" y="510" width="320" height="26" class="f-paper s-ink"/>
-<text x="680" y="527" class="b">yes</text><text x="712" y="527" style="font-size:11px">locate_leg replaces ground truth</text>
-<rect x="670" y="542" width="320" height="26" class="f-paper s-rule"/>
-<text x="680" y="559" class="b">no</text><text x="712" y="559" class="t2" style="font-size:11px">learned keypoints, geometry monitors</text>
+<rect x="670" y="510" width="320" height="26" class="f-paper s-rule"/>
+<text x="680" y="527" class="b">yes</text><text x="712" y="527" class="t2" style="font-size:11px">locate_leg replaces ground truth</text>
+<rect x="670" y="542" width="320" height="26" class="f-soft s-blue" stroke-width="2"/>
+<text x="680" y="559" class="b">no</text><text x="712" y="559" style="font-size:11px">hock as a landmark next; 20 to 25 mm off by length</text>
 <line x1="179" y1="568" x2="179" y2="600" class="s-ink" marker-end="url(#dq)"/>
-<rect x="20.5" y="625.5" width="11" height="11" class="f-paper s-ink"/>
+<rect x="20" y="625" width="12" height="12" class="f-ink"/>
 <rect x="44" y="602" width="270" height="58" class="f-paper s-ink"/>
 <text x="56" y="626" class="b">7 Arm holds a leg</text><text x="56" y="646" class="t2">5 mm proof lift, both arms</text>
 <line x1="314" y1="631" x2="334" y2="631" class="s-ink" marker-end="url(#dq)"/>
@@ -1405,23 +1404,23 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
 <text x="356" y="627" style="font-size:11px">tool within 0.5 mm of command</text><text x="356" y="645" style="font-size:11px">on the 5 mm lift?</text>
 <path d="M618,631 H636 V615 H668" class="s-ink f-none" marker-end="url(#dq)"/>
 <path d="M636,631 V647 H668" class="s-ink f-none" marker-end="url(#dq)"/>
-<rect x="670" y="602" width="320" height="26" class="f-paper s-ink"/>
-<text x="680" y="619" class="b">yes</text><text x="712" y="619" style="font-size:11px">run the 160-episode experiment</text>
+<rect x="670" y="602" width="320" height="26" class="f-soft s-blue" stroke-width="2"/>
+<text x="680" y="619" class="b">yes</text><text x="712" y="619" style="font-size:11px">within 0.1 mm: the experiment ran</text>
 <rect x="670" y="634" width="320" height="26" class="f-paper s-rule"/>
 <text x="680" y="651" class="b">no</text><text x="712" y="651" class="t2" style="font-size:11px">fix the servo model first</text>
 <line x1="179" y1="660" x2="179" y2="692" class="s-ink" marker-end="url(#dq)"/>
-<rect x="20.5" y="717.5" width="11" height="11" class="f-paper s-ink"/>
+<rect x="20" y="717" width="12" height="12" class="f-ink"/>
 <rect x="44" y="694" width="270" height="58" class="f-paper s-ink"/>
-<text x="56" y="718" class="b">8 Approach and arm</text><text x="56" y="738" class="t2">160 episodes, judged by the saw</text>
+<text x="56" y="718" class="b">8 Approach and arm</text><text x="56" y="738" class="t2">220 episodes, two arrival sets, the saw</text>
 <line x1="314" y1="723" x2="334" y2="723" class="s-ink" marker-end="url(#dq)"/>
 <polygon points="352,694 602,694 618,723 602,752 352,752 336,723" class="f-code s-ink"/>
 <text x="356" y="719" style="font-size:11px">grasp-and-rotate wins and tilt</text><text x="356" y="737" style="font-size:11px">adds at most 2 legs of 20?</text>
 <path d="M618,723 H636 V707 H668" class="s-ink f-none" marker-end="url(#dq)"/>
 <path d="M636,723 V739 H668" class="s-ink f-none" marker-end="url(#dq)"/>
-<rect x="670" y="694" width="320" height="26" class="f-paper s-ink"/>
-<text x="680" y="711" class="b">yes</text><text x="712" y="711" style="font-size:11px">SCARA stays in on cost and speed</text>
-<rect x="670" y="726" width="320" height="26" class="f-paper s-rule"/>
-<text x="680" y="743" class="b">no</text><text x="712" y="743" class="t2" style="font-size:11px">six-axis arm for the pilot cell</text>
+<rect x="670" y="694" width="320" height="26" class="f-paper s-rule"/>
+<text x="680" y="711" class="b">yes</text><text x="712" y="711" class="t2" style="font-size:11px">SCARA stays in on cost and speed</text>
+<rect x="670" y="726" width="320" height="26" class="f-soft s-blue" stroke-width="2"/>
+<text x="680" y="743" class="b">no</text><text x="712" y="743" style="font-size:11px">six-axis: tie on the turn, 9 of 20 SCARA reach</text>
 <line x1="179" y1="752" x2="179" y2="784" class="s-ink" marker-end="url(#dq)"/>
 <rect x="20.5" y="809.5" width="11" height="11" class="f-paper s-ink"/>
 <rect x="44" y="786" width="270" height="58" class="f-paper s-ink"/>
@@ -1438,7 +1437,7 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
 <line x1="179" y1="844" x2="179" y2="876" class="s-ink" marker-end="url(#dq)"/>
 <rect x="20.5" y="901.5" width="11" height="11" class="f-paper s-ink"/>
 <rect x="44" y="878" width="270" height="58" class="f-paper s-ink"/>
-<text x="56" y="902" class="b">10 One orient skill, two arms</text><text x="56" y="922" class="t2">same checkpoint, SCARA and UR20</text>
+<text x="56" y="902" class="b">10 One orient skill, two arms</text><text x="56" y="922" class="t2">scripted: done; learned checkpoint: not trained</text>
 <line x1="314" y1="907" x2="334" y2="907" class="s-ink" marker-end="url(#dq)"/>
 <polygon points="352,878 602,878 618,907 602,936 352,936 336,907" class="f-code s-ink"/>
 <text x="356" y="903" style="font-size:11px">same saw metric as each</text><text x="356" y="921" style="font-size:11px">arm's own baseline?</text>
@@ -1450,7 +1449,7 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
 <text x="680" y="927" class="b">no</text><text x="712" y="927" class="t2" style="font-size:11px">per-arm correction on shared skill</text>
 </svg>
     </div>
-    <figcaption><b>Figure 9.1.</b> The decisions in the order we take them. Filled square: tested. Half-filled: running. Empty: not run yet. A blue outcome is the branch the result has taken so far: the camera is proposed and awaits sign-off; with the camera's edge effects modelled, the learned segmenter beat geometry and is kept with geometry checking it (11.2); plant video says learned separation is needed, at a compute cost that decision 4 has to solve; the learned correction on the column centroid passed its rule, 1.2 mm median against 7.9 (11.4). Rules for 2, 7 and 8 were set in sections 11.2, 9 and 7.1; rules marked † are our proposals, to agree before those tests run.</figcaption>
+    <figcaption><b>Figure 9.1.</b> The decisions in the order we take them. Filled square: tested. Empty: not run yet. A blue outcome is the branch the result took: the camera is chosen; with the camera's edge effects modelled, the learned segmenter beat geometry and is kept with geometry checking it (11.2); plant video says learned separation is needed, at a compute cost that decision 4 has to solve; the learned correction on the column centroid passed its rule, 1.2 mm median against 7.9 (11.4); the hock from a fraction of the perceived length failed its gate and a landmark method is next (11.6); both arms hold a leg through the lift; and the approach test took the "no" branch, six-axis, on the rule and on reach (7.1, 11.6). Decisions 4, 9 and 10 are open; rules marked † are our proposals, to agree before those tests run.</figcaption>
   </figure>
 
   <div class="tbl"><div class="cap">Table 9.1 · gates</div>
@@ -1458,11 +1457,12 @@ footer{max-width:var(--wide);margin:4rem auto 0;border-top:1px solid var(--ink);
     <thead><tr><th>Gate</th><th>Measured by</th><th>Passes when</th><th>State</th></tr></thead>
     <tbody>
       <tr><td>Saw scores placement</td><td><code>tests/applications/pork_leg_alignment/sim/test_saw.py</code></td><td>square placement reads 0 mm and 0°; offsets read back exactly</td><td><span class="mk f"></span>passed</td></tr>
-      <tr><td>Arm holds position under a leg</td><td>5 mm proof lift, both arms</td><td>tool within 0.5 mm of command; home held within 0.02 unloaded</td><td><span class="mk"></span>open</td></tr>
-      <tr><td>Both approaches end to end</td><td>20 legs per condition</td><td>every episode ends in a declared outcome with numbers; no pass bar on success until the plant gives a tolerance</td><td><span class="mk"></span>open</td></tr>
-      <tr class="chg"><td>Hock from depth</td><td>20 legs, modelled degradations</td><td>hock error within 5 mm and yaw within 2° <span class="unv">† assumed until the tolerance is known</span></td><td><span class="mk"></span>open</td></tr>
+      <tr><td>Arm holds position under a leg</td><td>5 mm proof lift, both arms</td><td>tool within 0.5 mm of command; home held within 0.02 unloaded</td><td><span class="mk f"></span>passed, within 0.1 mm (11.6)</td></tr>
+      <tr><td>Both approaches end to end</td><td>20 legs per condition, 11 conditions</td><td>every episode ends in a declared outcome with numbers; no pass bar on success until the plant gives a tolerance</td><td><span class="mk f"></span>passed, 220 episodes (Table 11.7)</td></tr>
+      <tr><td>Turn verified and corrected</td><td>fresh estimate after the turn, 20 legs at any heading</td><td>hock within 3 mm of the blade plane at release on every gripped leg</td><td><span class="mk f"></span>passed on the UR20, 1.7 mm worst; SR-20iA 2.1 mm worst on the 14 it reached</td></tr>
+      <tr class="chg"><td>Hock from depth</td><td>3 legs in the loop, camera pipeline</td><td>hock error within 5 mm and yaw within 2° <span class="unv">† assumed until the tolerance is known</span></td><td><span class="mk x"></span>failed, 20 to 25 mm; landmark method next</td></tr>
       <tr><td>Recovery designed in</td><td><code>TaskGraph</code> construction</td><td>every declared outcome of every skill routed</td><td><span class="mk f"></span>enforced in code</td></tr>
-      <tr><td>One skill, two arms</td><td>section 6 protocol</td><td>same checkpoint, same saw metric on both arms, reported against per-arm baselines</td><td><span class="mk"></span>open</td></tr>
+      <tr><td>One skill, two arms</td><td>section 6 protocol</td><td>same checkpoint, same saw metric on both arms, reported against per-arm baselines</td><td><span class="mk f"></span>scripted skill: passed, one skill ran both arms (11.6); <span class="mk"></span>learned checkpoint: not trained</td></tr>
     </tbody>
   </table></div></div>
 
