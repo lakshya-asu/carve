@@ -140,14 +140,22 @@ the `LegEstimate` layer with a second estimate after the grasp (`B-*-truth-24062
 the code the videos in the plan were filmed from. The saw is the judge; "entry offset" and "cut
 angle" are the blade's first contact relative to the hock, over the cut legs.
 
-| Condition | Successes / trials, final run | Entry offset median, p95 mm | Cut angle median, p95 deg | Cycle median s | Failures | First run |
+| Condition | Successes / trials, final run (jaws close on a ramp) | Entry offset median, p95 mm | Cut angle median, p95 deg | Cycle median s | Failures | Earlier runs |
 |---|---|---|---|---|---|---|
-| B, SR-20iA, jaw, tilt 0 | 13 / 20 | 3.8, 12.8 | 2.6, 12.9 | 3.65 | unreachable x2 (legs 10 and 19, arrivals -25 and -12 deg); slipped in the turn x2; cut out of tolerance x3 | 14 / 20 |
-| B, UR20, jaw, tilt 0 | 12 / 20 | 2.2, 12.6 | 1.6, 9.4 | 3.85 | set down 10 to 14 mm inboard x2; cut out of tolerance x5; pad brushed the belt x1 | 12 / 20 |
-| B, UR20, jaw, tilt 15 | 17 / 20 | 1.7, 10.4 | 0.9, 8.8 | 3.85 | cut out of tolerance x3 | 16 / 20 |
-| B, UR20, jaw, tilt 30 | 15 / 20 | 1.4, 6.2 | 1.1, 9.8 | 3.85 | grasp slipped on the proof lift x2 (legs 7 and 15); cut angle 9 to 13 deg x3 | 16 / 20 |
-| A, SR-20iA, jaw, tilt 0 | 12 / 20 | 4.3, 12.4 | 2.4, 13.0 | 3.65 | unreachable x2 (legs 10 and 19); slipped in the carry x1; cut angle 5 to 9 deg x4; cut offset 12 mm x1 | not run |
-| A, UR20, jaw, tilt 0 | 16 / 20 | 2.9, 10.3 | 1.2, 8.7 | 3.85 | cut offset 10 to 12 mm x2; cut angle 8.5 deg x1; arm collision x1 | not run |
+| B, SR-20iA, jaw, tilt 0 | 14 / 20 | 3.4, 19.9 | 2.1, 11.8 | 3.80 | unreachable x2 (legs 10 and 19, arrivals -25 and -12 deg); slipped in the turn x2; cut angle 5.3 and 9.2 deg | 14, then 13 |
+| B, UR20, jaw, tilt 0 | 15 / 20 | 1.7, 12.2 | 1.3, 11.4 | 4.00 | slipped in the turn x1; cut angle 8.5 and 9.2 deg; cut offset 12.2 mm and -9.4 mm entry with the leg turned during the cut | 12, then 12 |
+| B, UR20, jaw, tilt 15 | 17 / 20 | 1.0, 10.0 | 1.2, 9.0 | 4.00 | cut angle 8.4 and 9.0 deg; cut offset 10.1 mm | 16, then 17 |
+| B, UR20, jaw, tilt 30 | 15 / 20 | 0.8, 8.2 | 1.2, 8.8 | 4.00 | grasp slipped on the proof lift x1; cut angle 13.4 and 8.8 deg; cut offset 19.1 and -9.7 mm | 16, then 15 |
+| A, SR-20iA, jaw, tilt 0 | 14 / 20 | 3.6, 18.9 | 2.1, 11.8 | 3.80 | unreachable x2; slipped in the carry x2; cut angle 5.3 and 9.3 deg | 12 |
+| A, UR20, jaw, tilt 0 | 16 / 20 | 2.8, 9.0 | 1.2, 8.3 | 4.00 | slipped in the carry x1; cut angle 12.0, 7.6 and 8.3 deg | 16 |
+
+Three runs of the protocol are in the data directory: `*-b42a2e7.csv` (before the leg-estimate
+layer), `*-truth-2406215.csv` (estimate layer, jaws closing as a step) and `*-truth-7125e18.csv`
+(jaws closing on a 0.6 s ramp), which is the final run and the one the videos were filmed from.
+The ramp came from watching the videos: the step close drove the leg 21 mm along its axis in the
+first 0.1 s of closing, which on film looked like the leg snapping into the jaws; on the ramp the
+leg moves 0.5 mm during the close and the grasp shift over 20 legs is 2.4 mm median, 10.7 mm
+worst (UR20), against 20 to 25 mm before.
 
 Approach A (`PickAndPlace` in `skills/rotate_on_belt.py`) is the same skill and path as B with the
 shank carried 100 mm up instead of 20 mm, plus a check at carry height that no part of the leg
@@ -156,10 +164,10 @@ legs per arm: flange 88 to 147 N; moment about the jaw line 18 to 42 N m; inerti
 tool's vertical axis 0.49 to 1.47 kg m^2, over the SR-20iA J4 rating of 0.45 kg m^2 on every leg.
 The simulated arms have no torque limits (Caveats), so the SR-20iA carried every leg regardless.
 
-Paired by leg, tool vertical: UR20, A won 5 legs (4, 12, 14, 15, 18) and lost 1 (9), 16 against
-12; SR-20iA, A won 0 and lost 1 (leg 1), 12 against 13. Hock at release, median: UR20 A 2.2 mm,
-B 1.3 mm; SR-20iA A 2.4 mm, B 2.3 mm. So the arms set the leg down equally well either way and
-the UR20's extra successes when carrying come after release, at the hold-down.
+Paired by leg, tool vertical, final run: UR20, A won 1 leg (15) and lost none, 16 against 15;
+SR-20iA, A and B passed and failed the same legs, 14 and 14. Hock at release, median: UR20 A
+1.4 mm, B 0.9 mm; SR-20iA 2.2 mm both. Loads at carry height: flange 88 to 147 N, moment 21 to
+44 N m, inertia about the tool axis 0.6 to 1.6 kg m^2, over the SR-20iA J4 rating on every leg.
 
 Not run: the three-finger end-on conditions (the trotter grasp does not yet track a moving belt).
 
@@ -199,17 +207,17 @@ Where the failures come from, from the per-episode rows and the traces behind th
   difference is inside the failures the hold-down causes, so it is not a tilt result either.
 
 Camera in the loop (UR20, tilt 0, 3 legs, same runner with `--pose-source camera`): 0 of 3. The
-first camera estimate put the hock 20 to 23 mm from the truth and the heading within 3 degrees;
-closing the jaws then moved the hock 25 mm along the leg, the camera could not look again because
-the leg had left its field, and the turn planned on the stale estimate set the hock 22 to 24 mm
-outboard. The longest leg of the three ran off the image edge at arrival and was refused. From
-ground truth with a second estimate after the grasp the same three legs score 2 of 3.
+first camera estimate put the hock 19 to 21 mm from the truth along the leg and the heading
+within 3 degrees; with the jaws closing on a ramp the turn set those two legs down 14 and 18 mm
+outboard, which is that estimate error; the longest leg's hock came out 60 mm off and the fit
+check refused the grasp. (Before the ramp, the step close added a 25 mm shift the camera could
+not see because the leg had left its field.)
 
 ## Decision taken and why
 
 By the rule written before the runs: the SCARA stayed in only if grasp-and-rotate won and tilt
-gained at most 2 legs of 20. Grasp-and-rotate did not win on the UR20 (12 against 16 carrying, tool
-vertical), tilt gained 5 legs (17 against 12), and carrying exceeds the SR-20iA's wrist rating on
+gained at most 2 legs of 20. Grasp-and-rotate did not win on the UR20 (15 against 16 carrying, tool
+vertical), tilt gained 2 legs (17 against 15), and carrying exceeds the SR-20iA's wrist rating on
 every leg. The decision the rule gives is the six-axis arm for the pilot cell. H1 is not supported, and
 could not be on a rigid leg (see "What B is in this simulation" above); H2 is not supported; H3
 holds for the SCARA (every carried leg over the J4 rating, in both approaches) and does not bind

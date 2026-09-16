@@ -132,8 +132,14 @@ def park_ready(cell: Cell) -> None:
 
 
 def place_by_centre_of_gravity(cell: Cell, arrival: Arrival) -> None:
-    """Put the leg down so its centre of gravity, not its body origin, is at the arrival point."""
-    cell.place_product(ARRIVAL_X_M, arrival.y_m, arrival.heading_rad, settle_s=SETTLE_S)
+    """Put the leg down so its centre of gravity, not its body origin, is at the arrival point.
+
+    The centre of mass is read from the model at the nominal pose without
+    stepping, then the leg is placed once at the corrected pose and settles
+    there; placing it twice with a settle in between showed on video as the
+    leg jumping back along the belt.
+    """
+    cell.place_product(ARRIVAL_X_M, arrival.y_m, arrival.heading_rad, settle_s=0.0)
     truth = cell.ground_truth()
     assert truth.centre_of_mass_m is not None
     shift = truth.centre_of_mass_m[:2] - np.array([truth.piece_pose.x_m, truth.piece_pose.y_m])
@@ -303,9 +309,16 @@ def run_episode(
         cell.arm_collisions = 0
         cycle_start_s = cell.time_s
 
+        # The camera sees the leg as it arrives, before it settles and rides
+        # on: 0.3 s later its ham has left the image's downstream edge, which
+        # says the camera sits too close to the pick zone (11.6).
         estimated: SkillResult | None = None
+        perceived: dict[str, Any] = {}
+        refused = ""
         if pipeline is not None:
             perceived, refused = pipeline.perceive(cell)
+        cell.step(seconds=SETTLE_S)
+        if pipeline is not None:
             if refused:
                 row.estimate = refused
             else:

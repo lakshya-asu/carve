@@ -162,13 +162,19 @@ def _caption(row: Episode, arm: ArmModel, tilt_deg: float, index: int, approach:
 
 
 def film_condition(
-    arm: ArmModel, tilt_deg: float, out_dir: Path, close_up: bool, approach: str = "B"
+    arm: ArmModel,
+    tilt_deg: float,
+    out_dir: Path,
+    close_up: bool,
+    approach: str = "B",
+    only: list[int] | None = None,
 ) -> list[Episode]:
-    """All 20 legs (or the close-up legs) of one condition into one video."""
+    """All 20 legs (or the close-up legs, or `only`) of one condition into one video."""
     legs = leg_population(LEG_COUNT, seed=LEG_SEED)
     draws = arrivals(LEG_COUNT)
-    indices = CLOSE_UP_LEGS if close_up else tuple(range(LEG_COUNT))
-    name = f"approach-{approach.lower()}-{'closeup-' if close_up else ''}{arm.value}-tilt{tilt_deg:.0f}.mp4"
+    indices = tuple(only) if only else (CLOSE_UP_LEGS if close_up else tuple(range(LEG_COUNT)))
+    suffix = f"-leg{'-'.join(str(i) for i in only)}" if only else ""
+    name = f"approach-{approach.lower()}-{'closeup-' if close_up else ''}{arm.value}-tilt{tilt_deg:.0f}{suffix}.mp4"
     film: Film | None = None
     rows: list[Episode] = []
     for index in indices:
@@ -184,8 +190,14 @@ def film_condition(
                 film = Film(cell.model, out_dir / name, camera)
             filmed = cell
             assert isinstance(filmed, FilmedCell)
-            filmed.film = film
             filmed.caption_fn = lambda: _caption(row, arm, tilt_deg, index, approach)
+            placed = cell.place_product
+
+            def place_then_record(*args: object, **kwargs: object) -> None:
+                placed(*args, **kwargs)
+                filmed.film = film
+
+            cell.place_product = place_then_record  # type: ignore[method-assign]
             if close_up:
                 body = cell.model.body("slab").id
 
@@ -221,6 +233,9 @@ def main() -> None:
     parser.add_argument("--arm", type=ArmModel, choices=list(ArmModel), default=None, help="one arm only")
     parser.add_argument("--tilt-deg", type=float, default=None, help="one tilt only")
     parser.add_argument("--approach", choices=["A", "B"], default="B", help="A carries the leg; B turns it on the belt")
+    parser.add_argument(
+        "--only-leg", type=int, nargs="+", default=None, help="film just these legs, full view unless --only closeup"
+    )
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
     for name in ("applications.pork_leg_alignment.sim.scene", "applications.pork_leg_alignment.sim.product"):
@@ -232,7 +247,7 @@ def main() -> None:
         for close_up in (False, True):
             if (args.only == "full" and close_up) or (args.only == "closeup" and not close_up):
                 continue
-            rows = film_condition(arm, tilt_deg, args.out_dir, close_up, args.approach)
+            rows = film_condition(arm, tilt_deg, args.out_dir, close_up, args.approach, args.only_leg)
             print(
                 f"{arm.value} tilt {tilt_deg:.0f} {'close-up' if close_up else 'full'}: {sum(r.success for r in rows)} / {len(rows)}"
             )

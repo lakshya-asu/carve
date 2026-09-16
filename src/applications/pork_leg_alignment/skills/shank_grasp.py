@@ -32,7 +32,7 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from applications.pork_leg_alignment.sim.cell import Cell
+from applications.pork_leg_alignment.sim.cell import TOOL_TICK_S, Cell
 from applications.pork_leg_alignment.sim.product import PRODUCT_BODY, leg_centreline
 from applications.pork_leg_alignment.skills.leg_estimate import LegEstimate
 from robotics.core.grasp_action import tool_rotation
@@ -388,8 +388,21 @@ class AcquireShank:
                 np.linalg.norm(cell.tool_position_m - grasp_point_at(cell, grasp, cell.time_s))
             )
             evidence["joint_lag_rad"] = float(np.max(np.abs(cell.arm_target - cell.arm_qpos)))
+            # The jaws close on a ramp rather than a step: a step drove the leg
+            # 21 mm along its axis in the first 0.1 s of closing (2026-09-15).
+            open_from = float(cell.gripper_opening_m)
+            close_start_s = cell.time_s
+            while cell.time_s < close_start_s + CLOSE_S - 1e-9:
+                fraction = min(1.0, (cell.time_s - close_start_s + TOOL_TICK_S) / CLOSE_S)
+                cell.open_gripper(
+                    max(
+                        cell.gripper_geometry.rest_gap_m,
+                        open_from + fraction * (cell.gripper_geometry.rest_gap_m - open_from),
+                    )
+                )
+                cell.follow_tool(hold, TOOL_TICK_S)
             cell.close_gripper()
-            cell.follow_tool(hold, CLOSE_S)
+            cell.follow_tool(hold, SETTLE_S)
             opening = float(cell.gripper_opening_m)
             evidence["opening_m"] = opening
             if opening < 0.5 * grasp.shank_width_m:
