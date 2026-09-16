@@ -1,0 +1,21 @@
+{
+  "name": "leg-cell-footage",
+  "private": true,
+  "description": "Footage segments of the leg cell talk: drill clips and simulation clips framed in the deck's palette.",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.525",
+    "@remotion/fonts": "4.0.525",
+    "@remotion/media-utils": "4.0.525",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "remotion": "4.0.525"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.0",
+    "typescript": "5.8.3"
+  }
+}

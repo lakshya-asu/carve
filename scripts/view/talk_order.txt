@@ -1,0 +1,54 @@
+# The leg cell talk, in spoken order: one piece per line, a Manim scene class name or a footage
+# card under ~/Videos/meat-cell/deck/footage/. Read by scripts/view/stitch_deck.py --order.
+# The narration for each piece is its block in plan/leg-cell-talk-script.md.
+
+# The pig and the leg
+Title
+Pig
+Anatomy
+Handle
+
+# Why skills
+WhySkills
+Definition
+footage/DrillPanel.mp4
+Fuse
+Compose
+
+# The workflow in code
+Plan
+
+# Perception
+Cameras
+footage/CameraFeed.mp4
+Segment
+footage/Segmentation.mp4
+footage/RealFootageSegmentation.mp4
+CentreOfGravity
+footage/CentreOfGravityClip.mp4
+
+# Grippers and arms
+Grippers
+footage/GripperAlone.mp4
+footage/GripShank.mp4
+footage/ThreeFingerShank.mp4
+footage/TrotterEndOn.mp4
+Arms
+footage/Reach.mp4
+
+# The method
+Method
+footage/ApproachAandB.mp4
+footage/BestPick.mp4
+
+# Learning
+Teach
+Reinforce
+Foundation
+Hierarchy
+
+# Transfer and results
+Transfer
+footage/LoinTransfer.mp4
+footage/AnyHeading.mp4
+Numbers

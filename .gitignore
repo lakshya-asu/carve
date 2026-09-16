@@ -38,6 +38,11 @@ ros2/build/
 ros2/install/
 ros2/log/
 
+# Remotion footage project
+scripts/view/remotion/node_modules/
+scripts/view/remotion/out/
+scripts/view/remotion/public/
+
 # kept out of the public repo: personal assistant memory and raw customer messages
 memory/
 field-notes/customer/meat-men/

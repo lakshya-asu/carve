@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 250">
+  <!-- One side of a hog, the same drawing as Figure 0.1 of the plan. Paths in order:
+       the leg region, the body outline, the ear, the tail, then the four cut lines. -->
+  <path d="M320,50 C380,48 410,70 412,105 C414,140 400,165 380,172 L380,212 L362,212 L356,178 L320,180 Z" fill="#000000"/>
+  <path d="M74,100 C74,62 110,52 160,52 L330,50 C380,48 410,70 412,105 C414,140 400,165 380,172 L380,212 L362,212 L356,178 L150,180 L146,212 L128,212 L124,172 C100,166 84,152 78,134 C62,142 40,142 22,134 L20,118 C36,104 56,98 74,100 Z" fill="none" stroke="#000000" stroke-width="2"/>
+  <path d="M88,72 L100,46 L116,66" fill="none" stroke="#000000" stroke-width="1.2"/>
+  <path d="M412,78 C428,70 432,58 422,54" fill="none" stroke="#000000" stroke-width="1.2"/>
+  <path d="M175,53 L178,180" fill="none" stroke="#000000" stroke-width="1.4"/>
+  <path d="M318,51 L320,180" fill="none" stroke="#000000" stroke-width="1.4"/>
+  <path d="M176,112 L319,112" fill="none" stroke="#000000" stroke-width="1.4"/>
+  <path d="M82,104 L176,96" fill="none" stroke="#000000" stroke-width="1.4"/>
+</svg>
