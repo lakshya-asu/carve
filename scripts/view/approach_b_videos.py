@@ -1,4 +1,4 @@
-"""Film approach B end to end on the moving belt: every condition, every leg, saw-judged.
+r"""Film approach B end to end on the moving belt: every condition, every leg, saw-judged.
 
 Runs the same episodes as `scripts/measure/alignment_approaches.py` (ground-truth pose, the
 pre-registered arrivals) through a cell that writes a frame every 1/25 s of simulated time, so what
@@ -27,12 +27,13 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "measure"))
 from alignment_approaches import (
-    ARRIVAL_YAW_RANGE_RAD,
+    ARRIVAL_KINDS,
     BELT_SPEED_MPS,
     LEG_COUNT,
     LEG_SEED,
     Episode,
     arrivals,
+    judge,
     run_episode,
 )
 
@@ -44,8 +45,19 @@ from robotics.hardware.grippers import GripperModel
 logger = logging.getLogger("approach_b_videos")
 
 WIDTH_PX, HEIGHT_PX, FPS = 960, 540, 25
+# Full view per arrival set: the square set's saw stands at 1.75 m, the any
+# set's at 2.60 m on a longer belt, so its camera sits further back. The
+# close-up tracks the leg as far as the saw's far side.
+FULL_VIEW = {
+    "square": ([0.85, 0.45, 0.95], 3.3),
+    "any": ([1.25, 0.45, 0.95], 4.3),
+}
+TRACK_X_RANGE_M = {"square": (-0.2, 1.9), "any": (-0.2, 2.5)}
 HOLD_AFTER_S = 1.2
-CLOSE_UP_LEGS = (0, 9, 15)
+# Close-up legs per arrival set: an ordinary leg, the leg that arrives 31 degrees off square and the
+# largest leg for the square set; for the any set an ordinary leg, one arriving trotter-downstream
+# at -126 degrees and one arriving nearly trotter-first at +163 degrees.
+CLOSE_UP_LEGS = {"square": (0, 9, 15), "any": (0, 12, 13)}
 CONDITIONS = (
     (ArmModel.SR20IA, 0.0),
     (ArmModel.UR20, 0.0),
@@ -138,9 +150,11 @@ class FilmedCell(Cell):
 
 def _verdict(row: Episode) -> str:
     if row.cut:
-        if row.success:
+        # The runner judges the row after the cell has closed, so judge it here for the last frames.
+        passed, why = judge(row)
+        if passed:
             return f"PASS: cut {row.entry_offset_mm:+.1f} mm from the hock, {row.cut_angle_deg:+.1f} deg off square"
-        return f"FAIL: {row.failure}"
+        return f"FAIL: {why}"
     if row.orient:
         return f"released at x = {row.released_at_x_m:.2f} m, hock {row.hock_offset_mm:+.1f} mm from the blade plane; riding to the saw"
     if row.acquire:
@@ -150,13 +164,15 @@ def _verdict(row: Episode) -> str:
     return "reading the leg's pose"
 
 
-def _caption(row: Episode, arm: ArmModel, tilt_deg: float, index: int, approach: str = "B") -> list[str]:
+def _caption(
+    row: Episode, arm: ArmModel, tilt_deg: float, index: int, approach: str = "B", kind: str = "square"
+) -> list[str]:
     tilt = "tool vertical" if tilt_deg == 0.0 else f"tool leaned {tilt_deg:.0f} deg"
     what = "grasp and rotate on the belt" if approach == "B" else "pick up, carry, place"
+    drawn = f"drawn within +/-{math.degrees(ARRIVAL_KINDS[kind][0]):.0f} deg"
     return [
         f"APPROACH {approach}, {what}: {arm.value}, jaw on the shank, {tilt}, belt {BELT_SPEED_MPS:.2f} m/s",
-        f"leg {index + 1} of {LEG_COUNT}: {row.length_mm:.0f} mm, {row.mass_kg:.1f} kg, arrives {row.arrival_heading_deg:+.0f} deg off square "
-        f"(drawn within +/-{math.degrees(ARRIVAL_YAW_RANGE_RAD):.0f})",
+        f"leg {index + 1} of {LEG_COUNT}: {row.length_mm:.0f} mm, {row.mass_kg:.1f} kg, arrives {row.arrival_heading_deg:+.0f} deg off square ({drawn})",
         f"PASS = the saw cuts within 10 mm of the hock and 5 deg of square | {_verdict(row)}",
     ]
 
@@ -168,12 +184,13 @@ def film_condition(
     close_up: bool,
     approach: str = "B",
     only: list[int] | None = None,
+    kind: str = "square",
 ) -> list[Episode]:
     """All 20 legs (or the close-up legs, or `only`) of one condition into one video."""
     legs = leg_population(LEG_COUNT, seed=LEG_SEED)
-    draws = arrivals(LEG_COUNT)
-    indices = tuple(only) if only else (CLOSE_UP_LEGS if close_up else tuple(range(LEG_COUNT)))
-    suffix = f"-leg{'-'.join(str(i) for i in only)}" if only else ""
+    draws = arrivals(LEG_COUNT, kind, legs)
+    indices = tuple(only) if only else (CLOSE_UP_LEGS[kind] if close_up else tuple(range(LEG_COUNT)))
+    suffix = (f"-{kind}" if kind != "square" else "") + (f"-leg{'-'.join(str(i) for i in only)}" if only else "")
     name = f"approach-{approach.lower()}-{'closeup-' if close_up else ''}{arm.value}-tilt{tilt_deg:.0f}{suffix}.mp4"
     film: Film | None = None
     rows: list[Episode] = []
@@ -185,12 +202,12 @@ def film_condition(
                 camera = (
                     _camera([0.0, 0.45, 0.95], 1.7, 120.0, -32.0)
                     if close_up
-                    else _camera([0.75, 0.45, 0.95], 3.0, 100.0, -30.0)
+                    else _camera(*FULL_VIEW[kind], 100.0, -30.0)
                 )
                 film = Film(cell.model, out_dir / name, camera)
             filmed = cell
             assert isinstance(filmed, FilmedCell)
-            filmed.caption_fn = lambda: _caption(row, arm, tilt_deg, index, approach)
+            filmed.caption_fn = lambda: _caption(row, arm, tilt_deg, index, approach, kind)
             placed = cell.place_product
 
             def place_then_record(*args: object, **kwargs: object) -> None:
@@ -203,7 +220,7 @@ def film_condition(
 
                 def track() -> np.ndarray:
                     position = np.asarray(cell.data.xpos[body], dtype=float)
-                    return np.array([float(np.clip(position[0], -0.2, 1.7)), 0.4, 0.95])
+                    return np.array([float(np.clip(position[0], *TRACK_X_RANGE_M[kind])), 0.4, 0.95])
 
                 filmed.track = track
 
@@ -215,6 +232,7 @@ def film_condition(
             legs[index],
             draws[index],
             approach=approach,
+            kind=kind,
             cell_class=FilmedCell,
             on_cell=attach,
         )
@@ -236,6 +254,7 @@ def main() -> None:
     parser.add_argument(
         "--only-leg", type=int, nargs="+", default=None, help="film just these legs, full view unless --only closeup"
     )
+    parser.add_argument("--arrivals", choices=list(ARRIVAL_KINDS), default="square", help="the arrival draw")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
     for name in ("applications.pork_leg_alignment.sim.scene", "applications.pork_leg_alignment.sim.product"):
@@ -247,7 +266,7 @@ def main() -> None:
         for close_up in (False, True):
             if (args.only == "full" and close_up) or (args.only == "closeup" and not close_up):
                 continue
-            rows = film_condition(arm, tilt_deg, args.out_dir, close_up, args.approach, args.only_leg)
+            rows = film_condition(arm, tilt_deg, args.out_dir, close_up, args.approach, args.only_leg, args.arrivals)
             print(
                 f"{arm.value} tilt {tilt_deg:.0f} {'close-up' if close_up else 'full'}: {sum(r.success for r in rows)} / {len(rows)}"
             )

@@ -51,6 +51,7 @@ from applications.pork_leg_alignment.skills import (
     SelectShankGrasp,
 )
 from applications.pork_leg_alignment.skills.leg_estimate import estimate_from_ground_truth
+from applications.pork_leg_alignment.skills.rotate_on_belt import TURN_ACCELERATION_RADPS2
 from robotics.core.camera_frame import CameraFrameData
 from robotics.core.skill_library import SUCCESS, SkillResult, run_skill
 from robotics.hardware.arms import ArmModel
@@ -78,14 +79,39 @@ BELT_SPEED_MPS = 0.30
 # mount 0.35 m downstream so its 1.1 m reach covers the pick and the set-down.
 SAW_X_M = 1.75
 HOLD_DOWN_LENGTH_M = 0.50
-SCARA_MOUNT_X_M = 0.35
+# Two arrival sets. "square": the pre-registered draw, within 35 degrees of
+# square with the trotter toward the open edge, saw at 1.95 m on a 5 m belt
+# (1.75 m on 4 m until the correcting turn of 2026-09-15 added 0.4 s, after
+# which the UR20's fingers met the hold-down ramp on their way up on 7 to 13
+# legs of 20). "any": the leg
+# at any heading at all, ham kept on the belt, trotter wherever the heading
+# puts it, including upstream, downstream and toward the rail; a leg that
+# arrives trotter-first needs a turn of up to 180 degrees, which is more belt,
+# so the saw stands at 2.30 m on a 6 m belt. Added 2026-09-15 at Lakshya's
+# request, before any run of it.
+# Per set: heading range, saw x, belt half length, and each arm's mount x. A
+# 180 degree turn takes 2.5 s plus a correcting pass, so a leg arriving
+# trotter-upstream is set down 1.5 to 1.8 m past the pick; the saw stands at
+# 2.6 m on a 6 m belt and each arm stands midway between the pick and its
+# furthest set-down, as far downstream as its reach to the pick allows.
+ARRIVAL_KINDS = {
+    "square": (ARRIVAL_YAW_RANGE_RAD, 1.95, 2.5, {ArmModel.UR20: 0.0, ArmModel.SR20IA: 0.45}),
+    "any": (math.pi, 2.60, 3.0, {ArmModel.UR20: 0.85, ArmModel.SR20IA: 0.60}),
+}
+# The ham end must stay this far inside either belt edge; the trotter may
+# overhang the open edge, as it does on the line, but not the rail.
+BELT_EDGE_Y_M = (0.15, 0.85)
+EDGE_MARGIN_M = 0.03
 # Where each arm waits between legs: over the open-edge side of the belt, where
 # the legs are thin, tool down and jaws across the belt. A leg arrives with its
 # ham on the far side, so an arm that waits here and swings to the shank never
 # passes its open jaws over a ham; waiting mid-belt at y = 0.50, the SR-20iA
 # swept its jaws through the ham of a 766 mm leg (2026-09-15). The height is
 # the top of the SR-20iA's stroke at its mount, used for both arms.
-READY_M = np.array([-0.10, 0.25, 0.90 + 0.21])
+# The ready pose sits 0.45 m upstream of the arm's mount, over the thin side of the belt.
+READY_UPSTREAM_OF_MOUNT_M = 0.45
+READY_Y_M = 0.25
+READY_Z_M = 0.90 + 0.21
 READY_YAW_RAD = SQUARE_HEADING_RAD
 SPEED_FRACTION = 0.5
 MIN_MOVE_S = 0.4
@@ -111,21 +137,40 @@ class Arrival:
     heading_rad: float
 
 
-def arrivals(count: int) -> list[Arrival]:
-    """The same arrival draw for every condition."""
+def arrivals(count: int, kind: str = "square", legs: list[LegConfig] | None = None) -> list[Arrival]:
+    """The same arrival draw for every condition of one kind.
+
+    For "any", the drawn y is shifted the least that keeps the ham's end and,
+    when it points at the rail, the trotter's tip inside the belt.
+    """
+    yaw_range = ARRIVAL_KINDS[kind][0]
     rng = np.random.default_rng(ARRIVAL_SEED)
-    return [
-        Arrival(
-            y_m=float(rng.uniform(*ARRIVAL_Y_RANGE_M)),
-            heading_rad=SQUARE_HEADING_RAD + float(rng.uniform(-ARRIVAL_YAW_RANGE_RAD, ARRIVAL_YAW_RANGE_RAD)),
-        )
-        for _ in range(count)
-    ]
+    draws = []
+    for index in range(count):
+        y = float(rng.uniform(*ARRIVAL_Y_RANGE_M))
+        heading = SQUARE_HEADING_RAD + float(rng.uniform(-yaw_range, yaw_range))
+        if kind == "any" and legs is not None:
+            leg = legs[index]
+            along = math.sin(heading)
+            # Ends relative to the centre of gravity, which sits about 0.35 of the length from the butt.
+            butt_y = y - 0.35 * leg.length_m * along
+            tip_y = y + 0.65 * leg.length_m * along
+            low, high = BELT_EDGE_Y_M[0] + EDGE_MARGIN_M, BELT_EDGE_Y_M[1] - EDGE_MARGIN_M
+            shift = 0.0
+            for end_y, keep_off_open_edge in ((butt_y, True), (tip_y, False)):
+                if end_y > high:
+                    shift = min(shift, high - end_y)
+                if keep_off_open_edge and end_y < low:
+                    shift = max(shift, low - end_y)
+            y += shift
+        draws.append(Arrival(y_m=y, heading_rad=heading))
+    return draws
 
 
 def park_ready(cell: Cell) -> None:
     """Move the arm to its ready pose at the allowed joint speeds and let it settle."""
-    q = solve_ik(cell.model, cell.data, READY_M, READY_YAW_RAD, arm=cell.arm)
+    ready = np.array([cell.config.mount.x_m - READY_UPSTREAM_OF_MOUNT_M, READY_Y_M, READY_Z_M])
+    q = solve_ik(cell.model, cell.data, ready, READY_YAW_RAD, arm=cell.arm)
     speeds = np.asarray(cell.arm.max_joint_speed) * SPEED_FRACTION
     cell.move_arm(q, max(MIN_MOVE_S, float(np.max(np.abs(q - cell.arm_qpos) / speeds))))
     cell.step(seconds=0.2)
@@ -146,14 +191,25 @@ def place_by_centre_of_gravity(cell: Cell, arrival: Arrival) -> None:
     cell.place_product(ARRIVAL_X_M - float(shift[0]), arrival.y_m - float(shift[1]), arrival.heading_rad, settle_s=0.0)
 
 
-def cell_config(arm: ArmModel, leg: LegConfig, gripper: GripperModel, camera: bool = False) -> CellConfig:
+def cell_config(
+    arm: ArmModel, leg: LegConfig, gripper: GripperModel, camera: bool = False, kind: str = "square"
+) -> CellConfig:
     """The run's cell for one arm and one leg, with the depth camera when the pose comes from it."""
-    mount = ArmMount(x_m=SCARA_MOUNT_X_M, y_m=1.10, z_m=1.10, yaw_rad=-math.pi / 2) if arm is ArmModel.SR20IA else None
+    # Mounts per arrival set. Square: the UR20 at x = 0, where it stood for
+    # every earlier run (at 0.35 its retreat after release met the hold-down
+    # ramp on 7 to 13 legs of 20, 2026-09-15); the SR-20iA at 0.45, because
+    # the correcting turn sets the leg down 0.12 m further along and from
+    # 0.35 the retreat at x = 0.92 was 1 mm past its reach on 7 legs. Any: a
+    # leg arriving trotter-upstream is set down 1.1 to 1.3 m downstream after
+    # a 180 degree turn, beyond the UR20's reach from x = 0 with the tool down.
+    _, saw_x, half_length, mounts = ARRIVAL_KINDS[kind]
+    mount = ArmMount(x_m=mounts[arm], y_m=1.10, z_m=1.10 if arm is ArmModel.SR20IA else 0.90, yaw_rad=-math.pi / 2)
     return CellConfig(
         belt_speed_mps=BELT_SPEED_MPS,
+        belt_half_length_m=half_length,
         leg=leg,
-        saw=SawConfig(x_m=SAW_X_M),
-        hold_down=HoldDownConfig(x_centre_m=SAW_X_M, length_m=HOLD_DOWN_LENGTH_M),
+        saw=SawConfig(x_m=saw_x),
+        hold_down=HoldDownConfig(x_centre_m=saw_x, length_m=HOLD_DOWN_LENGTH_M),
         arm=arm,
         arm_mount=mount,
         gripper=gripper,
@@ -224,6 +280,7 @@ class Episode:
     moment_about_tool_nm: float = math.nan
     inertia_about_tool_kgm2: float = math.nan
     airborne: float = math.nan
+    corrections: float = math.nan
     meet_error_mm: float = math.nan
     opening_mm: float = math.nan
     tool_rise_mm: float = math.nan
@@ -277,13 +334,15 @@ def run_episode(
     pose_source: str = "truth",
     checkpoint: Path | None = None,
     approach: str = "B",
+    kind: str = "square",
+    turn_acceleration_radps2: float = TURN_ACCELERATION_RADPS2,
     cell_class: type[Cell] = Cell,
     on_cell: Callable[[Cell, Episode], None] | None = None,
 ) -> Episode:
     """One leg through approach B: estimate the leg, grasp, rotate on the belt, release, saw."""
     started = time.perf_counter()
     row = Episode(
-        condition=f"{approach}-{arm.value}-{gripper.value}-tilt{math.degrees(tilt_rad):.0f}-{pose_source}",
+        condition=f"{approach}-{arm.value}-{gripper.value}-tilt{math.degrees(tilt_rad):.0f}-{pose_source}-{kind}",
         approach=approach,
         pose_source=pose_source,
         arm=arm.value,
@@ -299,7 +358,7 @@ def run_episode(
     cameras = (
         {CAMERA: CameraSpec(CAMERA, GEMINI_335L.width_px, GEMINI_335L.height_px, exposure_s=0.0)} if camera else {}
     )
-    with cell_class(cell_config(arm, leg, gripper, camera=camera), cameras) as cell:
+    with cell_class(cell_config(arm, leg, gripper, camera=camera, kind=kind), cameras) as cell:
         if on_cell is not None:
             on_cell(cell, row)
         pipeline = CameraPipeline(cell, checkpoint) if camera else None
@@ -364,10 +423,23 @@ def run_episode(
                 row.grasp_shift_mm = 1000 * float(
                     np.linalg.norm((before.point_at(HOCK_FRACTION) + carried - truth_now.point_at(HOCK_FRACTION))[:2])
                 )
-                orient_skill = PickAndPlace() if approach == "A" else RotateOnBelt()
+                orient_skill = (PickAndPlace if approach == "A" else RotateOnBelt)(turn_acceleration_radps2)
+
+                def re_estimate() -> LegEstimate | None:
+                    """A fresh look at the leg mid-turn: the truth, or the camera when it can see it."""
+                    if pipeline is None:
+                        return estimate_from_ground_truth(cell)
+                    seen, why = pipeline.perceive(cell)
+                    if why:
+                        return None
+                    return run_skill(EstimateLegFromCamera(), cell, seen).outputs.get("leg_estimate")
+
                 oriented = run_skill(
-                    orient_skill, cell, {"leg_estimate": planning, **selected.outputs, **acquired.outputs}
+                    orient_skill,
+                    cell,
+                    {"leg_estimate": planning, "re_estimate": re_estimate, **selected.outputs, **acquired.outputs},
                 )
+                row.corrections = _evidence(oriented, "corrections")
                 row.flange_load_n = _evidence(oriented, "flange_load_n")
                 row.moment_about_tool_nm = _evidence(oriented, "moment_about_tool_nm")
                 row.inertia_about_tool_kgm2 = _evidence(oriented, "inertia_about_tool_kgm2")
@@ -474,10 +546,17 @@ def main() -> None:
     """Run the requested conditions and print the summary table."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--approach", choices=["A", "B"], default="B", help="A carries the leg; B turns it on the belt")
+    parser.add_argument("--arrivals", choices=list(ARRIVAL_KINDS), default="square", help="the arrival draw")
     parser.add_argument("--arm", type=ArmModel, choices=list(ArmModel), required=True)
     parser.add_argument("--gripper", type=GripperModel, default=GripperModel.JAW_GEH6180)
     parser.add_argument("--tilt-deg", type=float, nargs="+", default=[0.0])
     parser.add_argument("--legs", type=int, default=LEG_COUNT, help="how many of the 20 legs, for a quick check")
+    parser.add_argument(
+        "--turn-acceleration",
+        type=float,
+        default=TURN_ACCELERATION_RADPS2,
+        help="peak angular acceleration of the turn, rad/s^2; the file name carries it when it is not the default",
+    )
     parser.add_argument("--only-leg", type=int, nargs="+", default=None, help="run just these leg indices")
     parser.add_argument(
         "--pose-source",
@@ -496,10 +575,12 @@ def main() -> None:
         ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=False
     ).stdout.strip()
     legs = leg_population(LEG_COUNT, seed=LEG_SEED)
-    draws = arrivals(LEG_COUNT)
+    draws = arrivals(LEG_COUNT, args.arrivals, legs)
     indices = args.only_leg if args.only_leg is not None else list(range(args.legs))
     rows: list[Episode] = []
-    print(f"git {sha}, belt {BELT_SPEED_MPS} m/s, saw at x = {SAW_X_M} m, {len(indices)} legs")
+    print(
+        f"git {sha}, belt {BELT_SPEED_MPS} m/s, arrivals {args.arrivals}, saw at x = {ARRIVAL_KINDS[args.arrivals][1]} m, {len(indices)} legs"
+    )
     for tilt_deg in args.tilt_deg:
         for index in indices:
             row = run_episode(
@@ -512,6 +593,8 @@ def main() -> None:
                 pose_source=args.pose_source,
                 checkpoint=args.cog_checkpoint,
                 approach=args.approach,
+                kind=args.arrivals,
+                turn_acceleration_radps2=args.turn_acceleration,
             )
             rows.append(row)
             print(
@@ -531,7 +614,11 @@ def main() -> None:
                 + f", {row.wall_s:.1f} s",
                 flush=True,
             )
-    out = args.out or DATA_DIR / f"{args.approach}-{args.arm.value}-{args.gripper.value}-{args.pose_source}-{sha}.csv"
+    out = args.out or DATA_DIR / (
+        f"{args.approach}-{args.arm.value}-{args.gripper.value}-{args.pose_source}-{args.arrivals}"
+        + ("" if args.turn_acceleration == TURN_ACCELERATION_RADPS2 else f"-accel{args.turn_acceleration:g}")
+        + f"-{sha}.csv"
+    )
     write_rows(out, rows)
     print(f"\nwrote {out}\n")
     print(summarise(rows))

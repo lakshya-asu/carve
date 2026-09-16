@@ -28,13 +28,13 @@ from __future__ import annotations
 
 import logging
 import math
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 
-from applications.pork_leg_alignment.sim.cell import Cell
+from applications.pork_leg_alignment.sim.cell import Cell, ToolPath
 from applications.pork_leg_alignment.sim.product import HOCK_FRACTION, leg_centreline
 from applications.pork_leg_alignment.skills.leg_estimate import LegEstimate
 from applications.pork_leg_alignment.skills.shank_grasp import (
@@ -60,8 +60,19 @@ TURN_LIFT_M = 0.020
 LIFT_S = 0.3
 # Tool speed and turn rate through the turn. Assumed: a 20 kg-class arm swinging
 # a 15 kg leg on the belt; neither vendor rates a payload move this way.
-TOOL_SPEED_MPS = 0.5
-TURN_RATE_RADPS = math.radians(60.0)
+# The turn is bounded by speed and by angular acceleration. A turn planned on
+# rate alone made short turns violent: a 53 degree turn in 0.44 s peaks at
+# 27 rad/s^2 and the leg slid 15 mm in the jaws, a 126 degree turn 29 mm
+# (2026-09-15). At 3 rad/s^2 the leg's inertia about the grasp (about
+# 1.5 kg m^2) asks the pads for under 5 N m, but a 180 degree turn then takes
+# 2.5 s of belt travel and a 35 degree turn 1.1 s, which put the SR-20iA's
+# set-down beyond its reach on 12 of 20 square arrivals (2026-09-15). The
+# square set had run at up to 10 rad/s^2 before the bound existed (60 deg/s,
+# 35 degrees in 0.61 s) with one slip in 20, so 10 is the default and the
+# bound is a skill parameter, `turn_acceleration_radps2`. All assumed.
+TOOL_SPEED_MPS = 0.8
+TURN_RATE_RADPS = math.radians(120.0)
+TURN_ACCELERATION_RADPS2 = 10.0
 MIN_TURN_S = 0.4
 LOWER_S = 0.25
 OPEN_S = 0.3
@@ -73,6 +84,12 @@ RETREAT_S = 0.2
 # the ramp on every leg (2026-09-15).
 CLEAR_BACK_M = 0.25
 CLEAR_S = 0.3
+# After the turn a fresh estimate, when the task graph supplies one, triggers a
+# correcting turn if the hock or heading is still off by more than this; at
+# most `MAX_CORRECTIONS` of them.
+CORRECT_ABOVE_HOCK_M = 0.003
+CORRECT_ABOVE_HEADING_RAD = math.radians(1.0)
+MAX_CORRECTIONS = 2
 # What the skill promises at release, the same numbers the saw is scored
 # against (experiments/2026-09-15-alignment-approaches.md). Both assumed; the
 # customer has not given a tolerance.
@@ -81,6 +98,21 @@ HEADING_TOLERANCE_RAD = math.radians(5.0)
 # Below this the leg has left the belt surface.
 ON_BELT_TOLERANCE_M = 0.03
 BELT_TOP_Z_M = 0.90
+
+
+@dataclass(frozen=True)
+class _TurnPlan:
+    leg_position: np.ndarray
+    leg_rotation: np.ndarray
+    tool_in_leg: np.ndarray
+    tool_rotation_in_leg: np.ndarray
+    target_position: np.ndarray
+    target_rotation: np.ndarray
+    turn_rad: float
+    turn_s: float
+
+    def tool_for_leg(self, position: np.ndarray, rotation: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        return position + rotation @ self.tool_in_leg, rotation @ self.tool_rotation_in_leg
 
 
 @dataclass(frozen=True)
@@ -187,10 +219,19 @@ class RotateOnBelt:
     the ham stays on the belt and pivots (approach B); high enough, the whole
     leg leaves the belt and the arm carries its weight (approach A, in
     `PickAndPlace`). The path is the same either way.
+
+    `turn_acceleration_radps2` caps the peak angular acceleration of the turn,
+    which sets how long a turn takes and so how far down the belt the leg is
+    set down.
     """
 
     name = "rotate_on_belt"
     carry_lift_m = TURN_LIFT_M
+
+    def __init__(self, turn_acceleration_radps2: float = TURN_ACCELERATION_RADPS2) -> None:
+        """Build the skill with its turn acceleration bound."""
+        self.turn_acceleration_radps2 = turn_acceleration_radps2
+
     contract = Contract(
         inputs=(
             Port("leg_estimate", LegEstimate, "the leg the grasp was planned on"),
@@ -229,78 +270,96 @@ class RotateOnBelt:
         started_s = cell.time_s
         travel_at_start = cell.belt_travel_m
 
-        # The leg's frame, from the estimate brought forward to now: origin at
-        # its centre of gravity, x along its heading. The tool's pose in that
-        # frame holds while the grip does.
-        carried = np.array([cell.belt_travel_m - estimate.belt_travel_m, 0.0, 0.0])
-        leg_position = estimate.centre_of_gravity_m + carried
-        leg_rotation = _rot_z(estimate.heading_rad)
-        tool_in_leg = leg_rotation.T @ (cell.tool_position_m - leg_position)
-        tool_rotation_in_leg = leg_rotation.T @ cell.tool_rotation
-
-        # Target leg pose: heading square to the blade, hock on the blade plane,
-        # centre of gravity kept where it is along the belt, height unchanged.
-        centre_in_leg = np.zeros(3)
-        hock_in_leg = leg_rotation.T @ (estimate.point_at(HOCK_FRACTION) + carried - leg_position)
-        turn_rad = _wrap(TARGET_HEADING_RAD - estimate.heading_rad)
-        target_rotation = _rot_z(turn_rad) @ leg_rotation
-        target_position = np.array(
-            [
-                float(leg_position[0]) - float((target_rotation @ centre_in_leg)[0]),
-                _blade_plane_y(cell) - float((target_rotation @ hock_in_leg)[1]),
-                float(leg_position[2]),
-            ]
-        )
-        evidence["turn_rad"] = turn_rad
-        evidence["shift_m"] = float(np.linalg.norm(target_position[:2] - leg_position[:2]))
-        turn_s = max(
-            MIN_TURN_S,
-            abs(turn_rad) / TURN_RATE_RADPS,
-            float(
-                np.linalg.norm(
-                    (target_position + target_rotation @ tool_in_leg) - (leg_position + leg_rotation @ tool_in_leg)
-                )
-            )
-            / TOOL_SPEED_MPS,
-        )
+        re_estimate: Callable[[], LegEstimate | None] | None = args.get("re_estimate")
 
         def belt_shift(t_s: float) -> np.ndarray:
             travel = cell.belt_travel_m + cell.belt_speed_mps * (t_s - cell.time_s) - travel_at_start
             return np.array([travel, 0.0, 0.0])
 
-        def tool_for_leg(position: np.ndarray, rotation: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-            return position + rotation @ tool_in_leg, rotation @ tool_rotation_in_leg
+        def plan(source: LegEstimate, carry_z: float) -> _TurnPlan:
+            """The leg's frame now, the tool's pose in it, and the target pose, all at height `carry_z`.
+
+            The frame's origin is the estimated centre of gravity, x along the
+            estimated heading. The target keeps the centre of gravity where it
+            is along the belt, puts the hock on the blade plane and squares the
+            heading.
+            """
+            # Positions are kept in the frame the belt was in when the skill
+            # started, so every path can add the travel since; an estimate
+            # taken later is world-now and is brought back by that travel.
+            carried = np.array([cell.belt_travel_m - source.belt_travel_m, 0.0, 0.0])
+            leg_world = source.centre_of_gravity_m + carried
+            leg_world[2] = carry_z
+            leg_rotation = _rot_z(source.heading_rad)
+            hock_in_leg = leg_rotation.T @ (source.point_at(HOCK_FRACTION) + carried - leg_world)
+            tool_in_leg = leg_rotation.T @ (cell.tool_position_m - leg_world)
+            tool_rotation_in_leg = leg_rotation.T @ cell.tool_rotation
+            leg_position = leg_world - belt_shift(cell.time_s)
+            turn_rad = _wrap(TARGET_HEADING_RAD - source.heading_rad)
+            target_rotation = _rot_z(turn_rad) @ leg_rotation
+            target_position = np.array(
+                [float(leg_position[0]), _blade_plane_y(cell) - float((target_rotation @ hock_in_leg)[1]), carry_z]
+            )
+            travel_m = float(
+                np.linalg.norm((target_position - leg_position) + (target_rotation - leg_rotation) @ tool_in_leg)
+            )
+            # A smoothstep of angle theta over T peaks at 6 theta / T^2.
+            turn_s = max(
+                MIN_TURN_S,
+                abs(turn_rad) / TURN_RATE_RADPS,
+                math.sqrt(6.0 * abs(turn_rad) / self.turn_acceleration_radps2),
+                travel_m / TOOL_SPEED_MPS,
+            )
+            return _TurnPlan(
+                leg_position,
+                leg_rotation,
+                tool_in_leg,
+                tool_rotation_in_leg,
+                target_position,
+                target_rotation,
+                turn_rad,
+                turn_s,
+            )
 
         # The leg pose was captured with the shank already raised by the proof
-        # lift; the turn carries it `TURN_LIFT_M` above where the jaws closed, and
-        # the set-down returns it exactly there, so the tool never presses the
-        # shank into the belt.
+        # lift; the turn carries it `carry_lift_m` above where the jaws closed,
+        # and the set-down returns it exactly there, so the tool never presses
+        # the shank into the belt.
         rise_so_far = float(cell.tool_position_m[2]) - proof.tool_z_m
         extra_lift = self.carry_lift_m - rise_so_far
+        first = plan(estimate, float(estimate.centre_of_gravity_m[2]))
+        evidence["turn_rad"] = first.turn_rad
+        evidence["shift_m"] = float(np.linalg.norm(first.target_position[:2] - first.leg_position[:2]))
         lift_start_s = cell.time_s
 
         def lift(t_s: float) -> tuple[np.ndarray, np.ndarray]:
             rise = smoothstep((t_s - lift_start_s) / LIFT_S) * extra_lift
-            return tool_for_leg(leg_position + belt_shift(t_s) + np.array([0.0, 0.0, rise]), leg_rotation)
+            return first.tool_for_leg(
+                first.leg_position + belt_shift(t_s) + np.array([0.0, 0.0, rise]), first.leg_rotation
+            )
 
-        def turn(t_s: float) -> tuple[np.ndarray, np.ndarray]:
-            fraction = smoothstep((t_s - turn_start_s) / turn_s)
-            rotation = _rot_z(fraction * turn_rad) @ leg_rotation
-            position = leg_position + fraction * (target_position - leg_position) + belt_shift(t_s)
-            position[2] += extra_lift
-            return tool_for_leg(position, rotation)
+        def turn_path(current: _TurnPlan, start_s: float) -> ToolPath:
+            def turn(t_s: float) -> tuple[np.ndarray, np.ndarray]:
+                fraction = smoothstep((t_s - start_s) / current.turn_s)
+                rotation = _rot_z(fraction * current.turn_rad) @ current.leg_rotation
+                position = (
+                    current.leg_position + fraction * (current.target_position - current.leg_position) + belt_shift(t_s)
+                )
+                return current.tool_for_leg(position, rotation)
+
+            return turn
 
         def lower(t_s: float) -> tuple[np.ndarray, np.ndarray]:
             fraction = smoothstep((t_s - lower_start_s) / LOWER_S)
-            position = target_position + belt_shift(t_s)
-            position[2] += extra_lift - fraction * self.carry_lift_m
-            return tool_for_leg(position, target_rotation)
+            position = current.target_position + belt_shift(t_s)
+            position[2] -= fraction * self.carry_lift_m
+            return current.tool_for_leg(position, current.target_rotation)
 
         def retreat(t_s: float) -> tuple[np.ndarray, np.ndarray]:
             fraction = smoothstep((t_s - retreat_start_s) / RETREAT_S)
-            position = target_position + belt_shift(t_s)
-            position[2] -= rise_so_far
-            tool_position, tool_rotation = tool_for_leg(position, target_rotation)
+            position = current.target_position + belt_shift(t_s)
+            position[2] -= self.carry_lift_m
+            tool_position, tool_rotation = current.tool_for_leg(position, current.target_rotation)
             return tool_position + np.array([0.0, 0.0, fraction * RETREAT_M]), tool_rotation
 
         def clear(t_s: float) -> tuple[np.ndarray, np.ndarray]:
@@ -313,16 +372,39 @@ class RotateOnBelt:
             if lifted is not None:
                 cell.open_gripper(cell.gripper_geometry.max_opening_m)
                 return lifted, {}, evidence
-            turn_start_s = cell.time_s
-            cell.follow_tool(turn, turn_s)
-            # Slip: where the leg's true centre of gravity and heading are against
-            # where the plan, carried by the grip, says they should be.
-            truth = cell.ground_truth()
-            assert truth.centre_of_mass_m is not None
-            _, rotation = leg_pose(cell)
-            planned = target_position + belt_shift(cell.time_s)
-            evidence["slip_m"] = float(np.linalg.norm(truth.centre_of_mass_m[:2] - planned[:2]))
-            evidence["slip_rad"] = _wrap(leg_heading_rad(rotation) - TARGET_HEADING_RAD)
+            # After the lift the leg sits at carry height; plan the turn there
+            # from the estimate, then check it against a fresh estimate and
+            # correct, up to `MAX_CORRECTIONS` times: on a turn of more than
+            # about 90 degrees the leg lags the tool by 3 to 5 degrees in the
+            # jaws (2026-09-15), and a second, small turn takes that out.
+            carry_z = float(first.leg_position[2]) + extra_lift
+            current = plan(estimate, carry_z)
+            corrections = 0
+            while True:
+                turn_start_s = cell.time_s
+                cell.follow_tool(turn_path(current, turn_start_s), current.turn_s)
+                if corrections == 0:
+                    # Slip: the leg's true centre of gravity and heading against the plan.
+                    truth = cell.ground_truth()
+                    assert truth.centre_of_mass_m is not None
+                    _, rotation = leg_pose(cell)
+                    planned = current.target_position + belt_shift(cell.time_s)
+                    evidence["slip_m"] = float(np.linalg.norm(truth.centre_of_mass_m[:2] - planned[:2]))
+                    evidence["slip_rad"] = _wrap(leg_heading_rad(rotation) - TARGET_HEADING_RAD)
+                if re_estimate is None or corrections >= MAX_CORRECTIONS:
+                    break
+                fresh = re_estimate()
+                if fresh is None:
+                    break
+                hock_error = float(
+                    (fresh.point_at(HOCK_FRACTION) + np.array([cell.belt_travel_m - fresh.belt_travel_m, 0.0, 0.0]))[1]
+                ) - _blade_plane_y(cell)
+                heading_error = _wrap(fresh.heading_rad - TARGET_HEADING_RAD)
+                if abs(hock_error) <= CORRECT_ABOVE_HOCK_M and abs(heading_error) <= CORRECT_ABOVE_HEADING_RAD:
+                    break
+                current = plan(fresh, carry_z)
+                corrections += 1
+            evidence["corrections"] = float(corrections)
             lower_start_s = cell.time_s
             cell.follow_tool(lower, LOWER_S)
             cell.open_gripper(min(cell.gripper_geometry.max_opening_m, grasp.widest_under_pads_m + 2 * OPEN_MARGIN_M))

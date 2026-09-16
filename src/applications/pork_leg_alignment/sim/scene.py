@@ -113,6 +113,9 @@ class CellConfig:
 
     belt_speed_mps: float = 0.15
     belt_friction_slide: float = 0.55
+    # Half the belt's length along x. The drawn belt in cell.xml is 4 m; a
+    # cell whose cycle needs more belt before the saw asks for more here.
+    belt_half_length_m: float = 2.0
     slab: SlabConfig = field(default_factory=SlabConfig)
     leg: LegConfig | None = None
     saw: SawConfig | None = None
@@ -152,6 +155,8 @@ def _apply_config(spec: mujoco.MjSpec, config: CellConfig) -> None:
     spec.option.timestep = config.timestep_s
     belt = spec.geom("belt_surface")
     belt.friction[0] = config.belt_friction_slide
+    belt.size[0] = config.belt_half_length_m
+    spec.geom("rail_far").size[0] = config.belt_half_length_m
     if config.leg is not None:
         add_leg_geoms(spec, config.leg)
     else:

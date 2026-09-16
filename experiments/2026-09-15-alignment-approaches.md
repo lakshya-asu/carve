@@ -69,6 +69,42 @@ round a shank lying on the belt without its pads striking the belt.
 
 8 conditions, 160 episodes. Deterministic simulation, so one episode per leg per condition.
 
+Amended 2026-09-15 evening, after Lakshya saw the first videos and asked for legs arriving in any
+orientation: every arrival in the pre-registered set is within 35 degrees of square with the
+trotter toward the open edge, which is not what a line delivers. A second arrival set, "any",
+draws the heading uniformly over the full circle with the same seed and shifts the leg across the
+belt only as far as keeps the ham's end and a rail-pointing trotter on the belt. The square set
+is kept and re-run; the two sets are reported apart. What the any set forced, each with the
+measurement, before its 20-leg runs:
+
+- Turn time. A turn planned on rate alone made short turns violent (a 53 degree turn in 0.44 s
+  peaks at 27 rad/s^2, the leg slid 15 mm in the jaws; a 126 degree turn 29 mm), so the turn's
+  time is now also bounded by a peak angular acceleration. At 3 rad/s^2 a 35 degree turn takes
+  1.1 s and a 180 degree turn 2.5 s, and the belt carried the leg past the SR-20iA's reach before
+  set-down: SR-20iA square 6 of 20 (12 set-downs unreachable), any 3 of 20. At 10 rad/s^2, which
+  is what the square set had run at before the bound existed (60 deg/s, 35 degrees in 0.61 s),
+  SR-20iA square 10 of 20, any 9 of 20, UR20 any 17 of 20 either way (`*-accel3-*.csv` and
+  `*-accel10-*.csv`, both at the mounts of the first attempt). 10 rad/s^2 is the value used, as a
+  skill parameter (`RotateOnBelt(turn_acceleration_radps2=...)`, `--turn-acceleration`).
+- Verify and correct. After the turn the skill takes a fresh estimate and, if the hock is more
+  than 3 mm off the blade plane or the heading more than 1 degree off square, turns again, at
+  most twice. On turns past about 90 degrees the leg lags the tool by 3 to 5 degrees in the
+  jaws; the correcting turn takes that out (UR20, any set: hock at release within 1.7 mm on
+  every gripped leg). Positions through the turn are kept in the belt frame at the skill's start,
+  because adding the belt's travel to a world-now estimate counted it twice (65 to 92 mm of
+  imaginary slip, then unreachable).
+- Layout per set. The correcting pass costs 0.4 s, 0.12 m of belt, and it moved every release
+  downstream. Square set: the UR20's fingers met the hold-down ramp on the way up on 7 to 13
+  legs of 20 with the saw at 1.75 m, so the saw and hold-down stand at 1.95 m on a 5 m belt;
+  the SR-20iA's retreat at x = 0.92 m was 1 mm past its reach on 7 legs from its mount at 0.35 m,
+  so it stands at 0.45 m. Any set: a leg arriving trotter-upstream is set down 1.1 to 1.3 m past
+  the pick after a 180 degree turn, so the saw stands at 2.60 m on a 6 m belt, the UR20 at
+  x = 0.85 m and the SR-20iA at 0.60 m (its 1.1 m reach cannot cover both the pick and that
+  set-down from anywhere). The ready pose follows the mount, 0.45 m upstream of it.
+- Camera frame at arrival. The camera-driven path takes its frame when the leg is placed, not
+  after the 0.3 s settle, because a leg that has ridden 0.3 s is already out of the image at its
+  tall end.
+
 Amended 2026-09-15, before any condition ran its 20 legs, after shakedown runs on legs 0 to 2 of the
 population. Every change is in the code with the measurement that motivated it; the protocol,
 trial counts and success definition are unchanged.
@@ -132,6 +168,57 @@ the fingers' open radius, so legs that arrive with the trotter on the belt end i
   and gripper; H2 counted as legs gained by tilt over vertical.
 
 ## Results
+
+Final run, 2026-09-15 evening, after the evening amendments (any-orientation set, acceleration
+bound at 10 rad/s^2, verify-and-correct turn, layout per set), git 3fa01ce plus the uncommitted
+amendments, files `*-truth-{any,square}-3fa01ce.csv`. 11 conditions, 220 episodes. The saw is the
+judge. "Legs corrected" is how many gripped legs took at least one correcting pass.
+
+| Set | Condition | Successes / trials | Entry offset median, p95 mm | Cut angle median, p95 deg | Cycle median s | Hock at release, median mm | Legs corrected | Failures |
+|---|---|---|---|---|---|---|---|---|
+| any | B, UR20, jaw, tilt 0 | 17 / 20 | 1.6, 5.5 | 1.3, 8.9 | 5.40 | 1.1 | 18 of 20 | 3 cut angles over 5° |
+| any | B, UR20, jaw, tilt 15 | 14 / 20 | 1.5, 52.4 | 1.2, 45.7 | 5.33 | 1.2 | 17 of 18 | 3 cut angles over 5°; 2 slipped in the grip; 1 cut offset over 10 mm |
+| any | B, SR-20iA, jaw, tilt 0 | 9 / 20 | 2.7, 82.0 | 2.9, 12.4 | 4.85 | 1.4 | 11 of 14 | 5 set-downs out of reach; 5 arrivals out of reach; 1 cut angle over 5° |
+| any | A, UR20, jaw, tilt 0 | 16 / 20 | 4.7, 10.9 | 1.1, 7.9 | 5.40 | 5.1 | 19 of 20 | 2 cut angles over 5°; 1 cut offset over 10 mm; 1 slipped in the grip |
+| any | A, SR-20iA, jaw, tilt 0 | 9 / 20 | 3.6, 82.0 | 3.0, 12.0 | 4.85 | 1.5 | 11 of 14 | 5 set-downs out of reach; 5 arrivals out of reach; 1 cut angle over 5° |
+| square | B, SR-20iA, jaw, tilt 0 | 14 / 20 | 1.1, 6.6 | 1.1, 11.8 | 4.24 | 0.8 | 8 of 18 | 2 cut offsets over 10 mm; 2 cut angles over 5°; 2 arrivals out of reach |
+| square | B, UR20, jaw, tilt 0 | 17 / 20 | 1.0, 6.3 | 1.1, 8.7 | 4.44 | 0.5 | 8 of 20 | 3 cut angles over 5° |
+| square | B, UR20, jaw, tilt 15 | 16 / 20 | 0.5, 7.3 | 1.1, 9.1 | 4.41 | 0.5 | 6 of 20 | 3 cut angles over 5°; 1 cut offset over 10 mm |
+| square | B, UR20, jaw, tilt 30 | 15 / 20 | 0.6, 7.5 | 1.0, 10.4 | 4.51 | 0.5 | 5 of 19 | 3 cut angles over 5°; 1 slipped in the grip; 1 cut offset over 10 mm |
+| square | A, SR-20iA, jaw, tilt 0 | 16 / 20 | 1.5, 6.6 | 1.1, 11.8 | 4.24 | 0.9 | 8 of 18 | 2 cut angles over 5°; 2 arrivals out of reach |
+| square | A, UR20, jaw, tilt 0 | 17 / 20 | 1.4, 6.8 | 1.2, 8.0 | 4.47 | 0.9 | 8 of 20 | 2 cut angles over 5°; 1 cut offset over 10 mm |
+
+What the final run says:
+
+- Any heading, UR20, turning: 17 of 20, the same as the square set, hock at release 1.1 mm median
+  and 1.7 mm worst over all 20 legs, 18 of 20 corrected. All three losses are cut angles of 8 to
+  13 degrees at the hold-down on legs that arrived 126 to 158 degrees off square, which the
+  lead-in meets ham-first after the half turn. Cycle 5.40 s against 4.44 s square, from the
+  long turn and its correction.
+- Any heading, SR-20iA: 9 of 20 either approach, 5 picks and 5 set-downs out of reach. On the
+  14 legs it gripped, hock at release 1.4 mm median. This is the reach result: its 1.1 m reach
+  cannot cover the pick and a set-down 1.1 to 1.3 m downstream after a half turn from any one
+  mount; 0.60 m was the best of 0.35, 0.60 and 0.85 tried on 4 legs.
+- Tilt 15 on the any set lost 3 legs to the vertical tool: two grip slips on the proof lift and
+  one cut offset of 47 mm, all on legs arriving more than 90 degrees off square. Not understood;
+  the leaned pads have less of the shank under them when the jaws close across a leg pointing
+  at the arm.
+- Carrying (A) through a big turn sets the hock down 5.1 mm median, 10.2 mm worst on the UR20,
+  against 1.1 and 1.7 mm turning at 20 mm: the leg swings more in the jaws when carried high,
+  and the saw still accepts it (16 of 20).
+- Square set, paired by leg, tool vertical: UR20 B and A 17 and 17; SR-20iA A 16 against B 14,
+  the two cut offsets B lost (14.7 and 127.8 mm at exit, the leg turned during the cut) A kept.
+  Tilt: 16 and 15 against 17 vertical, inside the hold-down failures.
+- Hock at release on the square set: UR20 0.5 mm median, SR-20iA 0.8 mm, within 4 mm on every
+  gripped leg; 5 to 8 legs of 20 took a correcting pass.
+
+Earlier runs of the square set, kept in the same directory: `*-b42a2e7.csv` (before the
+leg-estimate layer), `*-truth-2406215.csv` (estimate layer, jaws closing as a step),
+`*-truth-7125e18.csv` (jaws closing on a ramp), and the acceleration sweep `*-accel3-*.csv`,
+`*-accel10-*.csv` (both at the mounts of the first attempt, SR-20iA 0.35 m square and 0.60 m
+any, UR20 0.35 m square). The afternoon results below are from `*-truth-7125e18.csv`.
+
+### Afternoon run, before the any-orientation set
 
 Approach B, jaw on the shank, from ground-truth pose. Two runs of the same protocol on
 2026-09-15, both kept in `experiments/data/2026-09-15-alignment-approaches/`: the first at git
@@ -214,6 +301,14 @@ check refused the grasp. (Before the ramp, the step close added a 25 mm shift th
 not see because the leg had left its field.)
 
 ## Decision taken and why
+
+Final run (evening). By the pre-registered rule the SCARA stayed in only if grasp-and-rotate won and
+tilt gained at most 2 legs. On the square set grasp-and-rotate ties carrying on the UR20 (17 and
+17) and loses on the SCARA (14 against 16), and tilt gains nothing (16 and 15 against 17); so the
+rule still gives the six-axis arm. The any-orientation set then settles it on reach rather than
+on the rule: SR-20iA 9 of 20 against UR20 17 of 20, with 10 of the SCARA's losses being picks or
+set-downs it cannot reach from any one mount. The rest of this section is the afternoon reasoning,
+which the evening run did not overturn.
 
 By the rule written before the runs: the SCARA stayed in only if grasp-and-rotate won and tilt
 gained at most 2 legs of 20. Grasp-and-rotate did not win on the UR20 (15 against 16 carrying, tool
